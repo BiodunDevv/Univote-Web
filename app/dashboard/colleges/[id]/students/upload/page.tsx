@@ -331,7 +331,7 @@ export default function UploadStudentsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -366,7 +366,7 @@ export default function UploadStudentsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
         {/* Instructions */}
         <Card className="p-4 border shadow-none">
           <h3 className="font-semibold text-foreground mb-2 text-sm">

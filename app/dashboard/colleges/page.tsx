@@ -101,31 +101,32 @@ export default function CollegesPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
                 Colleges & Departments
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
                 Manage academic colleges and their departments
               </p>
             </div>
             {isSuperAdmin && (
               <Button
                 onClick={() => router.push("/dashboard/colleges/create")}
-                className="h-9"
+                className="h-8 md:h-9 text-xs shrink-0"
               >
-                <Plus className="w-3.5 h-3.5 mr-2" />
-                Create College
+                <Plus className="w-3.5 h-3.5 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Create College</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
         {/* Statistics Cards */}
         {statistics && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -248,8 +249,9 @@ export default function CollegesPage() {
 
         {/* Loading State */}
         {(loading || initialLoad) && colleges.length === 0 && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Loading...</p>
           </div>
         )}
 

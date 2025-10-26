@@ -6,7 +6,7 @@ import { useAdminStore } from "@/lib/store/useAdminStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -23,6 +23,7 @@ import {
   User,
   Mail,
   Lock,
+  Loader2,
 } from "lucide-react";
 
 export default function CreateAdminPage() {
@@ -49,57 +50,46 @@ export default function CreateAdminPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-10">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="h-9 w-9 p-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="h-8 w-8 rounded-full shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
               Create New Admin
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add a new administrator to the system
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive" className="max-w-2xl">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive" className="max-w-2xl">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Form Card */}
-      <Card className="max-w-2xl border shadow-none">
-        <CardHeader className="border-b px-6 py-5">
-          <CardTitle className="text-base font-semibold">
-            Admin Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-6 py-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Form Card */}
+        <Card className="max-w-2xl border shadow-none p-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Full Name Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="full_name"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="full_name" className="text-xs font-medium">
                 Full Name
               </Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <Input
                   id="full_name"
@@ -111,22 +101,19 @@ export default function CreateAdminPage() {
                   }
                   required
                   disabled={isLoading}
-                  className="h-10 border-muted-foreground/20 pl-10"
+                  className="h-9 text-sm pl-9"
                 />
               </div>
             </div>
 
             {/* Email Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium">
                 Email Address
               </Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <Input
                   id="email"
@@ -138,22 +125,19 @@ export default function CreateAdminPage() {
                   }
                   required
                   disabled={isLoading}
-                  className="h-10 border-muted-foreground/20 pl-10"
+                  className="h-9 text-sm pl-9"
                 />
               </div>
             </div>
 
             {/* Password Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-xs font-medium">
                 Password
               </Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <Input
                   id="password"
@@ -166,7 +150,7 @@ export default function CreateAdminPage() {
                   minLength={8}
                   required
                   disabled={isLoading}
-                  className="h-10 border-muted-foreground/20 pl-10"
+                  className="h-9 text-sm pl-9"
                 />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -175,11 +159,8 @@ export default function CreateAdminPage() {
             </div>
 
             {/* Role Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="role"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="role" className="text-xs font-medium">
                 Role
               </Label>
               <Select
@@ -189,33 +170,20 @@ export default function CreateAdminPage() {
                 }
                 disabled={isLoading}
               >
-                <SelectTrigger
-                  id="role"
-                  className="h-10 border-muted-foreground/20"
-                >
+                <SelectTrigger id="role" className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <div className="font-medium">Admin</div>
-                        <div className="text-xs text-muted-foreground">
-                          Standard admin privileges
-                        </div>
-                      </div>
+                      <Shield className="h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-sm">Admin</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="super_admin">
                     <div className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-purple-500" />
-                      <div>
-                        <div className="font-medium">Super Admin</div>
-                        <div className="text-xs text-muted-foreground">
-                          Full system access
-                        </div>
-                      </div>
+                      <ShieldAlert className="h-3.5 w-3.5 text-purple-500" />
+                      <span className="text-sm">Super Admin</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -223,15 +191,11 @@ export default function CreateAdminPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 border-t pt-6">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="h-10 flex-1"
-              >
+            <div className="flex gap-2 pt-3">
+              <Button type="submit" disabled={isLoading} className="h-9 flex-1">
                 {isLoading ? (
                   <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                     Creating...
                   </>
                 ) : (
@@ -243,14 +207,14 @@ export default function CreateAdminPage() {
                 variant="outline"
                 onClick={() => router.back()}
                 disabled={isLoading}
-                className="h-10 flex-1"
+                className="h-9 flex-1"
               >
                 Cancel
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

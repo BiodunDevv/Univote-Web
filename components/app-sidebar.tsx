@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Building2,
+  Loader2,
 } from "lucide-react";
 
 import { NavProjects } from "@/components/nav-projects";
@@ -27,14 +28,32 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const { logout, admin } = useAuthStore();
+  const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
     logout();
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay for UX
     router.push("/auth/signin");
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
   };
 
   const navSecondary = [
@@ -46,7 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Logout",
       icon: LogOut,
-      onClick: handleLogout,
+      onClick: handleLogoutClick,
     },
   ];
 
@@ -119,34 +138,69 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ];
 
   return (
-    <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
-      {...props}
-    >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a>
-                <div className="flex size-8 items-center justify-center rounded-lg">
-                  <LogoIcon />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Univote</span>
-                  <span className="truncate text-xs">Campus Voting</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavProjects projects={availableProjects} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={userData} />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      <Sidebar className="h-screen border-r" {...props}>
+        <SidebarHeader className="border-b py-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="sm" asChild className="h-9">
+                <a>
+                  <div className="flex size-7 items-center justify-center rounded-lg">
+                    <LogoIcon />
+                  </div>
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="truncate text-sm font-semibold">
+                      Univote
+                    </span>
+                    <span className="truncate text-[10px] text-muted-foreground">
+                      Campus Voting
+                    </span>
+                  </div>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent className="py-2">
+          <NavProjects projects={availableProjects} />
+          <NavSecondary items={navSecondary} className="mt-auto" />
+        </SidebarContent>
+        <SidebarFooter className="border-t py-2">
+          <NavUser user={userData} />
+        </SidebarFooter>
+      </Sidebar>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Logout Confirmation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to logout? You will need to sign in again to
+              access the dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9" disabled={isLoggingOut}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLoggingOut ? (
+                <>
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Logging out...
+                </>
+              ) : (
+                "Logout"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

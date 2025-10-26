@@ -4,15 +4,18 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSessionStore } from "@/lib/store/useSessionStore";
-import { Plus, Calendar, MapPin, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Plus,
+  Calendar,
+  MapPin,
+  Users,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -30,6 +33,7 @@ export default function SessionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     // Wait for Zustand to hydrate from localStorage
@@ -39,10 +43,12 @@ export default function SessionsPage() {
 
   const loadSessions = useCallback(() => {
     const params: Record<string, string | number> = { page, limit: 20 };
-    if (statusFilter !== "all") params.status = statusFilter;
+    // Don't send status filter to backend - we'll filter on frontend
 
-    fetchSessions(params);
-  }, [page, statusFilter, fetchSessions]);
+    fetchSessions(params).finally(() => {
+      setIsInitialLoad(false);
+    });
+  }, [page, fetchSessions]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -54,6 +60,16 @@ export default function SessionsPage() {
 
     loadSessions();
   }, [token, router, loadSessions, isHydrated]);
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+  };
+
+  // Filter sessions on the frontend
+  const filteredSessions =
+    statusFilter === "all"
+      ? sessions
+      : sessions.filter((session) => session.status === statusFilter);
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
@@ -68,210 +84,289 @@ export default function SessionsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-      case "scheduled":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
-      case "completed":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
-      case "cancelled":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
+        return "bg-green-500/10 text-green-600";
+      case "upcoming":
+        return "bg-blue-500/10 text-blue-600";
+      case "ended":
+        return "bg-gray-500/10 text-gray-600";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/10 text-gray-600";
     }
   };
 
-  if (isLoading && !sessions.length) {
+  const formatLocation = (location: {
+    lat?: number;
+    lng?: number;
+    name?: string;
+    address?: string;
+  }) => {
+    if (location.name) return location.name;
+    if (location.address) return location.address;
+    if (location.lat && location.lng) {
+      return `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+    }
+    return "Location not set";
+  };
+
+  // Show loading state immediately on initial load
+  if (isInitialLoad && isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Loading sessions...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading sessions...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Voting Sessions</h2>
-          <p className="text-muted-foreground">
-            Create and manage voting sessions
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-9xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
+                Voting Sessions
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+                Create and manage voting sessions
+              </p>
+            </div>
+            <Button
+              onClick={() => router.push("/dashboard/sessions/create")}
+              className="h-8 md:h-9 text-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Create Session</span>
+              <span className="sm:hidden">Create</span>
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => router.push("/dashboard/sessions/create")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Session
-        </Button>
       </div>
 
-      {/* Filter */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-          <CardDescription>Filter sessions by status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-xs">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
+        {/* Filter */}
+        <Card className="p-3 border shadow-none">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-muted-foreground">
+              Status:
+            </label>
+            <Select
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-9 w-[180px] text-sm">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="ended">Ended</SelectItem>
               </SelectContent>
             </Select>
+            {isLoading && (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Sessions Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sessions.map((session) => (
-          <Card key={session._id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="line-clamp-2">
-                    {session.title}
-                  </CardTitle>
-                  <span
-                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                      session.status
-                    )}`}
-                  >
-                    {session.status.charAt(0).toUpperCase() +
-                      session.status.slice(1)}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {session.description}
-              </p>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(session.start_time).toLocaleDateString()} -{" "}
-                    {new Date(session.end_time).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span className="line-clamp-1">{session.location.name}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>{session.total_votes} votes</span>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground mb-2">
-                  {session.categories.length} categories
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {session.categories.slice(0, 3).map((cat, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded bg-muted px-2 py-1 text-xs"
-                    >
-                      {cat.name}
-                    </span>
-                  ))}
-                  {session.categories.length > 3 && (
-                    <span className="rounded bg-muted px-2 py-1 text-xs">
-                      +{session.categories.length - 3} more
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() =>
-                    router.push(`/dashboard/sessions/${session._id}`)
-                  }
-                >
-                  View
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() =>
-                    router.push(`/dashboard/sessions/${session._id}/edit`)
-                  }
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(session._id, session.title)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {sessions.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No sessions found</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Create your first voting session to get started
-            </p>
-            <Button
-              className="mt-4"
-              onClick={() => router.push("/dashboard/sessions/create")}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Session
-            </Button>
-          </CardContent>
         </Card>
-      )}
 
-      {/* Pagination */}
-      {pagination.pages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm">
-            Page {page} of {pagination.pages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setPage(page + 1)}
-            disabled={page === pagination.pages}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+        {/* Sessions Grid */}
+        {isLoading && sessions.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Loading sessions...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredSessions.map((session) => (
+              <Card
+                key={session._id}
+                className="p-4 border shadow-none hover:border-primary/50 transition-colors"
+              >
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-foreground line-clamp-2">
+                        {session.title}
+                      </h3>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${getStatusColor(
+                        session.status
+                      )}`}
+                    >
+                      {session.status.charAt(0).toUpperCase() +
+                        session.status.slice(1)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {session.description}
+                  </p>
+
+                  {/* Info */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">
+                        {new Date(session.start_time).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}{" "}
+                        -{" "}
+                        {new Date(session.end_time).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
+                      <span className="line-clamp-1">
+                        {formatLocation(session.location)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Users className="w-3.5 h-3.5 shrink-0" />
+                      <span>{session.total_votes || 0} votes</span>
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  <div className="pt-2.5 border-t">
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      {session.categories?.length || 0} categories •{" "}
+                      {session.candidates?.length || 0} candidates
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {session.categories?.slice(0, 3).map((cat, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded-full bg-muted px-2 py-0.5 text-xs"
+                        >
+                          {typeof cat === "string" ? cat : cat.name}
+                        </span>
+                      ))}
+                      {(session.categories?.length || 0) > 3 && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                          +{(session.categories?.length || 0) - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-1.5 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() =>
+                        router.push(`/dashboard/sessions/${session._id}`)
+                      }
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1.5" />
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() =>
+                        router.push(`/dashboard/sessions/${session._id}/edit`)
+                      }
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleDelete(session._id, session.title)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && filteredSessions.length === 0 && (
+          <Card className="p-8 border shadow-none">
+            <div className="text-center">
+              <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                {sessions.length === 0
+                  ? "No sessions found"
+                  : `No ${statusFilter} sessions`}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                {sessions.length === 0
+                  ? "Create your first voting session to get started"
+                  : `There are no sessions with status "${statusFilter}"`}
+              </p>
+              {sessions.length === 0 && (
+                <Button
+                  onClick={() => router.push("/dashboard/sessions/create")}
+                  className="h-9"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-2" />
+                  Create Session
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Pagination */}
+        {pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              className="h-8 text-xs"
+            >
+              Previous
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Page {page} of {pagination.pages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={page === pagination.pages}
+              className="h-8 text-xs"
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

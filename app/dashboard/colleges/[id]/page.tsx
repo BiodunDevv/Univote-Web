@@ -158,28 +158,28 @@ export default function CollegeDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => router.back()}
-                className="rounded-full hover:bg-accent h-9 w-9"
+                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold text-foreground">
+                  <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
                     {currentCollege.name}
                   </h1>
                   <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-mono font-semibold">
                     {currentCollege.code}
                   </span>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                       currentCollege.is_active
                         ? "bg-green-500/10 text-green-600"
                         : "bg-gray-500/10 text-gray-600"
@@ -224,7 +224,8 @@ export default function CollegeDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
         {/* Error Message */}
         {error && (
           <Card className="p-3 border-destructive/50 bg-destructive/5 shadow-none">

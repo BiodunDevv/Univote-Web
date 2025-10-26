@@ -23,18 +23,21 @@ export function NavSecondary({
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               {item.onClick ? (
-                <SidebarMenuButton size="sm" onClick={item.onClick}>
-                  <item.icon />
+                <SidebarMenuButton
+                  className="h-8 px-2 text-xs"
+                  onClick={item.onClick}
+                >
+                  <item.icon className="h-3.5 w-3.5" />
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild size="sm">
+                <SidebarMenuButton asChild className="h-8 px-2 text-xs">
                   <a href={item.url}>
-                    <item.icon />
+                    <item.icon className="h-3.5 w-3.5" />
                     <span>{item.title}</span>
                   </a>
                 </SidebarMenuButton>

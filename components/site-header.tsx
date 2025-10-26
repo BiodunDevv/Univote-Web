@@ -10,17 +10,17 @@ export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
-      <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
+    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b lg:hidden">
+      <div className="flex h-12 w-full items-center gap-2 px-3">
         <Button
-          className="h-8 w-8 lg:hidden"
+          className="h-7 w-7"
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
         >
-          <SidebarIcon />
+          <SidebarIcon className="h-4 w-4" />
         </Button>
-        <Separator orientation="vertical" className="mr-2 h-4 lg:hidden" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
       </div>
     </header>
   );

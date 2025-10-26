@@ -127,22 +127,22 @@ export default function CreateCollegePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="h-8 w-8 rounded-full hover:bg-accent"
+              className="h-8 w-8 rounded-full hover:bg-accent shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
                 Create New College
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Add a new college to the system
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function CreateCollegePage() {
       </div>
 
       {/* Form */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Error Message */}
           {error && (

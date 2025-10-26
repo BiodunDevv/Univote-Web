@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   Loader2,
   Plus,
   X,
+  Save,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
-import CandidateForm from "@/components/CandidateForm";
+import { useSessionStore } from "@/lib/store/useSessionStore";
+import { UpdateSessionDto, Location as SessionLocation } from "@/types/session";
 import {
   CollegeQuickSelect,
   DepartmentSelector,
@@ -50,6 +52,7 @@ interface Department {
 }
 
 interface Candidate {
+  _id?: string;
   name: string;
   position: string;
   photo_url: string;
@@ -68,18 +71,23 @@ interface SessionFormData {
     lng: number;
     radius_meters: number;
   };
-  eligible_colleges: string[]; // Changed to array for multiple selection
+  eligible_colleges: string[];
   eligible_departments: string[];
   eligible_levels: string[];
   categories: string[];
   is_off_campus_allowed: boolean;
+  results_public: boolean;
   candidates: Candidate[];
 }
 
-export default function CreateSessionPage() {
+export default function EditSessionPage() {
   const router = useRouter();
+  const params = useParams();
+  const sessionId = params.id as string;
+
   const { token } = useAuthStore();
   const { colleges: collegesData, fetchColleges } = useCollegeStore();
+  const { currentSession, fetchSessionById, updateSession } = useSessionStore();
 
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
@@ -98,36 +106,93 @@ export default function CreateSessionPage() {
     location: {
       lat: 7.62024,
       lng: 4.202455,
-      radius_meters: 2000,
+      radius_meters: 5000,
     },
-    eligible_colleges: [], // Changed to array
+    eligible_colleges: [],
     eligible_departments: [],
     eligible_levels: [],
     categories: [],
     is_off_campus_allowed: false,
+    results_public: false,
     candidates: [],
   });
 
-  // Fetch colleges and departments on mount
+  // Fetch session data and colleges on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setDataLoading(true);
         if (token) {
-          await fetchColleges(token);
+          await Promise.all([
+            fetchSessionById(sessionId),
+            fetchColleges(token),
+          ]);
         }
       } catch (err) {
         console.error("Failed to load data:", err);
-        setError("Failed to load colleges and departments");
+        setError("Failed to load session data");
       } finally {
         setDataLoading(false);
       }
     };
 
     loadData();
-  }, [token, fetchColleges]);
+  }, [token, sessionId, fetchSessionById, fetchColleges]);
 
-  // Update departments when collegesData changes - show ALL departments
+  // Populate form when session data is loaded
+  useEffect(() => {
+    if (currentSession && collegesData && collegesData.length > 0) {
+      console.log("Loading session data:", {
+        colleges: currentSession.eligible_colleges,
+        departments: currentSession.eligible_departments,
+        levels: currentSession.eligible_levels,
+      });
+
+      setFormData({
+        title: currentSession.title || "",
+        description: currentSession.description || "",
+        start_time: currentSession.start_time
+          ? new Date(currentSession.start_time).toISOString().slice(0, 16)
+          : "",
+        end_time: currentSession.end_time
+          ? new Date(currentSession.end_time).toISOString().slice(0, 16)
+          : "",
+        location: {
+          lat: currentSession.location?.coordinates?.latitude || 7.62024,
+          lng: currentSession.location?.coordinates?.longitude || 4.202455,
+          radius_meters:
+            currentSession.location?.radius_meters ||
+            currentSession.geofence_radius ||
+            5000,
+        },
+        eligible_colleges: Array.isArray(currentSession.eligible_colleges)
+          ? currentSession.eligible_colleges
+          : currentSession.eligible_college
+          ? [currentSession.eligible_college]
+          : [],
+        eligible_departments: currentSession.eligible_departments || [],
+        eligible_levels: currentSession.eligible_levels || [],
+        categories: Array.isArray(currentSession.categories)
+          ? currentSession.categories.map((c) =>
+              typeof c === "string" ? c : c.name
+            )
+          : [],
+        is_off_campus_allowed: currentSession.is_off_campus_allowed || false,
+        results_public: currentSession.results_public || false,
+        candidates:
+          currentSession.candidates?.map((c) => ({
+            _id: c._id, // Preserve the candidate ID
+            name: c.name || "",
+            position: c.position || "",
+            photo_url: c.photo_url || "",
+            bio: c.bio || "",
+            manifesto: c.manifesto || "",
+          })) || [],
+      });
+    }
+  }, [currentSession, collegesData]);
+
+  // Update colleges and departments when collegesData changes
   useEffect(() => {
     if (collegesData && collegesData.length > 0) {
       // Show ALL departments from ALL colleges
@@ -191,29 +256,30 @@ export default function CreateSessionPage() {
         });
       });
 
-      const submitData = {
-        ...formData,
+      // Transform formData to match API expectations
+      const updateData: UpdateSessionDto = {
+        title: formData.title,
+        description: formData.description,
+        start_time: formData.start_time,
+        end_time: formData.end_time,
+        location: {
+          lat: formData.location.lat,
+          lng: formData.location.lng,
+          radius_meters: formData.location.radius_meters,
+        } as SessionLocation,
+        categories: formData.categories,
         eligible_colleges: Array.from(eligibleCollegesSet),
+        eligible_departments: formData.eligible_departments,
+        eligible_levels: formData.eligible_levels,
+        is_off_campus_allowed: formData.is_off_campus_allowed,
+        results_public: formData.results_public,
+        // Note: Candidates are updated separately via /api/admin/candidates/:id
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/create-session`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(submitData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create session");
-      }
-
-      router.push("/dashboard/sessions");
+      await updateSession(sessionId, updateData);
+      // Refetch to ensure we have the latest data
+      await fetchSessionById(sessionId);
+      router.push(`/dashboard/sessions/${sessionId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -232,6 +298,25 @@ export default function CreateSessionPage() {
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleDepartmentChange = (deptId: string) => {
+    const isSelected = formData.eligible_departments.includes(deptId);
+    let newDepartments: string[];
+
+    if (isSelected) {
+      newDepartments = formData.eligible_departments.filter(
+        (id) => id !== deptId
+      );
+    } else {
+      newDepartments = [...formData.eligible_departments, deptId];
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      eligible_departments: newDepartments,
+      eligible_levels: [],
+    }));
   };
 
   const handleCollegeCodeClick = (collegeId: string) => {
@@ -266,29 +351,10 @@ export default function CreateSessionPage() {
     }));
   };
 
-  const handleDepartmentChange = (deptId: string) => {
-    const isSelected = formData.eligible_departments.includes(deptId);
-    let newDepartments: string[];
-
-    if (isSelected) {
-      newDepartments = formData.eligible_departments.filter(
-        (id) => id !== deptId
-      );
-    } else {
-      newDepartments = [...formData.eligible_departments, deptId];
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      eligible_departments: newDepartments,
-    }));
-  };
-
   const handleSelectAllDepartments = () => {
     const allSelected =
       formData.eligible_departments.length ===
       selectedCollegeDepartments.length;
-
     if (allSelected) {
       setFormData((prev) => ({
         ...prev,
@@ -296,97 +362,23 @@ export default function CreateSessionPage() {
         eligible_levels: [],
       }));
     } else {
-      const allDeptIds = selectedCollegeDepartments.map((d) => d._id);
       setFormData((prev) => ({
         ...prev,
-        eligible_departments: allDeptIds,
+        eligible_departments: selectedCollegeDepartments.map((d) => d._id),
+        eligible_levels: [],
       }));
     }
   };
 
   const handleLevelChange = (level: string) => {
+    const newLevels = formData.eligible_levels.includes(level)
+      ? formData.eligible_levels.filter((l) => l !== level)
+      : [...formData.eligible_levels, level];
+
     setFormData((prev) => ({
       ...prev,
-      eligible_levels: prev.eligible_levels.includes(level)
-        ? prev.eligible_levels.filter((l) => l !== level)
-        : [...prev.eligible_levels, level],
+      eligible_levels: newLevels,
     }));
-  };
-
-  const addCandidate = () => {
-    setFormData((prev) => ({
-      ...prev,
-      candidates: [
-        ...prev.candidates,
-        {
-          name: "",
-          position: "",
-          photo_url: "",
-          bio: "",
-          manifesto: "",
-        },
-      ],
-    }));
-  };
-
-  const removeCandidate = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      candidates: prev.candidates.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateCandidate = (
-    index: number,
-    field: keyof Candidate,
-    value: string | boolean
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      candidates: prev.candidates.map((candidate, i) =>
-        i === index ? { ...candidate, [field]: value } : candidate
-      ),
-    }));
-  };
-
-  const uploadCandidateImage = async (index: number, file: File) => {
-    try {
-      // Set uploading state
-      updateCandidate(index, "uploading", true);
-
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-      if (!cloudName || !uploadPreset) {
-        throw new Error("Cloudinary configuration is missing");
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-      formData.append("cloud_name", cloudName);
-      formData.append("folder", "univote/candidates");
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const data = await response.json();
-      updateCandidate(index, "photo_url", data.secure_url);
-      updateCandidate(index, "uploading", false);
-    } catch (error) {
-      console.error("Image upload error:", error);
-      updateCandidate(index, "uploading", false);
-      alert("Failed to upload image. Please try again.");
-    }
   };
 
   if (dataLoading) {
@@ -394,7 +386,24 @@ export default function CreateSessionPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
-          <p className="text-sm text-muted-foreground">Loading data...</p>
+          <p className="text-sm text-muted-foreground">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentSession) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">Session not found</p>
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="mt-4"
+          >
+            Go Back
+          </Button>
         </div>
       </div>
     );
@@ -416,23 +425,23 @@ export default function CreateSessionPage() {
             </Button>
             <div className="min-w-0">
               <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                Create New Session
+                Edit Session
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-                Set up a new voting session
+                Update voting session details
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Error Message */}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Error Alert */}
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-xs text-destructive">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
@@ -476,9 +485,9 @@ export default function CreateSessionPage() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Provide details about the voting session..."
+                  placeholder="Describe this voting session..."
                   rows={3}
-                  className="bg-background border-input resize-none text-sm"
+                  className="bg-background resize-none text-sm"
                 />
               </div>
 
@@ -747,11 +756,11 @@ export default function CreateSessionPage() {
             </div>
           </Card>
 
-          {/* Eligibility */}
+          {/* Eligibility Criteria */}
           <Card className="p-4 border shadow-none">
             <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Users className="w-4 h-4 text-muted-foreground" />
-              Eligibility Criteria (Step by Step)
+              Eligibility Criteria
             </h2>
 
             <div className="space-y-4">
@@ -781,78 +790,122 @@ export default function CreateSessionPage() {
                 selectedDepartmentsCount={formData.eligible_departments.length}
                 onLevelChange={handleLevelChange}
               />
-            </div>
-          </Card>
 
-          {/* Voting Options */}
-          <Card className="p-4 border shadow-none">
-            <h2 className="text-sm font-semibold text-foreground mb-3">
-              Voting Options
-            </h2>
-
-            <div className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                id="is_off_campus_allowed"
-                name="is_off_campus_allowed"
-                checked={formData.is_off_campus_allowed}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    is_off_campus_allowed: e.target.checked,
-                  })
-                }
-                className="w-4 h-4 mt-0.5 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              />
-              <div className="flex-1">
+              {/* Off-Campus Voting */}
+              <div className="flex items-center gap-2 mt-4 p-3 bg-muted/50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="is_off_campus_allowed"
+                  name="is_off_campus_allowed"
+                  checked={formData.is_off_campus_allowed}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 rounded border-input"
+                />
                 <Label
                   htmlFor="is_off_campus_allowed"
-                  className="text-sm font-medium text-foreground cursor-pointer"
+                  className="text-xs font-medium cursor-pointer"
                 >
-                  Allow Off-Campus Voting
+                  Allow off-campus voting (students can vote from anywhere)
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Students can vote from any location
-                </p>
+              </div>
+
+              {/* Results Public */}
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="results_public"
+                  name="results_public"
+                  checked={formData.results_public}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 rounded border-input"
+                />
+                <Label
+                  htmlFor="results_public"
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  Make results public after voting ends
+                </Label>
               </div>
             </div>
           </Card>
 
           {/* Candidates */}
           <Card className="p-4 border shadow-none">
-            <CandidateForm
-              candidates={formData.candidates}
-              categories={formData.categories}
-              onAddCandidate={addCandidate}
-              onRemoveCandidate={removeCandidate}
-              onUpdateCandidate={updateCandidate}
-              onUploadImage={uploadCandidateImage}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                Candidates
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {formData.candidates.length} candidate
+                  {formData.candidates.length !== 1 ? "s" : ""} registered
+                </span>
+              </div>
+            </div>
+
+            {formData.candidates.length === 0 ? (
+              <div className="p-8 text-center border-2 border-dashed rounded-lg">
+                <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground mb-1">
+                  No candidates registered yet
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {formData.candidates.map((candidate, index) => (
+                  <div
+                    key={candidate._id || index}
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-card"
+                  >
+                    {candidate.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={candidate.photo_url}
+                        alt={candidate.name}
+                        className="w-16 h-16 rounded-full object-cover border-2"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border-2">
+                        <Users className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <h3 className="text-sm font-medium truncate">
+                        {candidate.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {candidate.position}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground mt-3 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-md">
+              💡 <strong>Note:</strong> To edit candidates, go to the session
+              details page after saving these changes.
+            </p>
           </Card>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-              className="h-9 px-4 text-sm"
-            >
-              Cancel
-            </Button>
+          {/* Submit Button */}
+          <div className="sticky bottom-0 bg-background border-t p-4">
             <Button
               type="submit"
+              className="w-full h-10 font-medium"
               disabled={loading}
-              className="h-9 px-4 text-sm"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
-                "Create Session"
+                <>
+                  <Save className="w-3.5 h-3.5 mr-2" />
+                  Update Session
+                </>
               )}
             </Button>
           </div>

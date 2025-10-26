@@ -4,9 +4,17 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useAdminStore } from "@/lib/store/useAdminStore";
-import { Plus, X, Shield, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  Plus,
+  X,
+  Shield,
+  ShieldAlert,
+  Trash2,
+  Loader2,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,6 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminsPage() {
   const router = useRouter();
@@ -25,6 +44,14 @@ export default function AdminsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<{
+    id: string;
+    email: string;
+  } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isPermanentDelete, setIsPermanentDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Wait for Zustand to hydrate from localStorage
@@ -77,376 +104,398 @@ export default function AdminsPage() {
 
   const hasActiveFilters = roleFilter !== "all" || statusFilter !== "all";
 
-  const handleDelete = async (id: string, email: string) => {
-    if (!confirm(`Are you sure you want to deactivate ${email}?`)) return;
+  const handleDeleteClick = (id: string, email: string) => {
+    // Prevent deleting yourself
+    if (admin?.id === id) {
+      alert("Cannot delete your own account");
+      return;
+    }
+
+    setSelectedAdmin({ id, email });
+    setDeleteConfirmText("");
+    setIsPermanentDelete(false);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedAdmin) return;
+
+    // Check if permanent delete is requested
+    if (isPermanentDelete && deleteConfirmText !== "DELETE") {
+      alert('Please type "DELETE" to confirm permanent deletion');
+      return;
+    }
+
+    setIsDeleting(true);
 
     try {
-      await deleteAdmin(id, false);
+      await deleteAdmin(selectedAdmin.id, isPermanentDelete);
+      setDeleteModalOpen(false);
+      setSelectedAdmin(null);
+      setDeleteConfirmText("");
+      setIsPermanentDelete(false);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
-      alert(err.response?.data?.error || "Failed to deactivate admin");
+      alert(err.response?.data?.error || "Failed to delete admin");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   if (isLoading && !admins.length) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Loading admins...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading admins...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-10">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Administrators
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {pagination.total} total admins
-            {admins.length > 0 && (
-              <span> · Showing {admins.length} on this page</span>
-            )}
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-9xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
+                Administrators
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+                Manage admin users and permissions
+              </p>
+            </div>
+            <Button
+              onClick={() => router.push("/dashboard/admins/create")}
+              className="h-8 md:h-9 text-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Create Admin</span>
+              <span className="sm:hidden">Create</span>
+            </Button>
+          </div>
         </div>
-        <Button
-          size="sm"
-          onClick={() => router.push("/dashboard/admins/create")}
-          className="h-9"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Admin
-        </Button>
       </div>
 
-      {/* Admins Table with Integrated Filters */}
-      <Card className="border shadow-none">
-        {/* Table Header with Filters */}
-        <CardHeader className="border-b px-6 py-5">
-          <div className="space-y-5">
-            {/* Title Row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-baseline gap-3">
-                <CardTitle className="text-base font-semibold">
-                  All Administrators
-                </CardTitle>
-                <span className="text-sm text-muted-foreground">
-                  {pagination.total} total
-                </span>
-              </div>
-              {hasActiveFilters && (
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
+        {/* Filters */}
+        <Card className="p-3 border shadow-none">
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-sm font-medium text-muted-foreground">
+              Role:
+            </label>
+            <Select
+              value={roleFilter}
+              onValueChange={handleRoleChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-9 w-40 text-sm">
+                <SelectValue placeholder="All Roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <label className="text-sm font-medium text-muted-foreground">
+              Status:
+            </label>
+            <Select
+              value={statusFilter}
+              onValueChange={handleStatusChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-9 w-40 text-sm">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="h-8 text-xs"
+              >
+                <X className="mr-1.5 h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+
+            {isLoading && (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        </Card>
+
+        {/* Admins Grid */}
+        {isLoading && admins.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+              <p className="text-sm text-muted-foreground">Loading admins...</p>
+            </div>
+          </div>
+        ) : admins.length === 0 ? (
+          <Card className="p-8 border shadow-none">
+            <div className="text-center">
+              <ShieldAlert className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                No admins found
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                {hasActiveFilters
+                  ? "Try adjusting your filters"
+                  : "Create your first admin to get started"}
+              </p>
+              {!hasActiveFilters && (
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-8 text-xs"
+                  onClick={() => router.push("/dashboard/admins/create")}
+                  className="h-9"
                 >
-                  <X className="mr-1.5 h-3.5 w-3.5" />
-                  Clear filters
+                  <Plus className="w-3.5 h-3.5 mr-2" />
+                  Create Admin
                 </Button>
               )}
             </div>
-
-            {/* Filters Row */}
-            <div className="flex gap-3">
-              {/* Role Filter */}
-              <div className="w-48">
-                <Select value={roleFilter} onValueChange={handleRoleChange}>
-                  <SelectTrigger className="h-9 border-muted-foreground/20">
-                    <SelectValue placeholder="All Roles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status Filter */}
-              <div className="w-48">
-                <Select value={statusFilter} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="h-9 border-muted-foreground/20">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Active filters:
-                </span>
-                {roleFilter !== "all" && (
-                  <div className="inline-flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1 text-xs font-medium text-purple-700 dark:text-purple-400">
-                    <Shield className="h-3 w-3" />
-                    <span>
-                      Role:{" "}
-                      {roleFilter === "super_admin" ? "Super Admin" : "Admin"}
-                    </span>
-                    <button
-                      onClick={() => handleRoleChange("all")}
-                      className="ml-1 hover:opacity-70"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-                {statusFilter !== "all" && (
-                  <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
-                    <span>
-                      Status:{" "}
-                      {statusFilter === "active" ? "Active" : "Inactive"}
-                    </span>
-                    <button
-                      onClick={() => handleStatusChange("all")}
-                      className="ml-1 hover:opacity-70"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          {admins.length === 0 ? (
-            <div className="py-20 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <ShieldAlert className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold">No admins found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {hasActiveFilters
-                  ? "Try adjusting your filters"
-                  : "Click the button above to create your first admin"}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Table Header */}
-              <div className="sticky top-0 z-10 grid grid-cols-[50px_1fr_1.5fr_140px_120px_140px_140px] gap-4 border-b bg-muted/50 px-6 py-3 text-xs font-medium text-muted-foreground backdrop-blur-sm">
-                <div>#</div>
-                <div>NAME</div>
-                <div>EMAIL</div>
-                <div>ROLE</div>
-                <div>STATUS</div>
-                <div>LAST LOGIN</div>
-                <div>ACTIONS</div>
-              </div>
-
-              {/* Table Body - Scrollable */}
-              <div className="max-h-[calc(100vh-400px)] min-h-[400px] overflow-y-auto">
-                {admins.map((adminItem, index) => (
-                  <div
-                    key={adminItem._id}
-                    className="group grid grid-cols-[50px_1fr_1.5fr_140px_120px_140px_140px] gap-4 border-b px-6 py-4 transition-colors last:border-b-0 hover:bg-muted/30"
-                  >
-                    {/* Row Number */}
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {(page - 1) * 20 + index + 1}
-                      </span>
-                    </div>
-
-                    {/* Name */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/10">
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {admins.map((adminItem) => (
+              <Card
+                key={adminItem._id}
+                className="p-4 border shadow-none hover:border-primary/50 transition-colors"
+              >
+                <div className="space-y-3">
+                  {/* Header with Avatar and Role Badge */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                         {adminItem.full_name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="truncate text-sm font-medium">
-                        {adminItem.full_name}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-foreground truncate">
+                          {adminItem.full_name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {adminItem.email}
+                        </p>
+                      </div>
+                    </div>
+                    {adminItem.role === "super_admin" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs font-medium text-purple-700 dark:text-purple-400 shrink-0">
+                        <ShieldAlert className="h-3 w-3" />
+                        Super
                       </span>
-                    </div>
-
-                    {/* Email */}
-                    <div className="flex items-center">
-                      <span className="truncate text-sm text-muted-foreground">
-                        {adminItem.email}
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400 shrink-0">
+                        <Shield className="h-3 w-3" />
+                        Admin
                       </span>
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Role */}
-                    <div className="flex items-center">
-                      {adminItem.role === "super_admin" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-500/20 dark:text-purple-400">
-                          <ShieldAlert className="h-3 w-3" />
-                          Super Admin
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-500/20 dark:text-blue-400">
-                          <Shield className="h-3 w-3" />
-                          Admin
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center">
+                  {/* Info */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Status</span>
                       <div className="flex items-center gap-1.5">
                         <div
                           className={`h-1.5 w-1.5 rounded-full ${
-                            adminItem.is_active
-                              ? "bg-green-500"
-                              : "bg-gray-300 dark:bg-gray-600"
+                            adminItem.is_active ? "bg-green-500" : "bg-gray-400"
                           }`}
                         />
                         <span
-                          className={`text-xs font-medium ${
+                          className={`font-medium ${
                             adminItem.is_active
                               ? "text-green-700 dark:text-green-400"
-                              : "text-gray-500 dark:text-gray-400"
+                              : "text-gray-500"
                           }`}
                         >
                           {adminItem.is_active ? "Active" : "Inactive"}
                         </span>
                       </div>
                     </div>
-
-                    {/* Last Login */}
-                    <div className="flex items-center">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Last Login</span>
+                      <span className="text-foreground">
                         {adminItem.last_login_at
                           ? new Date(
                               adminItem.last_login_at
-                            ).toLocaleDateString()
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
                           : "Never"}
                       </span>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          router.push(`/dashboard/admins/${adminItem._id}`)
-                        }
-                        className="h-8 px-3 text-xs"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleDelete(adminItem._id, adminItem.email)
-                        }
-                        className="h-8 px-3 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Pagination */}
-              {pagination.pages > 1 && (
-                <div className="flex items-center justify-between border-t bg-muted/20 px-6 py-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing{" "}
-                    <span className="font-medium text-foreground">
-                      {(page - 1) * 20 + 1}
-                    </span>{" "}
-                    to{" "}
-                    <span className="font-medium text-foreground">
-                      {(page - 1) * 20 + admins.length}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium text-foreground">
-                      {pagination.total}
-                    </span>{" "}
-                    admins
-                  </div>
-                  <div className="flex items-center gap-2">
+                  {/* Actions */}
+                  <div className="flex gap-1.5 pt-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={() => setPage(1)}
-                      disabled={page === 1}
-                      className="h-8"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() =>
+                        router.push(`/dashboard/admins/${adminItem._id}`)
+                      }
                     >
-                      First
+                      <User className="w-3.5 h-3.5 mr-1.5" />
+                      Edit
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                      className="h-8"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
+                      onClick={() =>
+                        handleDeleteClick(adminItem._id, adminItem.email)
+                      }
+                      disabled={admin?.id === adminItem._id}
                     >
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-                        .filter(
-                          (p) =>
-                            p === 1 ||
-                            p === pagination.pages ||
-                            Math.abs(p - page) <= 1
-                        )
-                        .map((p, idx, arr) => {
-                          const showEllipsis =
-                            idx > 0 && arr[idx - 1] !== p - 1;
-                          return (
-                            <div key={p} className="flex items-center">
-                              {showEllipsis && (
-                                <span className="px-2 text-muted-foreground">
-                                  ...
-                                </span>
-                              )}
-                              <Button
-                                variant={page === p ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => setPage(p)}
-                                className="h-8 min-w-10"
-                              >
-                                {p}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === pagination.pages}
-                      className="h-8"
-                    >
-                      Next
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPage(pagination.pages)}
-                      disabled={page === pagination.pages}
-                      className="h-8"
-                    >
-                      Last
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              className="h-8 text-xs"
+            >
+              Previous
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Page {page} of {pagination.pages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={page === pagination.pages}
+              className="h-8 text-xs"
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
+          </AlertDialogHeader>
+
+          {/* Modal Content - Fixed hydration error by removing AlertDialogDescription wrapper */}
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              You are about to delete{" "}
+              <span className="font-semibold text-foreground">
+                {selectedAdmin?.email}
+              </span>
+              .
+            </p>
+
+            {/* Permanent Delete Option */}
+            <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="permanent-delete"
+                  checked={isPermanentDelete}
+                  onChange={(e) => {
+                    setIsPermanentDelete(e.target.checked);
+                    setDeleteConfirmText("");
+                  }}
+                  className="mt-1 h-4 w-4 rounded border-destructive/30 text-destructive focus:ring-destructive"
+                />
+                <div className="flex-1 space-y-1">
+                  <Label
+                    htmlFor="permanent-delete"
+                    className="text-sm font-medium text-destructive cursor-pointer"
+                  >
+                    Permanently delete this admin
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {isPermanentDelete
+                      ? "This will permanently delete the admin from the database. This action cannot be undone."
+                      : "Uncheck to deactivate instead of permanently deleting."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Confirmation Input for Permanent Delete */}
+              {isPermanentDelete && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-text" className="text-xs font-medium">
+                    Type{" "}
+                    <span className="font-bold text-destructive">DELETE</span>{" "}
+                    to confirm
+                  </Label>
+                  <Input
+                    id="confirm-text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="h-9 border-destructive/30 focus-visible:ring-destructive"
+                  />
+                </div>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </div>
+
+            {!isPermanentDelete && (
+              <p className="text-xs text-muted-foreground">
+                The admin will be deactivated and won&apos;t be able to log in,
+                but their data will be preserved.
+              </p>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={
+                isDeleting ||
+                (isPermanentDelete && deleteConfirmText !== "DELETE")
+              }
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : isPermanentDelete ? (
+                "Permanently Delete"
+              ) : (
+                "Deactivate Admin"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

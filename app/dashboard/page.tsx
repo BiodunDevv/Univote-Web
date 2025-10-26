@@ -97,127 +97,133 @@ export default function DashboardWelcomePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-      {/* Welcome Section */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Welcome back, {admin?.full_name}
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          {admin?.role === "super_admin"
-            ? "You have full system access and administrative privileges"
-            : "Manage elections and monitor voting activities"}
-        </p>
-      </div>
-
-      {/* Quick Access Cards */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold">Quick Access</h2>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((link) => (
-            <Card
-              key={link.id}
-              className="group cursor-pointer border shadow-none transition-all hover:shadow-md hover:border-primary/50"
-              onClick={() => router.push(link.href)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br ${link.gradient}`}
-                  >
-                    <link.icon className={`h-5 w-5 ${link.iconColor}`} />
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                </div>
-                <div className="mt-3">
-                  <h3 className="text-sm font-semibold">{link.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {link.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3">
+          <div className="min-w-0">
+            <h1 className="text-sm md:text-lg font-semibold tracking-tight truncate">
+              Welcome back, {admin?.full_name}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+              {admin?.role === "super_admin"
+                ? "You have full system access and administrative privileges"
+                : "Manage elections and monitor voting activities"}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Getting Started Section */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold">Getting Started</h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          {/* Quick Start Guide */}
-          <Card className="border shadow-none">
-            <CardHeader className="border-b px-4 py-3">
-              <CardTitle className="text-sm font-semibold">
-                Quick Start Guide
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 py-4">
-              <div className="space-y-2.5">
-                {[
-                  "Create voting sessions for campus elections",
-                  "Upload student records via CSV files",
-                  "Monitor real-time voting statistics",
-                  "Generate comprehensive election reports",
-                  ...(admin?.role === "super_admin"
-                    ? ["Manage administrator accounts"]
-                    : []),
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
-                    <p className="text-xs text-muted-foreground">{item}</p>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-4 space-y-4">
+        {/* Quick Access Cards */}
+        <div>
+          <h2 className="mb-3 text-sm font-semibold">Quick Access</h2>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {quickLinks.map((link) => (
+              <Card
+                key={link.id}
+                className="group cursor-pointer border shadow-none transition-all hover:shadow-md hover:border-primary/50"
+                onClick={() => router.push(link.href)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br ${link.gradient}`}
+                    >
+                      <link.icon className={`h-5 w-5 ${link.iconColor}`} />
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="mt-3">
+                    <h3 className="text-sm font-semibold">{link.title}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {link.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
-          {/* Quick Actions */}
-          <Card className="border shadow-none">
-            <CardHeader className="border-b px-4 py-3">
-              <CardTitle className="text-sm font-semibold">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 py-4">
-              <div className="space-y-2">
-                <Button
-                  onClick={() => router.push("/dashboard/sessions")}
-                  className="h-9 w-full justify-start text-sm"
-                  variant="outline"
-                >
-                  <Vote className="mr-2 h-3.5 w-3.5" />
-                  Create New Election
-                </Button>
-                <Button
-                  onClick={() => router.push("/dashboard/students")}
-                  className="h-9 w-full justify-start text-sm"
-                  variant="outline"
-                >
-                  <Users className="mr-2 h-3.5 w-3.5" />
-                  Upload Students
-                </Button>
-                <Button
-                  onClick={() => router.push("/dashboard/sessions")}
-                  className="h-9 w-full justify-start text-sm"
-                  variant="outline"
-                >
-                  <BarChart3 className="mr-2 h-3.5 w-3.5" />
-                  View Reports
-                </Button>
-                {admin?.role === "super_admin" && (
+        {/* Getting Started Section */}
+        <div>
+          <h2 className="mb-3 text-sm font-semibold">Getting Started</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {/* Quick Start Guide */}
+            <Card className="border shadow-none">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="text-sm font-semibold">
+                  Quick Start Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 py-4">
+                <div className="space-y-2.5">
+                  {[
+                    "Create voting sessions for campus elections",
+                    "Upload student records via CSV files",
+                    "Monitor real-time voting statistics",
+                    "Generate comprehensive election reports",
+                    ...(admin?.role === "super_admin"
+                      ? ["Manage administrator accounts"]
+                      : []),
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
+                      <p className="text-xs text-muted-foreground">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border shadow-none">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="text-sm font-semibold">
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 py-4">
+                <div className="space-y-2">
                   <Button
-                    onClick={() => router.push("/dashboard/admins")}
+                    onClick={() => router.push("/dashboard/sessions")}
                     className="h-9 w-full justify-start text-sm"
                     variant="outline"
                   >
-                    <Settings className="mr-2 h-3.5 w-3.5" />
-                    Manage Admins
+                    <Vote className="mr-2 h-3.5 w-3.5" />
+                    Create New Election
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  <Button
+                    onClick={() => router.push("/dashboard/students")}
+                    className="h-9 w-full justify-start text-sm"
+                    variant="outline"
+                  >
+                    <Users className="mr-2 h-3.5 w-3.5" />
+                    Upload Students
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/dashboard/sessions")}
+                    className="h-9 w-full justify-start text-sm"
+                    variant="outline"
+                  >
+                    <BarChart3 className="mr-2 h-3.5 w-3.5" />
+                    View Reports
+                  </Button>
+                  {admin?.role === "super_admin" && (
+                    <Button
+                      onClick={() => router.push("/dashboard/admins")}
+                      className="h-9 w-full justify-start text-sm"
+                      variant="outline"
+                    >
+                      <Settings className="mr-2 h-3.5 w-3.5" />
+                      Manage Admins
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

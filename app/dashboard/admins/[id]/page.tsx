@@ -6,7 +6,7 @@ import { useAdminStore } from "@/lib/store/useAdminStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -22,9 +22,7 @@ import {
   ShieldAlert,
   User,
   Mail,
-  Calendar,
-  ToggleLeft,
-  ToggleRight,
+  Loader2,
 } from "lucide-react";
 
 export default function EditAdminPage() {
@@ -78,10 +76,10 @@ export default function EditAdminPage() {
 
   if (isLoading && !currentAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Loading admin...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading admin...</p>
         </div>
       </div>
     );
@@ -89,85 +87,73 @@ export default function EditAdminPage() {
 
   if (!currentAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-muted-foreground">Admin not found</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Admin not found</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-10">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="h-9 w-9 p-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Edit Administrator
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Update administrator information and permissions
-            </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-9xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="h-8 w-8 rounded-full shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
+                Edit Administrator
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+                Update administrator information and permissions
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive" className="max-w-2xl">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Admin Info Card */}
-      <Card className="max-w-2xl border shadow-none">
-        <CardHeader className="border-b px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/10 text-lg font-semibold text-primary ring-1 ring-primary/10">
+        {/* Admin Info Card */}
+        <Card className="p-4 border shadow-none">
+          <div className="flex items-center gap-3 pb-4 border-b">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary shrink-0">
               {currentAdmin.full_name.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <CardTitle className="text-base font-semibold">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-foreground truncate">
                 {currentAdmin.full_name}
-              </CardTitle>
-              <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Mail className="h-3 w-3" />
-                  <span>{currentAdmin.email}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    Joined{" "}
-                    {new Date(currentAdmin.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+              </h3>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                <Mail className="h-3 w-3 shrink-0" />
+                <span className="truncate">{currentAdmin.email}</span>
               </div>
             </div>
           </div>
-        </CardHeader>
 
-        <CardContent className="px-6 py-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3 pt-4">
             {/* Full Name Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="full_name"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="full_name" className="text-xs font-medium">
                 Full Name
               </Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <Input
                   id="full_name"
@@ -179,17 +165,14 @@ export default function EditAdminPage() {
                   }
                   required
                   disabled={isLoading}
-                  className="h-10 border-muted-foreground/20 pl-10"
+                  className="h-9 text-sm pl-9"
                 />
               </div>
             </div>
 
             {/* Role Field */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="role"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+            <div className="space-y-1.5">
+              <Label htmlFor="role" className="text-xs font-medium">
                 Role
               </Label>
               <Select
@@ -199,33 +182,20 @@ export default function EditAdminPage() {
                 }
                 disabled={isLoading}
               >
-                <SelectTrigger
-                  id="role"
-                  className="h-10 border-muted-foreground/20"
-                >
+                <SelectTrigger id="role" className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <div className="font-medium">Admin</div>
-                        <div className="text-xs text-muted-foreground">
-                          Standard admin privileges
-                        </div>
-                      </div>
+                      <Shield className="h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-sm">Admin</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="super_admin">
                     <div className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-purple-500" />
-                      <div>
-                        <div className="font-medium">Super Admin</div>
-                        <div className="text-xs text-muted-foreground">
-                          Full system access
-                        </div>
-                      </div>
+                      <ShieldAlert className="h-3.5 w-3.5 text-purple-500" />
+                      <span className="text-sm">Super Admin</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -233,57 +203,42 @@ export default function EditAdminPage() {
             </div>
 
             {/* Account Status Field */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Account Status
-              </Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Account Status</Label>
               <button
                 type="button"
                 onClick={() =>
                   setFormData({ ...formData, is_active: !formData.is_active })
                 }
                 disabled={isLoading}
-                className="flex w-full items-center justify-between rounded-lg border border-muted-foreground/20 px-4 py-3 transition-colors hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-between rounded-lg border px-3 py-2 transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <div className="flex items-center gap-3">
-                  {formData.is_active ? (
-                    <ToggleRight className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <ToggleLeft className="h-5 w-5 text-gray-400" />
-                  )}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      formData.is_active ? "bg-green-500" : "bg-gray-400"
+                    }`}
+                  />
                   <div className="text-left">
-                    <div className="text-sm font-medium">
-                      {formData.is_active
-                        ? "Active Account"
-                        : "Inactive Account"}
+                    <div className="text-xs font-medium">
+                      {formData.is_active ? "Active" : "Inactive"}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formData.is_active
-                        ? "Admin can access the system"
-                        : "Admin cannot access the system"}
+                        ? "Can access system"
+                        : "Cannot access system"}
                     </div>
                   </div>
                 </div>
-                <div
-                  className={`flex h-1.5 w-1.5 rounded-full ${
-                    formData.is_active
-                      ? "bg-green-500"
-                      : "bg-gray-300 dark:bg-gray-600"
-                  }`}
-                />
               </button>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 border-t pt-6">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="h-10 flex-1"
-              >
+            <div className="flex gap-2 pt-2">
+              <Button type="submit" disabled={isLoading} className="h-9 flex-1">
                 {isLoading ? (
                   <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                     Updating...
                   </>
                 ) : (
@@ -295,14 +250,14 @@ export default function EditAdminPage() {
                 variant="outline"
                 onClick={() => router.back()}
                 disabled={isLoading}
-                className="h-10 flex-1"
+                className="h-9 flex-1"
               >
                 Cancel
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

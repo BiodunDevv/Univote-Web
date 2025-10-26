@@ -148,20 +148,20 @@ export default function CollegeStudentsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => router.push(`/dashboard/colleges/${collegeId}`)}
-                className="rounded-full hover:bg-accent h-9 w-9"
+                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground">
+              <div className="min-w-0">
+                <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
                   {currentCollege?.name}
                 </h1>
                 <p className="text-xs text-muted-foreground">
@@ -177,17 +177,18 @@ export default function CollegeStudentsPage() {
                     `/dashboard/colleges/${collegeId}/students/upload`
                   )
                 }
-                className="h-9"
+                className="h-8 text-xs shrink-0"
               >
-                <Upload className="w-3.5 h-3.5 mr-2" />
-                Upload
+                <Upload className="w-3.5 h-3.5 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Upload</span>
+                <span className="sm:hidden">📤</span>
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
         {/* Filters */}
         <Card className="p-3 border shadow-none">
           <div className="flex flex-col sm:flex-row gap-2">

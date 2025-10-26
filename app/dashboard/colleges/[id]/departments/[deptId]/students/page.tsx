@@ -174,8 +174,8 @@ export default function DepartmentStudentsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -219,7 +219,7 @@ export default function DepartmentStudentsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
         {/* Department Info Card */}
         {currentDepartment && (
           <Card className="p-3 border shadow-none bg-muted/50">

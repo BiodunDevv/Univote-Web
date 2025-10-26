@@ -5,12 +5,25 @@ export interface VotingCategory {
 }
 
 export interface Location {
-  name: string;
-  address: string;
-  coordinates: {
+  name?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  coordinates?: {
     latitude: number;
     longitude: number;
   };
+  radius_meters?: number;
+}
+
+export interface Candidate {
+  _id?: string;
+  name: string;
+  position: string;
+  photo_url?: string;
+  bio?: string;
+  manifesto?: string;
+  vote_count?: number;
 }
 
 export interface VotingSession {
@@ -19,15 +32,22 @@ export interface VotingSession {
   description: string;
   start_time: string;
   end_time: string;
-  status: "scheduled" | "active" | "completed" | "cancelled";
+  status: "upcoming" | "active" | "ended";
   location: Location;
-  categories: VotingCategory[];
+  categories: VotingCategory[] | string[];
   is_geofenced: boolean;
   geofence_radius: number;
   total_votes: number;
   created_by: string;
   createdAt: string;
   updatedAt: string;
+  eligible_college?: string;
+  eligible_colleges?: string[];
+  eligible_departments?: string[];
+  eligible_levels?: string[];
+  is_off_campus_allowed?: boolean;
+  results_public?: boolean;
+  candidates?: Candidate[];
 }
 
 export interface CreateSessionDto {
@@ -36,9 +56,16 @@ export interface CreateSessionDto {
   start_time: string;
   end_time: string;
   location: Location;
-  categories: VotingCategory[];
-  is_geofenced: boolean;
+  categories: VotingCategory[] | string[];
+  is_geofenced?: boolean;
   geofence_radius?: number;
+  eligible_college?: string;
+  eligible_colleges?: string[];
+  eligible_departments?: string[];
+  eligible_levels?: string[];
+  is_off_campus_allowed?: boolean;
+  results_public?: boolean;
+  candidates?: Candidate[];
 }
 
 export interface UpdateSessionDto {
@@ -47,9 +74,19 @@ export interface UpdateSessionDto {
   start_time?: string;
   end_time?: string;
   location?: Location;
-  categories?: VotingCategory[];
+  categories?: VotingCategory[] | string[];
   is_geofenced?: boolean;
   geofence_radius?: number;
+  eligible_college?: string;
+  eligible_colleges?: string[];
+  eligible_departments?: string[];
+  eligible_levels?: string[];
+  is_off_campus_allowed?: boolean;
+  results_public?: boolean;
+  positions?: {
+    name: string;
+    max_candidates: number;
+  }[];
 }
 
 export interface SessionListResponse {
@@ -82,6 +119,7 @@ export interface SessionStats {
       name: string;
       vote_count: number;
       percentage: string;
+      photo_url?: string;
     }[];
   }[];
 }

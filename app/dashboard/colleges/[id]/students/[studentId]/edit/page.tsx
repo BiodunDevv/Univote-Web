@@ -119,7 +119,7 @@ export default function EditStudentPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -143,7 +143,7 @@ export default function EditStudentPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Error Message */}
           {error && (

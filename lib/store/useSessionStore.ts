@@ -71,11 +71,90 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   fetchSessionById: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get<{ session: VotingSession }>(
-        `/api/admin/sessions/${id}`
-      );
+      const response = await api.get<{
+        session: VotingSession;
+        stats: {
+          eligible_students: number;
+          total_votes: number;
+          duplicate_attempts: number;
+          rejected_votes: number;
+          turnout_percentage: string;
+        };
+      }>(`/api/admin/sessions/${id}`);
+
+      // Group candidates by position for stats display
+      const candidatesByPosition: {
+        category: string;
+        candidates: {
+          name: string;
+          vote_count: number;
+          percentage: string;
+          photo_url?: string;
+        }[];
+      }[] = [];
+
+      if (response.data.session.candidates) {
+        const grouped = response.data.session.candidates.reduce(
+          (acc, candidate) => {
+            if (!acc[candidate.position]) {
+              acc[candidate.position] = [];
+            }
+            acc[candidate.position].push({
+              name: candidate.name,
+              vote_count: candidate.vote_count || 0,
+              percentage: "0%",
+              photo_url: candidate.photo_url,
+            });
+            return acc;
+          },
+          {} as Record<
+            string,
+            {
+              name: string;
+              vote_count: number;
+              percentage: string;
+              photo_url?: string;
+            }[]
+          >
+        );
+
+        Object.entries(grouped).forEach(([position, candidates]) => {
+          const totalVotesInCategory = candidates.reduce(
+            (sum, c) => sum + c.vote_count,
+            0
+          );
+          candidatesByPosition.push({
+            category: position,
+            candidates: candidates.map((c) => ({
+              ...c,
+              percentage:
+                totalVotesInCategory > 0
+                  ? ((c.vote_count / totalVotesInCategory) * 100).toFixed(2) +
+                    "%"
+                  : "0%",
+            })),
+          });
+        });
+      }
+
       set({
         currentSession: response.data.session,
+        sessionStats: {
+          session: {
+            id: response.data.session._id,
+            title: response.data.session.title,
+            status: response.data.session.status,
+          },
+          statistics: {
+            eligible_students: response.data.stats.eligible_students,
+            total_votes: response.data.stats.total_votes,
+            unique_voters: response.data.stats.total_votes,
+            duplicate_attempts: response.data.stats.duplicate_attempts,
+            rejected_votes: response.data.stats.rejected_votes,
+            turnout_percentage: response.data.stats.turnout_percentage,
+          },
+          candidates: candidatesByPosition,
+        },
         isLoading: false,
       });
     } catch (error: unknown) {

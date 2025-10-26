@@ -16,7 +16,13 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+} from "lucide-react";
 
 export function ResetPasswordForm({
   className,
@@ -66,6 +72,15 @@ export function ResetPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push("/")}
+        className="w-fit h-9 text-xs"
+      >
+        <ArrowLeft className="mr-2 h-3.5 w-3.5" />
+        Back to Home
+      </Button>
       <Card>
         <CardHeader>
           <CardTitle>Reset Password</CardTitle>
