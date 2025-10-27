@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Vote,
-  Users,
   UserCog,
   BarChart3,
   Settings,
@@ -19,6 +19,7 @@ import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { LogoIcon } from "@/components/logo";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   Sidebar,
   SidebarContent,
@@ -144,7 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="sm" asChild className="h-9">
-                <a>
+                <Link href="/" className="flex items-center gap-2">
                   <div className="flex size-7 items-center justify-center rounded-lg">
                     <LogoIcon />
                   </div>
@@ -156,7 +157,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       Campus Voting
                     </span>
                   </div>
-                </a>
+                  <div className="hidden lg:block">
+                    <AnimatedThemeToggler />
+                  </div>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

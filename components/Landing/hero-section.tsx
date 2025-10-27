@@ -1,18 +1,24 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { HeroHeader } from "@/components/Landing/header";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function HeroSection() {
+  const { token } = useAuthStore();
+  const isSignedIn = !!token;
+
   return (
     <>
       <HeroHeader />
       <section id="hero">
         <div className="pb-24 pt-12 md:pb-32 lg:pb-56 lg:pt-44">
           <div className="relative mx-auto flex max-w-6xl flex-col px-6 lg:block">
-            <div className="mx-auto max-w-lg text-center lg:ml-0 lg:w-1/2 lg:text-left">
-              <h1 className="mt-8 max-w-2xl text-balance text-5xl font-medium md:text-6xl lg:mt-16">
+            <div className="mx-auto max-w-xl text-center lg:ml-0 lg:w-1/2 lg:text-left">
+              <h1 className="mt-8 max-w-2xl text-balance text-4xl font-medium md:text-5xl lg:mt-16">
                 Smart, Secure, and Transparent Campus Voting.
               </h1>
               <p className="mt-8 max-w-2xl text-pretty text-lg">
@@ -21,10 +27,12 @@ export default function HeroSection() {
                 results.
               </p>
 
-              <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
+              <div className="mt-12 flex flex-row items-center justify-center gap-2 sm:flex-row lg:justify-start">
                 <Button asChild size="lg" className="px-5 text-base">
-                  <Link href="#contact">
-                    <span className="text-nowrap">Get Started</span>
+                  <Link href={isSignedIn ? "/dashboard" : "#contact"}>
+                    <span className="text-nowrap">
+                      {isSignedIn ? "Go to Dashboard" : "Get Started"}
+                    </span>
                   </Link>
                 </Button>
                 <Button

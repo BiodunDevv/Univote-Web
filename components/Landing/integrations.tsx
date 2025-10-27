@@ -63,10 +63,6 @@ export default function IntegrationsSection() {
               Univote connects with Microsoft Azure, Paystack, and modern email
               APIs to ensure reliability and accuracy.
             </p>
-
-            <Button variant="outline" size="sm" asChild>
-              <Link href="#">Get Started</Link>
-            </Button>
           </div>
         </div>
       </div>

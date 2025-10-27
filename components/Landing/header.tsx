@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import React from "react";
+import { AnimatedThemeToggler } from "../theme-toggler";
 
 const menuItems = [
   { name: "Home", href: "#hero" },
@@ -15,11 +17,14 @@ const menuItems = [
 
 export const HeroHeader = () => {
   const [menuState, setMenuState] = React.useState(false);
+  const { token } = useAuthStore();
+  const isSignedIn = !!token;
+
   return (
     <header>
       <nav
         data-state={menuState && "active"}
-        className="bg-background/50 fixed z-20 w-full border-b backdrop-blur-3xl"
+        className="bg-background/50 fixed w-full border-b backdrop-blur-3xl z-50"
       >
         <div className="mx-auto max-w-6xl px-6 transition-all duration-300">
           <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
@@ -72,12 +77,13 @@ export const HeroHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+              <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:gap-3 md:w-fit">
                 <Button asChild size="sm">
-                  <Link href="/auth/signin">
-                    <span>Admin Login</span>
+                  <Link href={isSignedIn ? "/dashboard" : "/auth/signin"}>
+                    <span>{isSignedIn ? "Dashboard" : "Login"}</span>
                   </Link>
                 </Button>
+                <AnimatedThemeToggler />
               </div>
             </div>
           </div>

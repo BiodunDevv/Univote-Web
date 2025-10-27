@@ -9,7 +9,18 @@ export default function ContentSection() {
           Designed for Students
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
-          <div className="relative space-y-4">
+          <div className="relative mt-6 sm:mt-0 order-2 sm:order-1">
+            <div className="bg-linear-to-b aspect-square sm:aspect-4/3 relative rounded-2xl from-zinc-300 to-transparent p-px dark:from-zinc-700 overflow-hidden">
+              <Image
+                src="https://media.istockphoto.com/id/2181480843/photo/the-smartphone-screen-shows-a-vote-application-with-green-check-mark-and-red-cross-icon.webp?a=1&b=1&s=612x612&w=0&k=20&c=l4fXd8cZxO9v908BIJtP4GD-lbP1MOXOzVtZLDw41c8="
+                className="rounded-[15px] object-cover w-full h-full"
+                alt="Students voting on campus"
+                width={800}
+                height={600}
+              />
+            </div>
+          </div>
+          <div className="relative space-y-4 order-1 sm:order-2">
             <p className="text-muted-foreground">
               Vote easily from your phone or laptop during active elections.{" "}
               <span className="text-accent-foreground font-bold">
@@ -44,24 +55,6 @@ export default function ContentSection() {
                   time.
                 </p>
               </div>
-            </div>
-          </div>
-          <div className="relative mt-6 sm:mt-0">
-            <div className="bg-linear-to-b aspect-67/34 relative rounded-2xl from-zinc-300 to-transparent p-px dark:from-zinc-700">
-              <Image
-                src="/exercice-dark.png"
-                className="hidden rounded-[15px] dark:block"
-                alt="payments illustration dark"
-                width={1206}
-                height={612}
-              />
-              <Image
-                src="/exercice.png"
-                className="rounded-[15px] shadow dark:hidden"
-                alt="payments illustration light"
-                width={1206}
-                height={612}
-              />
             </div>
           </div>
         </div>
