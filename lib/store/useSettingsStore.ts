@@ -217,7 +217,7 @@ interface SettingsStore {
 }
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const getErrorMessage = (error: unknown): string => {
   return error instanceof Error ? error.message : "An error occurred";
