@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
-  ArrowLeft,
   GraduationCap,
   User,
   Mail,
@@ -17,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/College";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 
@@ -150,28 +150,11 @@ export default function EditDepartmentPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => router.back()}
-              className="rounded-full hover:bg-accent"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                Edit Department
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {currentCollege.name} - Update department information
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Department"
+        subtitle={`${currentCollege.name} - Update department information`}
+        onBack={() => router.push(`/dashboard/colleges/${collegeId}`)}
+      />
 
       {/* Form */}
       <div className="max-w-5xl mx-auto px-6 py-6">
@@ -393,7 +376,7 @@ export default function EditDepartmentPage() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => router.back()}
+              onClick={() => router.push(`/dashboard/colleges/${collegeId}`)}
               disabled={loading}
               className="hover:bg-accent"
             >

@@ -6,7 +6,6 @@ import { useAuthStore, getStoredToken } from "@/lib/store/useAuthStore";
 import { useSessionStore } from "@/lib/store/useSessionStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
   MapPin,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/College";
 
 export default function SessionDetailsPage() {
   const router = useRouter();
@@ -74,8 +74,11 @@ export default function SessionDetailsPage() {
           <p className="mt-4 text-muted-foreground">
             {error || "Session not found"}
           </p>
-          <Button className="mt-4" onClick={() => router.back()}>
-            Go Back
+          <Button
+            className="mt-4"
+            onClick={() => router.push("/dashboard/sessions")}
+          >
+            Back to Sessions
           </Button>
         </div>
       </div>
@@ -98,60 +101,35 @@ export default function SessionDetailsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full shrink-0"
-                onClick={() => router.push("/dashboard/sessions")}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="min-w-0">
-                <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                  Session Details
-                </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  View session information and results
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs hidden sm:inline-flex"
-                onClick={() =>
-                  router.push(`/dashboard/sessions/${sessionId}/edit`)
-                }
-              >
-                Edit Session
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 sm:hidden"
-                onClick={() =>
-                  router.push(`/dashboard/sessions/${sessionId}/edit`)
-                }
-              >
-                <span className="text-xs">✏️</span>
-              </Button>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(
-                  currentSession.status
-                )}`}
-              >
-                {currentSession.status.charAt(0).toUpperCase() +
-                  currentSession.status.slice(1)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Session Details"
+        subtitle="View session information and results"
+        onBack={() => router.push("/dashboard/sessions")}
+        badges={
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(
+              currentSession.status
+            )}`}
+          >
+            {currentSession.status.charAt(0).toUpperCase() +
+              currentSession.status.slice(1)}
+          </span>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs inline-flex"
+              onClick={() =>
+                router.push(`/dashboard/sessions/${sessionId}/edit`)
+              }
+            >
+              Edit Session
+            </Button>
+          </>
+        }
+      />
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
         {/* Session Info Card */}

@@ -72,10 +72,34 @@ interface CollegeStatistics {
   }>;
 }
 
+interface StudentStatisticsByCollege {
+  college: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  statistics: {
+    total_students: number;
+    active_students: number;
+    inactive_students: number;
+    departments: Array<{
+      name: string;
+      total: number;
+      active: number;
+      inactive: number;
+    }>;
+    levels: Array<{
+      level: string;
+      count: number;
+    }>;
+  };
+}
+
 interface CollegeState {
   colleges: College[];
   currentCollege: College | null;
   statistics: CollegeStatistics | null;
+  collegeStudentStats: StudentStatisticsByCollege | null;
   loading: boolean;
   error: string | null;
 
@@ -83,6 +107,10 @@ interface CollegeState {
   fetchColleges: (token?: string, isActive?: boolean) => Promise<void>;
   fetchCollegeById: (token?: string, id?: string) => Promise<void>;
   fetchStatistics: (token?: string) => Promise<void>;
+  fetchCollegeStudentStatistics: (
+    token?: string,
+    collegeId?: string
+  ) => Promise<void>;
   createCollege: (token: string, data: CollegeFormData) => Promise<College>;
   updateCollege: (
     token: string,
@@ -124,6 +152,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
   colleges: [],
   currentCollege: null,
   statistics: null,
+  collegeStudentStats: null,
   loading: false,
   error: null,
 
@@ -484,6 +513,38 @@ export const useCollegeStore = create<CollegeState>((set) => ({
         loading: false,
       });
       throw error;
+    }
+  },
+
+  fetchCollegeStudentStatistics: async (token?: string, collegeId?: string) => {
+    const authToken = token || getStoredToken();
+    if (!authToken || !collegeId) return;
+
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/colleges/${collegeId}/students/statistics`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to fetch college student statistics"
+        );
+      }
+
+      const data = await response.json();
+      set({ collegeStudentStats: data, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : "An error occurred",
+        loading: false,
+      });
     }
   },
 

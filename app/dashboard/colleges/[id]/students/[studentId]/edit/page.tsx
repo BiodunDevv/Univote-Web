@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -12,6 +12,9 @@ import {
   GraduationCap,
   Building2,
   Hash,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,8 +41,13 @@ export default function EditStudentPage() {
     department: "",
     college: "",
     level: "",
+    photo_url: "",
     is_active: true,
   });
+  const [updateWarning, setUpdateWarning] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isSuperAdmin = admin?.role === "super_admin";
 
@@ -70,18 +78,88 @@ export default function EditStudentPage() {
         department: currentStudent.department || "",
         college: currentStudent.college || "",
         level: currentStudent.level || "",
+        photo_url: currentStudent.photo_url || "",
         is_active: currentStudent.is_active ?? true,
       });
+      setPreviewUrl(currentStudent.photo_url || null);
     }
   }, [currentStudent]);
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      formDataUpload.append(
+        "upload_preset",
+        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+      );
+      formDataUpload.append("folder", "univote/students");
+
+      const response = await fetch(cloudinaryUrl, {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      const imageUrl = data.secure_url;
+
+      setFormData({ ...formData, photo_url: imageUrl });
+      setPreviewUrl(imageUrl);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, photo_url: "" });
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
 
     try {
-      await updateStudent(token, studentId, formData);
-      router.push(`/dashboard/colleges/${collegeId}/students`);
+      const result = await updateStudent(token, studentId, formData);
+      if (result.warning) {
+        setUpdateWarning(result.warning);
+        // Still show success but with warning
+        setTimeout(() => {
+          router.push(`/dashboard/colleges/${collegeId}/students`);
+        }, 3000);
+      } else {
+        router.push(`/dashboard/colleges/${collegeId}/students`);
+      }
     } catch {
       // Error handled by store
     }
@@ -158,6 +236,24 @@ export default function EditStudentPage() {
             </Card>
           )}
 
+          {/* Warning Message */}
+          {updateWarning && (
+            <Card className="p-3 border-orange-500/50 bg-orange-500/5 shadow-none">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-orange-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-orange-900">
+                    Update Warning
+                  </p>
+                  <p className="text-xs text-orange-700">{updateWarning}</p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    Redirecting in 3 seconds...
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Student Information */}
           <Card className="p-4 border shadow-none">
             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
@@ -215,6 +311,98 @@ export default function EditStudentPage() {
                   placeholder="Enter email address"
                   className="h-9 text-sm"
                 />
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <Label className="flex items-center gap-2 mb-2 text-xs">
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Profile Photo
+                </Label>
+
+                <div className="space-y-3">
+                  {/* Preview */}
+                  {previewUrl ? (
+                    <div className="relative inline-block">
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute -top-2 -right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors shadow-lg"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/30">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="photo-upload"
+                    />
+                    <label htmlFor="photo-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                        asChild
+                      >
+                        <span>
+                          {uploading ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5 mr-2" />
+                              {previewUrl ? "Change Photo" : "Upload Photo"}
+                            </>
+                          )}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+
+                  {/* Info text */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: Square image, at least 400x400px
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Max file size: 5MB (JPG, PNG, WEBP)
+                    </p>
+                    <p className="text-xs text-orange-600">
+                      ⚠️ Updating photo will re-register facial recognition
+                      (Face++)
+                    </p>
+                    {currentStudent.has_facial_data && (
+                      <p className="text-xs text-green-600">
+                        ✓ Facial data currently registered
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </Card>

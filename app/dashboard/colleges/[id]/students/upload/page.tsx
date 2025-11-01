@@ -14,6 +14,14 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import { useStudentStore } from "@/lib/store/useStudentStore";
@@ -25,6 +33,7 @@ interface CSVStudent {
   department?: string;
   college?: string;
   level?: string;
+  photo_url?: string;
 }
 
 interface UploadResult {
@@ -32,12 +41,12 @@ interface UploadResult {
   results: {
     total: number;
     created: number;
-    updated: number;
     failed: number;
     errors: Array<{
       matric_no: string;
       full_name: string;
-      error: string;
+      error?: string;
+      warning?: string;
     }>;
     target: {
       college: string;
@@ -132,6 +141,9 @@ export default function UploadStudentsPage() {
           }
           if (headers.includes("level")) {
             student.level = values[headers.indexOf("level")] || "";
+          }
+          if (headers.includes("photo_url")) {
+            student.photo_url = values[headers.indexOf("photo_url")] || "";
           }
 
           students.push(student);
@@ -307,7 +319,7 @@ export default function UploadStudentsPage() {
 
   const downloadTemplate = () => {
     const template =
-      "matric_no,full_name,email\nBU22CSC1005,John Doe,john.doe@example.com\nBU22CSC1006,Jane Smith,jane.smith@example.com";
+      "matric_no,full_name,email,photo_url\nBU22CSC1005,John Doe,john.doe@example.com,https://example.com/photos/john.jpg\nBU22CSC1006,Jane Smith,jane.smith@example.com,https://example.com/photos/jane.jpg";
     const blob = new Blob([template], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -381,17 +393,21 @@ export default function UploadStudentsPage() {
               email
             </p>
             <p>
-              3. <strong className="text-primary">Department and Level:</strong>{" "}
+              3. <strong>Optional CSV columns:</strong> photo_url (URL to
+              student photo for profile picture and facial recognition)
+            </p>
+            <p>
+              4. <strong className="text-primary">Department and Level:</strong>{" "}
               Set using the &quot;Override Department&quot; and &quot;Override
               Level&quot; fields below
             </p>
             <p>
-              4.{" "}
+              5.{" "}
               <strong className="text-orange-600">
                 Override values apply to ALL students in the CSV
               </strong>
             </p>
-            <p>5. Upload the completed CSV file</p>
+            <p>6. Upload the completed CSV file</p>
           </div>
         </Card>
 
@@ -497,27 +513,19 @@ export default function UploadStudentsPage() {
               {/* Preview Table */}
               <div className="border rounded-lg overflow-hidden">
                 <div className="overflow-x-auto max-h-80">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/30 border-b sticky top-0">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
-                          Matric No
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
-                          Full Name
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
-                          Email
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
-                          Department
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
-                          Level
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background">
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="w-12 text-xs">#</TableHead>
+                        <TableHead className="text-xs">Student</TableHead>
+                        <TableHead className="text-xs">Matric No</TableHead>
+                        <TableHead className="text-xs">Email</TableHead>
+                        <TableHead className="text-xs">Photo URL</TableHead>
+                        <TableHead className="text-xs">Department</TableHead>
+                        <TableHead className="text-xs">Level</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {csvData.map((student, index) => {
                         // Use target defaults if set (override CSV), otherwise use CSV values
                         const effectiveDept =
@@ -525,20 +533,78 @@ export default function UploadStudentsPage() {
                         const effectiveLevel = targetLevel || student.level;
 
                         return (
-                          <tr
+                          <TableRow
                             key={`${index}-${targetDepartment}-${targetLevel}`}
-                            className="hover:bg-muted/30 transition-colors"
                           >
-                            <td className="px-3 py-2 font-mono font-semibold text-primary text-xs">
+                            <TableCell className="text-xs text-muted-foreground font-medium">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-muted border border-border">
+                                  {student.photo_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={student.photo_url}
+                                      alt={student.full_name}
+                                      className="h-full w-full object-cover"
+                                      onError={(e) => {
+                                        const target =
+                                          e.target as HTMLImageElement;
+                                        target.style.display = "none";
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `<div class="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-semibold text-[10px]">${student.full_name
+                                            .split(" ")
+                                            .map((n) => n[0])
+                                            .join("")
+                                            .toUpperCase()
+                                            .slice(0, 2)}</div>`;
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-semibold text-[10px]">
+                                      {student.full_name
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                        .toUpperCase()
+                                        .slice(0, 2)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {student.full_name}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono font-semibold text-primary text-xs">
                               {student.matric_no}
-                            </td>
-                            <td className="px-3 py-2 text-foreground text-sm">
-                              {student.full_name}
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground text-xs">
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-xs">
                               {student.email}
-                            </td>
-                            <td className="px-3 py-2 text-sm">
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {student.photo_url ? (
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                  <span
+                                    className="text-muted-foreground truncate max-w-[150px]"
+                                    title={student.photo_url}
+                                  >
+                                    {student.photo_url}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">
+                                  No photo
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm">
                               {effectiveDept ? (
                                 <span className="text-foreground">
                                   {effectiveDept}
@@ -560,8 +626,8 @@ export default function UploadStudentsPage() {
                                   Not set
                                 </span>
                               )}
-                            </td>
-                            <td className="px-3 py-2">
+                            </TableCell>
+                            <TableCell>
                               {effectiveLevel ? (
                                 <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
                                   {effectiveLevel}
@@ -581,12 +647,12 @@ export default function UploadStudentsPage() {
                                   Not set
                                 </span>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
@@ -718,10 +784,8 @@ export default function UploadStudentsPage() {
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {uploadResult.results.created +
-                        uploadResult.results.updated}{" "}
-                      students uploaded successfully,{" "}
-                      {uploadResult.results.failed} failed
+                      {uploadResult.results.created} students uploaded
+                      successfully, {uploadResult.results.failed} failed
                     </p>
                   )}
                 </div>
@@ -761,33 +825,34 @@ export default function UploadStudentsPage() {
                       </p>
                     </div>
                     <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-2">
-                      {uploadResult.results.errors.map(
-                        (
-                          err: {
-                            matric_no: string;
-                            full_name: string;
-                            error: string;
-                          },
-                          index: number
-                        ) => (
-                          <div
-                            key={index}
-                            className="p-3 bg-destructive/5 border border-destructive/20 rounded-lg"
-                          >
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <p className="font-medium text-foreground text-sm">
-                                {err.matric_no}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {err.full_name}
-                              </p>
-                            </div>
-                            <p className="text-xs text-destructive bg-background/50 p-2 rounded border border-destructive/10">
-                              {err.error}
+                      {uploadResult.results.errors.map((err, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 border rounded-lg ${
+                            err.warning
+                              ? "bg-orange-500/5 border-orange-500/20"
+                              : "bg-destructive/5 border-destructive/20"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="font-medium text-foreground text-sm">
+                              {err.matric_no}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {err.full_name}
                             </p>
                           </div>
-                        )
-                      )}
+                          <p
+                            className={`text-xs bg-background/50 p-2 rounded border ${
+                              err.warning
+                                ? "text-orange-600 border-orange-500/10"
+                                : "text-destructive border-destructive/10"
+                            }`}
+                          >
+                            {err.error || err.warning}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                     <div className="mt-3 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
                       <p className="font-medium text-foreground mb-1">

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
-  ArrowLeft,
   Calendar,
   Users,
   FileText,
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/College";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import { useSessionStore } from "@/lib/store/useSessionStore";
@@ -399,10 +399,10 @@ export default function EditSessionPage() {
           <p className="text-sm text-muted-foreground">Session not found</p>
           <Button
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push(`/dashboard/sessions/${sessionId}`)}
             className="mt-4"
           >
-            Go Back
+            Back to Session
           </Button>
         </div>
       </div>
@@ -412,28 +412,11 @@ export default function EditSessionPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => router.back()}
-              className="h-8 w-8 rounded-full hover:bg-accent shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                Edit Session
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-                Update voting session details
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Session"
+        subtitle="Update voting session details"
+        onBack={() => router.push(`/dashboard/sessions/${sessionId}`)}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6">

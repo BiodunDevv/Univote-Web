@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useSettingsStore } from "@/lib/store/useSettingsStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import {
   Vote,
@@ -13,11 +15,15 @@ import {
   ArrowRight,
   CheckCircle2,
   Building2,
+  TrendingUp,
+  UserCheck,
+  Activity,
 } from "lucide-react";
 
 export default function DashboardWelcomePage() {
   const router = useRouter();
   const { admin, token } = useAuthStore();
+  const { dashboardStats, getDashboardStats, loading } = useSettingsStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -32,6 +38,13 @@ export default function DashboardWelcomePage() {
       router.push("/auth/signin");
     }
   }, [token, router, isHydrated]);
+
+  useEffect(() => {
+    // Fetch dashboard stats when hydrated and token is available
+    if (isHydrated && token) {
+      getDashboardStats(token);
+    }
+  }, [isHydrated, token, getDashboardStats]);
 
   // Show loading while hydrating
   if (!isHydrated || !token || !admin) {
@@ -54,15 +67,6 @@ export default function DashboardWelcomePage() {
       href: "/dashboard/sessions",
       gradient: "from-blue-500/10 to-blue-500/5",
       iconColor: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      id: "students",
-      title: "Students",
-      description: "Manage student records and voters",
-      icon: Users,
-      href: "/dashboard/students",
-      gradient: "from-green-500/10 to-green-500/5",
-      iconColor: "text-green-600 dark:text-green-400",
     },
     {
       id: "colleges",
@@ -115,6 +119,129 @@ export default function DashboardWelcomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-4 space-y-4">
+        {/* System Statistics */}
+        {dashboardStats && (
+          <div>
+            <h2 className="mb-3 text-sm font-semibold">System Overview</h2>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {/* Students */}
+              <Card className="border shadow-none">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">
+                        {dashboardStats.students.total}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Students</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <UserCheck className="h-3.5 w-3.5 text-green-600" />
+                    <span className="text-muted-foreground">
+                      {dashboardStats.students.active} active •{" "}
+                      {dashboardStats.students.facial_registration_rate} with
+                      facial data
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Colleges */}
+              <Card className="border shadow-none">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                      <Building2 className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">
+                        {dashboardStats.colleges.total}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Colleges</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <Activity className="h-3.5 w-3.5 text-purple-600" />
+                    <span className="text-muted-foreground">
+                      {dashboardStats.colleges.total_departments} departments
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Sessions */}
+              <Card className="border shadow-none">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                      <Vote className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">
+                        {dashboardStats.sessions.total}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Elections</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+                    <span className="text-muted-foreground">
+                      {dashboardStats.sessions.active} active •{" "}
+                      {dashboardStats.sessions.completed} completed
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Votes */}
+              <Card className="border shadow-none">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
+                      <BarChart3 className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">
+                        {dashboardStats.votes.total}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total Votes
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                    <span className="text-muted-foreground">
+                      All validated votes
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State for Stats */}
+        {loading && !dashboardStats && (
+          <div>
+            <h2 className="mb-3 text-sm font-semibold">System Overview</h2>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="border shadow-none">
+                  <CardContent className="p-4">
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="mt-3 h-4 w-20" />
+                    <Skeleton className="mt-2 h-3 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick Access Cards */}
         <div>
           <h2 className="mb-3 text-sm font-semibold">Quick Access</h2>
@@ -148,24 +275,56 @@ export default function DashboardWelcomePage() {
 
         {/* Getting Started Section */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold">Getting Started</h2>
+          <h2 className="mb-3 text-sm font-semibold">
+            Key Features & Capabilities
+          </h2>
           <div className="grid gap-3 md:grid-cols-2">
-            {/* Quick Start Guide */}
+            {/* System Features */}
             <Card className="border shadow-none">
               <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold">
-                  Quick Start Guide
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Vote className="h-4 w-4 text-primary" />
+                  Election Management
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 py-4">
                 <div className="space-y-2.5">
                   {[
-                    "Create voting sessions for campus elections",
-                    "Upload student records via CSV files",
-                    "Monitor real-time voting statistics",
-                    "Generate comprehensive election reports",
+                    "Create and configure voting sessions with custom settings",
+                    "Set election dates, voting hours, and geographic boundaries",
+                    "Add candidates with photos, manifestos, and positions",
+                    "Define eligible voter groups by college, department, or level",
+                    "Location-based voting with configurable radius verification",
+                    "Real-time vote counting and live result tracking",
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                      <p className="text-xs text-muted-foreground">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Student & Data Management */}
+            <Card className="border shadow-none">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Student & Data Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 py-4">
+                <div className="space-y-2.5">
+                  {[
+                    "Organize students by colleges, departments, and levels",
+                    "Bulk upload student data via CSV with validation",
+                    "Manage student profiles with photos and credentials",
+                    "Facial recognition integration for identity verification",
+                    "Track voting history and participation rates",
+                    "Generate detailed reports and analytics",
                     ...(admin?.role === "super_admin"
-                      ? ["Manage administrator accounts"]
+                      ? ["Full administrative control and user management"]
                       : []),
                   ].map((item, index) => (
                     <div key={index} className="flex items-start gap-2.5">

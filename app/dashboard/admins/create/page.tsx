@@ -58,7 +58,7 @@ export default function CreateAdminPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.back()}
+              onClick={() => router.push("/dashboard/admins")}
               className="h-8 w-8 rounded-full shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -205,7 +205,7 @@ export default function CreateAdminPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.back()}
+                onClick={() => router.push("/dashboard/admins")}
                 disabled={isLoading}
                 className="h-9 flex-1"
               >

@@ -8,9 +8,13 @@ import { cn } from "@/lib/utils";
 
 type props = {
   className?: string;
+  variant?: "icon-only" | "with-text";
 };
 
-export const AnimatedThemeToggler = ({ className }: props) => {
+export const AnimatedThemeToggler = ({
+  className,
+  variant = "icon-only",
+}: props) => {
   const { theme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -64,8 +68,32 @@ export const AnimatedThemeToggler = ({ className }: props) => {
   // Don't render anything until the component has mounted on the client
   if (!mounted) {
     return (
-      <button ref={buttonRef} className={cn(className)}>
-        <Moon />
+      <button
+        ref={buttonRef}
+        className={cn(
+          variant === "with-text" ? "w-full justify-start gap-2" : "",
+          className
+        )}
+      >
+        <Moon className="h-3.5 w-3.5 shrink-0" />
+        {variant === "with-text" && <span>Toggle theme</span>}
+      </button>
+    );
+  }
+
+  if (variant === "with-text") {
+    return (
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={changeTheme}
+        className={cn("flex items-center gap-2 w-full", className)}
+        aria-label="Toggle theme"
+      >
+        <SunDim className="h-3.5 w-3.5 shrink-0 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-3.5 w-3.5 shrink-0 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <span className="dark:hidden">Light Mode</span>
+        <span className="hidden dark:inline">Dark Mode</span>
       </button>
     );
   }

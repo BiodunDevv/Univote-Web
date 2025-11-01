@@ -8,10 +8,16 @@ interface Student {
   email: string;
   college: string;
   department: string;
+  department_code: string;
   level: string;
+  photo_url?: string;
   is_active: boolean;
   first_login: boolean;
+  has_facial_data?: boolean;
+  last_login_at?: string | null;
+  last_login_device?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 interface StudentCSVData {
@@ -21,6 +27,7 @@ interface StudentCSVData {
   college?: string;
   department?: string;
   level?: string;
+  photo_url?: string;
 }
 
 interface UploadStudentsResponse {
@@ -28,12 +35,12 @@ interface UploadStudentsResponse {
   results: {
     total: number;
     created: number;
-    updated: number;
     failed: number;
     errors: Array<{
       matric_no: string;
       full_name: string;
-      error: string;
+      error?: string;
+      warning?: string;
     }>;
     target: {
       college: string;
@@ -43,9 +50,22 @@ interface UploadStudentsResponse {
   };
 }
 
+interface VotingHistory {
+  _id: string;
+  session_id: {
+    _id: string;
+    title: string;
+    start_time: string;
+    end_time: string;
+  };
+  voted_at: string;
+  status: string;
+}
+
 interface StudentState {
   students: Student[];
   currentStudent: Student | null;
+  votingHistory: VotingHistory[];
   loading: boolean;
   error: string | null;
   pagination: {
@@ -53,6 +73,11 @@ interface StudentState {
     limit: number;
     total: number;
     pages: number;
+  };
+  filter?: {
+    college?: string;
+    department?: string;
+    level?: string;
   };
 
   // Actions
@@ -108,13 +133,9 @@ interface StudentState {
     token: string,
     id: string,
     data: Partial<Student>
-  ) => Promise<void>;
+  ) => Promise<{ warning?: string }>;
 
-  deleteStudent: (
-    token?: string,
-    id?: string,
-    permanent?: boolean
-  ) => Promise<void>;
+  deleteStudent: (token?: string, id?: string, soft?: boolean) => Promise<void>;
 
   bulkUpdateStudents: (
     token: string,
@@ -130,6 +151,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 export const useStudentStore = create<StudentState>((set) => ({
   students: [],
   currentStudent: null,
+  votingHistory: [],
   loading: false,
   error: null,
   pagination: {
@@ -138,6 +160,7 @@ export const useStudentStore = create<StudentState>((set) => ({
     total: 0,
     pages: 0,
   },
+  filter: undefined,
 
   fetchStudents: async (
     token?: string,
@@ -187,6 +210,7 @@ export const useStudentStore = create<StudentState>((set) => ({
           limit: params?.limit || 50,
           pages: data.pages,
         },
+        filter: data.filter,
         loading: false,
       });
     } catch (error) {
@@ -332,6 +356,7 @@ export const useStudentStore = create<StudentState>((set) => ({
       const data = await response.json();
       set({
         currentStudent: data.student,
+        votingHistory: data.voting_history || [],
         loading: false,
       });
     } catch (error) {
@@ -395,7 +420,12 @@ export const useStudentStore = create<StudentState>((set) => ({
         throw new Error(errorData.error || "Failed to update student");
       }
 
+      const result = await response.json();
       set({ loading: false });
+
+      return {
+        warning: result.warning,
+      };
     } catch (error) {
       set({
         loading: false,
@@ -406,7 +436,7 @@ export const useStudentStore = create<StudentState>((set) => ({
     }
   },
 
-  deleteStudent: async (token, id, permanent = false) => {
+  deleteStudent: async (token, id, soft = false) => {
     const authToken = token || getStoredToken();
     if (!authToken || !id) {
       set({
@@ -419,7 +449,7 @@ export const useStudentStore = create<StudentState>((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await fetch(
-        `${API_URL}/api/admin/students/${id}?permanent=${permanent}`,
+        `${API_URL}/api/admin/students/${id}?soft=${soft}`,
         {
           method: "DELETE",
           headers: {

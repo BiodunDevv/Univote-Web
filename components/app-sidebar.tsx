@@ -12,6 +12,8 @@ import {
   LogOut,
   Building2,
   Loader2,
+  FileText,
+  Scan,
 } from "lucide-react";
 
 import { NavProjects } from "@/components/nav-projects";
@@ -19,7 +21,6 @@ import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { LogoIcon } from "@/components/logo";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   Sidebar,
   SidebarContent,
@@ -60,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navSecondary = [
     {
       title: "Settings",
-      url: "#",
+      url: "/dashboard/settings",
       icon: Settings,
     },
     {
@@ -113,6 +114,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/dashboard/sessions",
             icon: BarChart3,
           },
+          {
+            name: "Audit Logs",
+            url: "/dashboard/audit-logs",
+            icon: FileText,
+          },
+          {
+            name: "Face++ Test",
+            url: "/dashboard/facepp-test",
+            icon: Scan,
+          },
         ]
       : [
           {
@@ -144,7 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarHeader className="border-b py-3">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="sm" asChild className="h-9">
+              <SidebarMenuButton size="sm" asChild className="h-11">
                 <Link href="/" className="flex items-center gap-2">
                   <div className="flex size-7 items-center justify-center rounded-lg">
                     <LogoIcon />
@@ -156,9 +167,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <span className="truncate text-[10px] text-muted-foreground">
                       Campus Voting
                     </span>
-                  </div>
-                  <div className="hidden lg:block">
-                    <AnimatedThemeToggler />
                   </div>
                 </Link>
               </SidebarMenuButton>

@@ -8,16 +8,15 @@ export interface Student {
   department_code: string;
   college: string;
   level: string;
-  has_voted_sessions: string[];
-  is_logged_in: boolean;
-  last_login_device: string | null;
-  last_login_at: string | null;
-  face_reference: {
-    persistedFaceIds: string[];
-  };
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
+  photo_url?: string;
+  has_facial_data?: boolean;
+  is_active: boolean;
+  has_voted_sessions?: string[];
+  is_logged_in?: boolean;
+  last_login_device?: string | null;
+  last_login_at?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface StudentListResponse {
@@ -28,23 +27,43 @@ export interface StudentListResponse {
 }
 
 export interface StudentCSVData {
-  student_id: string;
-  email: string;
+  matric_no: string;
   full_name: string;
-  department: string;
+  email: string;
+  college?: string;
+  department?: string;
+  level?: string;
+  photo_url?: string;
 }
 
 export interface UploadStudentsResponse {
   message: string;
-  summary: {
+  results: {
     total: number;
     created: number;
-    updated: number;
     failed: number;
+    errors: Array<{
+      matric_no: string;
+      full_name: string;
+      error?: string;
+      warning?: string;
+    }>;
+    target: {
+      college: string;
+      department: string;
+      level: string;
+    };
   };
-  failed_records: {
-    row: number;
-    data: StudentCSVData;
-    error: string;
-  }[];
+}
+
+export interface VotingHistory {
+  _id: string;
+  session_id: {
+    _id: string;
+    title: string;
+    start_time: string;
+    end_time: string;
+  };
+  voted_at: string;
+  status: string;
 }

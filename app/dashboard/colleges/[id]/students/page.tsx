@@ -6,17 +6,16 @@ import {
   Users,
   Search,
   Upload,
-  Edit,
-  Trash2,
   AlertCircle,
   Loader2,
-  ArrowLeft,
   RefreshCw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import { PageHeader } from "@/components/College";
+import { StudentTable } from "@/components/StudentTable";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import { useStudentStore } from "@/lib/store/useStudentStore";
@@ -148,45 +147,26 @@ export default function CollegeStudentsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push(`/dashboard/colleges/${collegeId}`)}
-                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="min-w-0">
-                <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                  {currentCollege?.name}
-                </h1>
-                <p className="text-xs text-muted-foreground">
-                  {pagination.total} students
-                </p>
-              </div>
-            </div>
-            {isSuperAdmin && (
-              <Button
-                size="sm"
-                onClick={() =>
-                  router.push(
-                    `/dashboard/colleges/${collegeId}/students/upload`
-                  )
-                }
-                className="h-8 text-xs shrink-0"
-              >
-                <Upload className="w-3.5 h-3.5 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Upload</span>
-                <span className="sm:hidden">📤</span>
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={currentCollege?.name || "College Students"}
+        subtitle={`${pagination.total} students`}
+        onBack={() => router.push(`/dashboard/colleges/${collegeId}`)}
+        actions={
+          isSuperAdmin ? (
+            <Button
+              size="sm"
+              onClick={() =>
+                router.push(`/dashboard/colleges/${collegeId}/students/upload`)
+              }
+              className="h-8 text-xs shrink-0"
+            >
+              <Upload className="w-3.5 h-3.5 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Upload</span>
+              <span className="sm:hidden">📤</span>
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
         {/* Filters */}
@@ -285,142 +265,15 @@ export default function CollegeStudentsPage() {
           !isRefreshing &&
           !isDeleting &&
           students.length > 0 && (
-            <Card className="border shadow-none overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/30 border-b">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Matric No
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Name
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Email
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Department
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Level
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                        Status
-                      </th>
-                      {isSuperAdmin && (
-                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">
-                          Actions
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {students.map((student) => (
-                      <tr
-                        key={student._id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-mono font-semibold text-primary text-xs">
-                          {student.matric_no}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-foreground">
-                          {student.full_name}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {student.email}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">
-                          {student.department}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                            {student.level}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              student.is_active
-                                ? "bg-green-500/10 text-green-600"
-                                : "bg-gray-500/10 text-gray-600"
-                            }`}
-                          >
-                            {student.is_active ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        {isSuperAdmin && (
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  router.push(
-                                    `/dashboard/colleges/${collegeId}/students/${student._id}/edit`
-                                  )
-                                }
-                                className="h-8 w-8 rounded-full hover:bg-accent"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleDeleteClick(
-                                    student._id,
-                                    student.full_name,
-                                    student.matric_no
-                                  )
-                                }
-                                className="h-8 w-8 rounded-full hover:bg-accent"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              {pagination.pages > 1 && (
-                <div className="px-4 py-3 border-t bg-muted/20 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    {(pagination.page - 1) * pagination.limit + 1}-
-                    {Math.min(
-                      pagination.page * pagination.limit,
-                      pagination.total
-                    )}{" "}
-                    of {pagination.total}
-                  </p>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page === 1}
-                      className="h-8 px-3 text-xs rounded-full"
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page === pagination.pages}
-                      className="h-8 px-3 text-xs rounded-full"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
+            <StudentTable
+              students={students}
+              pagination={pagination}
+              collegeId={collegeId}
+              isSuperAdmin={isSuperAdmin}
+              showDepartment={true}
+              onDelete={handleDeleteClick}
+              onPageChange={handlePageChange}
+            />
           )}
 
         {/* Empty State */}

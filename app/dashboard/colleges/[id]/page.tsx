@@ -3,13 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
-  ArrowLeft,
   User,
   GraduationCap,
   Users,
   Edit,
   Plus,
-  Trash2,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -18,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteDepartmentDialog } from "@/components/DeleteDepartmentDialog";
+import { StatCard, PageHeader, DepartmentCard } from "@/components/College";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 
@@ -158,44 +157,30 @@ export default function CollegeDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.back()}
-                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                    {currentCollege.name}
-                  </h1>
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-mono font-semibold">
-                    {currentCollege.code}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
-                      currentCollege.is_active
-                        ? "bg-green-500/10 text-green-600"
-                        : "bg-gray-500/10 text-gray-600"
-                    }`}
-                  >
-                    {currentCollege.is_active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-                {currentCollege.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {currentCollege.description}
-                  </p>
-                )}
-              </div>
-            </div>
-            {isSuperAdmin && (
+      <PageHeader
+        title={currentCollege.name}
+        subtitle={currentCollege.description}
+        onBack={() => router.push("/dashboard/colleges")}
+        hideTitleOnMobile={true}
+        badges={
+          <>
+            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-mono font-semibold">
+              {currentCollege.code}
+            </span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+                currentCollege.is_active
+                  ? "bg-green-500/10 text-green-600"
+                  : "bg-gray-500/10 text-gray-600"
+              }`}
+            >
+              {currentCollege.is_active ? "Active" : "Inactive"}
+            </span>
+          </>
+        }
+        actions={
+          isSuperAdmin ? (
+            <>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"
@@ -203,26 +188,26 @@ export default function CollegeDetailPage() {
                   onClick={() =>
                     router.push(`/dashboard/colleges/${collegeId}/students`)
                   }
-                  className="h-9 rounded-full"
+                  className="h-8 sm:h-9 text-xs"
                 >
-                  <Users className="w-3.5 h-3.5 mr-2" />
-                  Students
+                  <Users className="w-3.5 h-3.5 sm:mr-2" />
+                  <span className="inline">View All Students</span>
                 </Button>
                 <Button
                   size="sm"
                   onClick={() =>
                     router.push(`/dashboard/colleges/${collegeId}/edit`)
                   }
-                  className="h-9"
+                  className="h-8 sm:h-9 text-xs"
                 >
-                  <Edit className="w-3.5 h-3.5 mr-2" />
-                  Edit
+                  <Edit className="w-3.5 h-3.5 sm:mr-2" />
+                  <span className="inline">Edit</span>
                 </Button>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
+            </>
+          ) : undefined
+        }
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
@@ -240,60 +225,40 @@ export default function CollegeDetailPage() {
         )}
 
         {/* Statistics */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="p-4 border shadow-none">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <GraduationCap className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-foreground">
-                  {currentCollege.departments.length}
-                </p>
-                <p className="text-xs text-muted-foreground">Departments</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4 border shadow-none">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-foreground">
-                  {currentCollege.student_count}
-                </p>
-                <p className="text-xs text-muted-foreground">Students</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4 border shadow-none">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <User className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {currentCollege.dean_name || "Not assigned"}
-                </p>
-                <p className="text-xs text-muted-foreground">Dean</p>
-              </div>
-            </div>
-          </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatCard
+            icon={GraduationCap}
+            value={currentCollege.departments.length}
+            label="Departments"
+            iconColor="text-primary"
+            iconBgColor="bg-primary/10"
+          />
+          <StatCard
+            icon={Users}
+            value={currentCollege.student_count}
+            label="Students"
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-500/10"
+          />
+          <StatCard
+            icon={User}
+            value={currentCollege.dean_name || "Not assigned"}
+            label="Dean"
+            iconColor="text-green-600"
+            iconBgColor="bg-green-500/10"
+          />
         </div>
 
         {/* Dean Information */}
         {(currentCollege.dean_name || currentCollege.dean_email) && (
-          <Card className="p-4 border shadow-none">
+          <Card className="p-3 sm:p-4 border shadow-none">
             <div className="flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
                 Dean Information
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {currentCollege.dean_name && (
                 <div>
                   <Label className="text-xs font-semibold text-muted-foreground">
@@ -309,7 +274,7 @@ export default function CollegeDetailPage() {
                   <Label className="text-xs font-semibold text-muted-foreground">
                     Email
                   </Label>
-                  <p className="text-sm text-foreground mt-1">
+                  <p className="text-sm text-foreground mt-1 break-all">
                     {currentCollege.dean_email}
                   </p>
                 </div>
@@ -352,10 +317,10 @@ export default function CollegeDetailPage() {
                 New Department
               </h3>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground">
-                    Department Name
+                    Department Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     value={newDept.name}
@@ -370,7 +335,7 @@ export default function CollegeDetailPage() {
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground">
-                    Code
+                    Code <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     value={newDept.code}
@@ -384,6 +349,51 @@ export default function CollegeDetailPage() {
                     required
                     className="bg-background uppercase h-9 text-sm"
                     maxLength={6}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  Description
+                </Label>
+                <Input
+                  value={newDept.description}
+                  onChange={(e) =>
+                    setNewDept({ ...newDept, description: e.target.value })
+                  }
+                  placeholder="Brief description of the department..."
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">
+                    HOD Name
+                  </Label>
+                  <Input
+                    value={newDept.hod_name}
+                    onChange={(e) =>
+                      setNewDept({ ...newDept, hod_name: e.target.value })
+                    }
+                    placeholder="e.g., Dr. John Doe"
+                    className="bg-background h-9 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">
+                    HOD Email
+                  </Label>
+                  <Input
+                    value={newDept.hod_email}
+                    onChange={(e) =>
+                      setNewDept({ ...newDept, hod_email: e.target.value })
+                    }
+                    placeholder="hod@bowenuniversity.edu.ng"
+                    type="email"
+                    className="bg-background h-9 text-sm"
                   />
                 </div>
               </div>
@@ -447,116 +457,36 @@ export default function CollegeDetailPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {currentCollege.departments.map((dept) => (
-                <Card
+                <DepartmentCard
                   key={dept._id}
-                  className="p-3 border shadow-none hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="font-mono text-xs font-semibold text-primary">
-                          {dept.code}
-                        </span>
-                        <span
-                          className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                            dept.is_active
-                              ? "bg-green-500/10 text-green-600"
-                              : "bg-gray-500/10 text-gray-600"
-                          }`}
-                        >
-                          {dept.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm">
-                        {dept.name}
-                      </h3>
-                      {dept.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {dept.description}
-                        </p>
-                      )}
-                    </div>
-                    {isSuperAdmin && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(
-                              `/dashboard/colleges/${collegeId}/departments/${dept._id}/students`
-                            )
-                          }
-                          title="View Students"
-                          className="h-8 w-8 rounded-full hover:bg-accent"
-                        >
-                          <Users className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(
-                              `/dashboard/colleges/${collegeId}/departments/${dept._id}/edit`
-                            )
-                          }
-                          title="Edit Department"
-                          className="h-8 w-8 rounded-full hover:bg-accent"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            handleDeleteClick(dept._id, dept.name, dept.code)
-                          }
-                          className="h-8 w-8 rounded-full hover:bg-accent"
-                          title="Delete Department"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground text-xs">
-                        Students
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        {dept.student_count}
-                      </span>
-                    </div>
-
-                    {dept.hod_name && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground">HOD</p>
-                        <p className="text-sm font-medium text-foreground">
-                          {dept.hod_name}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mb-1.5">
-                        Levels
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {dept.available_levels.map((level) => (
-                          <span
-                            key={level}
-                            className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium"
-                          >
-                            {level}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
+                  department={dept}
+                  showActions={isSuperAdmin}
+                  onViewStudents={() =>
+                    router.push(
+                      `/dashboard/colleges/${collegeId}/departments/${dept._id}/students`
+                    )
+                  }
+                  onEdit={
+                    isSuperAdmin
+                      ? () =>
+                          router.push(
+                            `/dashboard/colleges/${collegeId}/departments/${dept._id}/edit`
+                          )
+                      : undefined
+                  }
+                  onDelete={
+                    isSuperAdmin
+                      ? () => handleDeleteClick(dept._id, dept.name, dept.code)
+                      : undefined
+                  }
+                  onViewDetails={() =>
+                    router.push(
+                      `/dashboard/colleges/${collegeId}/departments/${dept._id}/students`
+                    )
+                  }
+                />
               ))}
             </div>
           )}

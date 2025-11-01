@@ -17,6 +17,7 @@ interface AuthState {
   // Actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateAdmin: (updatedAdmin: Partial<Admin>) => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (
     email: string,
@@ -105,6 +106,12 @@ export const useAuthStore = create<AuthState>()(
           admin: null,
           error: null,
         });
+      },
+
+      updateAdmin: (updatedAdmin: Partial<Admin>) => {
+        set((state) => ({
+          admin: state.admin ? { ...state.admin, ...updatedAdmin } : null,
+        }));
       },
 
       forgotPassword: async (email: string) => {

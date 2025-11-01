@@ -1,5 +1,6 @@
 import * as React from "react";
 import { type LucideIcon } from "lucide-react";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 
 import {
   SidebarGroup,
@@ -44,6 +45,11 @@ export function NavSecondary({
               )}
             </SidebarMenuItem>
           ))}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="h-8 px-2 text-xs">
+              <AnimatedThemeToggler variant="with-text" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
