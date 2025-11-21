@@ -15,7 +15,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PageHeader } from "@/components/College";
 import {
   Select,
@@ -24,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function SessionsPage() {
   const router = useRouter();
@@ -141,30 +148,32 @@ export default function SessionsPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
         {/* Filter */}
-        <Card className="p-3 border shadow-none">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-muted-foreground">
-              Status:
-            </label>
-            <Select
-              value={statusFilter}
-              onValueChange={handleStatusFilterChange}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="h-9 w-[180px] text-sm">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="ended">Ended</SelectItem>
-              </SelectContent>
-            </Select>
-            {isLoading && (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
+        <Card className="border shadow-none">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-muted-foreground">
+                Status:
+              </label>
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="h-9 w-[180px] text-sm">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="ended">Ended</SelectItem>
+                </SelectContent>
+              </Select>
+              {isLoading && (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          </CardContent>
         </Card>
 
         {/* Sessions Grid */}
@@ -182,30 +191,28 @@ export default function SessionsPage() {
             {filteredSessions.map((session) => (
               <Card
                 key={session._id}
-                className="p-4 border shadow-none hover:border-primary/50 transition-colors"
+                className="border shadow-none hover:border-primary/50 transition-colors"
               >
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-foreground line-clamp-2">
-                        {session.title}
-                      </h3>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${getStatusColor(
-                        session.status
-                      )}`}
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-sm font-semibold line-clamp-2">
+                      {session.title}
+                    </CardTitle>
+                    <Badge
+                      variant="outline"
+                      className={`shrink-0 ${getStatusColor(session.status)}`}
                     >
                       {session.status.charAt(0).toUpperCase() +
                         session.status.slice(1)}
-                    </span>
+                    </Badge>
                   </div>
-
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {session.description}
-                  </p>
-
+                  {session.description && (
+                    <CardDescription className="text-xs line-clamp-2">
+                      {session.description}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-3">
                   {/* Info */}
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -240,7 +247,10 @@ export default function SessionsPage() {
 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Users className="w-3.5 h-3.5 shrink-0" />
-                      <span>{session.total_votes || 0} votes</span>
+                      <span>
+                        {session.students_voted || session.total_votes || 0}{" "}
+                        students voted
+                      </span>
                     </div>
                   </div>
 
@@ -248,21 +258,26 @@ export default function SessionsPage() {
                   <div className="pt-2.5 border-t">
                     <p className="text-xs text-muted-foreground mb-1.5">
                       {session.categories?.length || 0} categories •{" "}
-                      {session.candidates?.length || 0} candidates
+                      {session.candidates?.length || 0} candidates •{" "}
+                      {session.candidates && session.candidates.length > 0
+                        ? session.candidates.reduce(
+                            (total, candidate) =>
+                              total + (candidate.vote_count || 0),
+                            0
+                          )
+                        : 0}{" "}
+                      total votes
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {session.categories?.slice(0, 3).map((cat, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded-full bg-muted px-2 py-0.5 text-xs"
-                        >
+                        <Badge key={idx} variant="secondary">
                           {typeof cat === "string" ? cat : cat.name}
-                        </span>
+                        </Badge>
                       ))}
                       {(session.categories?.length || 0) > 3 && (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                        <Badge variant="secondary">
                           +{(session.categories?.length || 0) - 3}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -280,26 +295,34 @@ export default function SessionsPage() {
                       <Eye className="w-3.5 h-3.5 mr-1.5" />
                       View
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() =>
-                        router.push(`/dashboard/sessions/${session._id}/edit`)
-                      }
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => handleDelete(session._id, session.title)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    {session.status.toLowerCase() !== "active" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/sessions/${session._id}/edit`
+                            )
+                          }
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() =>
+                            handleDelete(session._id, session.title)
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -307,19 +330,19 @@ export default function SessionsPage() {
 
         {/* Empty State */}
         {!isLoading && filteredSessions.length === 0 && (
-          <Card className="p-8 border shadow-none">
-            <div className="text-center">
+          <Card className="border shadow-none">
+            <CardContent className="p-8 text-center">
               <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">
+              <CardTitle className="text-sm font-semibold mb-1.5">
                 {sessions.length === 0
                   ? "No sessions found"
                   : `No ${statusFilter} sessions`}
-              </h3>
-              <p className="text-xs text-muted-foreground mb-3">
+              </CardTitle>
+              <CardDescription className="text-xs mb-3">
                 {sessions.length === 0
                   ? "Create your first voting session to get started"
                   : `There are no sessions with status "${statusFilter}"`}
-              </p>
+              </CardDescription>
               {sessions.length === 0 && (
                 <Button
                   onClick={() => router.push("/dashboard/sessions/create")}
@@ -329,7 +352,7 @@ export default function SessionsPage() {
                   Create Session
                 </Button>
               )}
-            </div>
+            </CardContent>
           </Card>
         )}
 

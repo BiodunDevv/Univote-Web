@@ -18,7 +18,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/College";
 
 export default function SessionDetailsPage() {
@@ -106,17 +107,17 @@ export default function SessionDetailsPage() {
         subtitle="View session information and results"
         onBack={() => router.push("/dashboard/sessions")}
         badges={
-          <span
-            className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(
-              currentSession.status
-            )}`}
+          <Badge
+            variant="secondary"
+            className={getStatusColor(currentSession.status)}
           >
             {currentSession.status.charAt(0).toUpperCase() +
               currentSession.status.slice(1)}
-          </span>
+          </Badge>
         }
         actions={
-          <>
+          currentSession.status.toLowerCase() !== "active" &&
+          currentSession.status.toLowerCase() !== "ended" ? (
             <Button
               variant="outline"
               size="sm"
@@ -127,29 +128,22 @@ export default function SessionDetailsPage() {
             >
               Edit Session
             </Button>
-          </>
+          ) : null
         }
       />
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3">
         {/* Session Info Card */}
-        <Card className="p-4 border shadow-none">
-          <div className="space-y-4">
-            {/* Title & Description */}
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                {currentSession.title}
-              </h2>
-              {currentSession.description && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {currentSession.description}
-                </p>
-              )}
-            </div>
-
-            {/* Divider */}
-            <div className="border-t" />
-
+        <Card className="border shadow-none">
+          <CardHeader>
+            <CardTitle className="text-lg">{currentSession.title}</CardTitle>
+            {currentSession.description && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {currentSession.description}
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
             {/* Two Column Layout - Facebook Style */}
             <div className="grid gap-4 lg:grid-cols-2">
               {/* Left Column - Schedule & Location */}
@@ -333,70 +327,77 @@ export default function SessionDetailsPage() {
                 )}
               </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
         {/* Statistics Card */}
         {sessionStats && (
-          <Card className="p-4 border shadow-none">
-            <h3 className="text-sm font-semibold mb-3">Voting Statistics</h3>
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/20 p-3">
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                  <p className="text-[10px] font-medium text-blue-900 dark:text-blue-300">
-                    Eligible Students
+          <Card className="border shadow-none">
+            <CardHeader>
+              <CardTitle className="text-sm">Voting Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+                <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/20 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <p className="text-[10px] font-medium text-blue-900 dark:text-blue-300">
+                      Eligible Students
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-xl font-semibold text-blue-900 dark:text-blue-100">
+                    {sessionStats.statistics.eligible_students.toLocaleString()}
                   </p>
                 </div>
-                <p className="mt-1.5 text-xl font-semibold text-blue-900 dark:text-blue-100">
-                  {sessionStats.statistics.eligible_students.toLocaleString()}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-green-50 dark:bg-green-950/20 p-3">
-                <div className="flex items-center gap-1.5">
-                  <UserCheck className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <p className="text-[10px] font-medium text-green-900 dark:text-green-300">
-                    Total Votes
+                <div className="rounded-lg border bg-green-50 dark:bg-green-950/20 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <UserCheck className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    <p className="text-[10px] font-medium text-green-900 dark:text-green-300">
+                      Students Voted
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-xl font-semibold text-green-900 dark:text-green-100">
+                    {(
+                      currentSession.students_voted ||
+                      sessionStats.statistics.total_votes
+                    ).toLocaleString()}
                   </p>
                 </div>
-                <p className="mt-1.5 text-xl font-semibold text-green-900 dark:text-green-100">
-                  {sessionStats.statistics.total_votes.toLocaleString()}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-purple-50 dark:bg-purple-950/20 p-3">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-                  <p className="text-[10px] font-medium text-purple-900 dark:text-purple-300">
-                    Turnout
+                <div className="rounded-lg border bg-purple-50 dark:bg-purple-950/20 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                    <p className="text-[10px] font-medium text-purple-900 dark:text-purple-300">
+                      Turnout
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-xl font-semibold text-purple-900 dark:text-purple-100">
+                    {sessionStats.statistics.turnout_percentage}
                   </p>
                 </div>
-                <p className="mt-1.5 text-xl font-semibold text-purple-900 dark:text-purple-100">
-                  {sessionStats.statistics.turnout_percentage}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-orange-50 dark:bg-orange-950/20 p-3">
-                <div className="flex items-center gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
-                  <p className="text-[10px] font-medium text-orange-900 dark:text-orange-300">
-                    Duplicate Attempts
+                <div className="rounded-lg border bg-orange-50 dark:bg-orange-950/20 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                    <p className="text-[10px] font-medium text-orange-900 dark:text-orange-300">
+                      Duplicate Attempts
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-xl font-semibold text-orange-900 dark:text-orange-100">
+                    {sessionStats.statistics.duplicate_attempts.toLocaleString()}
                   </p>
                 </div>
-                <p className="mt-1.5 text-xl font-semibold text-orange-900 dark:text-orange-100">
-                  {sessionStats.statistics.duplicate_attempts.toLocaleString()}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-red-50 dark:bg-red-950/20 p-3">
-                <div className="flex items-center gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
-                  <p className="text-[10px] font-medium text-red-900 dark:text-red-300">
-                    Rejected Votes
+                <div className="rounded-lg border bg-red-50 dark:bg-red-950/20 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                    <p className="text-[10px] font-medium text-red-900 dark:text-red-300">
+                      Rejected Votes
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-xl font-semibold text-red-900 dark:text-red-100">
+                    {sessionStats.statistics.rejected_votes.toLocaleString()}
                   </p>
                 </div>
-                <p className="mt-1.5 text-xl font-semibold text-red-900 dark:text-red-100">
-                  {sessionStats.statistics.rejected_votes.toLocaleString()}
-                </p>
               </div>
-            </div>
+            </CardContent>
           </Card>
         )}
 
@@ -405,24 +406,163 @@ export default function SessionDetailsPage() {
           <div className="space-y-3">
             <h3 className="text-sm font-semibold px-1">Results by Position</h3>
             {sessionStats.candidates.map((categoryData) => (
-              <Card
-                key={categoryData.category}
-                className="p-4 border shadow-none"
-              >
-                <h4 className="text-sm font-semibold mb-4">
-                  {categoryData.category}
-                </h4>
-                {/* Grid Layout for Candidates */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categoryData.candidates
-                    .sort((a, b) => b.vote_count - a.vote_count)
-                    .map((candidate, index) => (
+              <Card key={categoryData.category} className="border shadow-none">
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    {categoryData.category}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Grid Layout for Candidates */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categoryData.candidates
+                      .sort((a, b) => b.vote_count - a.vote_count)
+                      .map((candidate, index) => (
+                        <div
+                          key={candidate.name}
+                          className="group relative border rounded-xl overflow-hidden bg-card hover:shadow-lg transition-all"
+                        >
+                          {/* Rank Badge */}
+                          <div className="absolute top-3 left-3 z-10 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                            {index + 1}
+                          </div>
+
+                          {/* Candidate Photo */}
+                          {candidate.photo_url ? (
+                            <div className="relative w-full aspect-square bg-muted">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={candidate.photo_url}
+                                alt={candidate.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-full aspect-square bg-muted/50 flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="w-20 h-20 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center">
+                                  <span className="text-3xl font-bold text-muted-foreground">
+                                    {candidate.name.charAt(0)}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  No photo
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Candidate Info */}
+                          <div className="p-3 space-y-2">
+                            <div className="space-y-1">
+                              <h5 className="text-sm font-semibold text-foreground line-clamp-1">
+                                {candidate.name}
+                              </h5>
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="font-medium text-foreground">
+                                  {candidate.vote_count.toLocaleString()} votes
+                                </span>
+                                <span className="text-muted-foreground">•</span>
+                                <span className="text-muted-foreground">
+                                  {candidate.percentage}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="h-2 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{ width: candidate.percentage }}
+                              />
+                            </div>
+
+                            {/* Bio and Manifesto */}
+                            {(() => {
+                              const fullCandidate =
+                                currentSession.candidates?.find(
+                                  (c) =>
+                                    c.name === candidate.name &&
+                                    c.position === categoryData.category
+                                );
+
+                              return (
+                                (fullCandidate?.bio ||
+                                  fullCandidate?.manifesto) && (
+                                  <div className="space-y-2 pt-2 border-t">
+                                    {fullCandidate.bio && (
+                                      <div>
+                                        <h6 className="text-xs font-semibold text-foreground mb-1">
+                                          Biography
+                                        </h6>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {fullCandidate.bio}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {fullCandidate.manifesto && (
+                                      <div>
+                                        <h6 className="text-xs font-semibold text-foreground mb-1">
+                                          Manifesto
+                                        </h6>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {fullCandidate.manifesto}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              );
+                            })()}
+
+                            {/* Edit Button */}
+                            {currentSession.status !== "ended" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  // Find the candidate ID from the full candidates list
+                                  const fullCandidate =
+                                    currentSession.candidates?.find(
+                                      (c) =>
+                                        c.name === candidate.name &&
+                                        c.position === categoryData.category
+                                    );
+                                  if (fullCandidate) {
+                                    router.push(
+                                      `/dashboard/sessions/${params.id}/candidates/${fullCandidate._id}/edit`
+                                    );
+                                  }
+                                }}
+                                className="w-full h-8 text-xs mt-2"
+                              >
+                                Edit Candidate
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          currentSession.candidates &&
+          currentSession.candidates.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold px-1">Candidates</h3>
+              <Card className="border shadow-none">
+                <CardContent className="pt-6">
+                  {/* Grid Layout for Candidates */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {currentSession.candidates.map((candidate, index) => (
                       <div
-                        key={candidate.name}
+                        key={candidate._id}
                         className="group relative border rounded-xl overflow-hidden bg-card hover:shadow-lg transition-all"
                       >
-                        {/* Rank Badge */}
-                        <div className="absolute top-3 left-3 z-10 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                        {/* Number Badge */}
+                        <div className="absolute top-3 left-3 z-10 bg-muted text-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
                           {index + 1}
                         </div>
 
@@ -453,86 +593,48 @@ export default function SessionDetailsPage() {
 
                         {/* Candidate Info */}
                         <div className="p-3 space-y-2">
-                          <div className="space-y-1">
-                            <h5 className="text-sm font-semibold text-foreground line-clamp-1">
-                              {candidate.name}
-                            </h5>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="font-medium text-foreground">
-                                {candidate.vote_count.toLocaleString()} votes
-                              </span>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="text-muted-foreground">
-                                {candidate.percentage}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Progress Bar */}
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-primary transition-all"
-                              style={{ width: candidate.percentage }}
-                            />
-                          </div>
+                          <h5 className="text-sm font-semibold text-foreground line-clamp-1">
+                            {candidate.name}
+                          </h5>
+                          <p className="text-xs text-muted-foreground">
+                            {candidate.position}
+                          </p>
 
                           {/* Bio and Manifesto */}
-                          {(() => {
-                            const fullCandidate =
-                              currentSession.candidates?.find(
-                                (c) =>
-                                  c.name === candidate.name &&
-                                  c.position === categoryData.category
-                              );
-
-                            return (
-                              (fullCandidate?.bio ||
-                                fullCandidate?.manifesto) && (
-                                <div className="space-y-2 pt-2 border-t">
-                                  {fullCandidate.bio && (
-                                    <div>
-                                      <h6 className="text-xs font-semibold text-foreground mb-1">
-                                        Biography
-                                      </h6>
-                                      <p className="text-xs text-muted-foreground leading-relaxed">
-                                        {fullCandidate.bio}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {fullCandidate.manifesto && (
-                                    <div>
-                                      <h6 className="text-xs font-semibold text-foreground mb-1">
-                                        Manifesto
-                                      </h6>
-                                      <p className="text-xs text-muted-foreground leading-relaxed">
-                                        {fullCandidate.manifesto}
-                                      </p>
-                                    </div>
-                                  )}
+                          {(candidate.bio || candidate.manifesto) && (
+                            <div className="space-y-2 pt-2 border-t">
+                              {candidate.bio && (
+                                <div>
+                                  <h6 className="text-xs font-semibold text-foreground mb-1">
+                                    Biography
+                                  </h6>
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {candidate.bio}
+                                  </p>
                                 </div>
-                              )
-                            );
-                          })()}
+                              )}
+                              {candidate.manifesto && (
+                                <div>
+                                  <h6 className="text-xs font-semibold text-foreground mb-1">
+                                    Manifesto
+                                  </h6>
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {candidate.manifesto}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
 
-                          {/* Edit Button */}
                           {currentSession.status !== "ended" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                // Find the candidate ID from the full candidates list
-                                const fullCandidate =
-                                  currentSession.candidates?.find(
-                                    (c) =>
-                                      c.name === candidate.name &&
-                                      c.position === categoryData.category
-                                  );
-                                if (fullCandidate) {
-                                  router.push(
-                                    `/dashboard/sessions/${params.id}/candidates/${fullCandidate._id}/edit`
-                                  );
-                                }
-                              }}
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/sessions/${params.id}/candidates/${candidate._id}/edit`
+                                )
+                              }
                               className="w-full h-8 text-xs mt-2"
                             >
                               Edit Candidate
@@ -541,106 +643,8 @@ export default function SessionDetailsPage() {
                         </div>
                       </div>
                     ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          currentSession.candidates &&
-          currentSession.candidates.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold px-1">Candidates</h3>
-              <Card className="p-4 border shadow-none">
-                {/* Grid Layout for Candidates */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentSession.candidates.map((candidate, index) => (
-                    <div
-                      key={candidate._id}
-                      className="group relative border rounded-xl overflow-hidden bg-card hover:shadow-lg transition-all"
-                    >
-                      {/* Number Badge */}
-                      <div className="absolute top-3 left-3 z-10 bg-muted text-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
-                        {index + 1}
-                      </div>
-
-                      {/* Candidate Photo */}
-                      {candidate.photo_url ? (
-                        <div className="relative w-full aspect-square bg-muted">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={candidate.photo_url}
-                            alt={candidate.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full aspect-square bg-muted/50 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-20 h-20 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center">
-                              <span className="text-3xl font-bold text-muted-foreground">
-                                {candidate.name.charAt(0)}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              No photo
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Candidate Info */}
-                      <div className="p-3 space-y-2">
-                        <h5 className="text-sm font-semibold text-foreground line-clamp-1">
-                          {candidate.name}
-                        </h5>
-                        <p className="text-xs text-muted-foreground">
-                          {candidate.position}
-                        </p>
-
-                        {/* Bio and Manifesto */}
-                        {(candidate.bio || candidate.manifesto) && (
-                          <div className="space-y-2 pt-2 border-t">
-                            {candidate.bio && (
-                              <div>
-                                <h6 className="text-xs font-semibold text-foreground mb-1">
-                                  Biography
-                                </h6>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                  {candidate.bio}
-                                </p>
-                              </div>
-                            )}
-                            {candidate.manifesto && (
-                              <div>
-                                <h6 className="text-xs font-semibold text-foreground mb-1">
-                                  Manifesto
-                                </h6>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                  {candidate.manifesto}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {currentSession.status !== "ended" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              router.push(
-                                `/dashboard/sessions/${params.id}/candidates/${candidate._id}/edit`
-                              )
-                            }
-                            className="w-full h-8 text-xs mt-2"
-                          >
-                            Edit Candidate
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  </div>
+                </CardContent>
               </Card>
             </div>
           )

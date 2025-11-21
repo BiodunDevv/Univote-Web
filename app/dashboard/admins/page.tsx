@@ -14,7 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -181,60 +181,62 @@ export default function AdminsPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
         {/* Filters */}
-        <Card className="p-3 border shadow-none">
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-sm font-medium text-muted-foreground">
-              Role:
-            </label>
-            <Select
-              value={roleFilter}
-              onValueChange={handleRoleChange}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="h-9 w-40 text-sm">
-                <SelectValue placeholder="All Roles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <label className="text-sm font-medium text-muted-foreground">
-              Status:
-            </label>
-            <Select
-              value={statusFilter}
-              onValueChange={handleStatusChange}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="h-9 w-40 text-sm">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="h-8 text-xs"
+        <Card className="border shadow-none">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-sm font-medium text-muted-foreground">
+                Role:
+              </label>
+              <Select
+                value={roleFilter}
+                onValueChange={handleRoleChange}
+                disabled={isLoading}
               >
-                <X className="mr-1.5 h-3.5 w-3.5" />
-                Clear
-              </Button>
-            )}
+                <SelectTrigger className="h-9 w-40 text-sm">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {isLoading && (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
+              <label className="text-sm font-medium text-muted-foreground">
+                Status:
+              </label>
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusChange}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="h-9 w-40 text-sm">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-8 text-xs"
+                >
+                  <X className="mr-1.5 h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              )}
+
+              {isLoading && (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          </CardContent>
         </Card>
 
         {/* Admins Grid */}
@@ -246,27 +248,29 @@ export default function AdminsPage() {
             </div>
           </div>
         ) : admins.length === 0 ? (
-          <Card className="p-8 border shadow-none">
-            <div className="text-center">
-              <ShieldAlert className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                No admins found
-              </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                {hasActiveFilters
-                  ? "Try adjusting your filters"
-                  : "Create your first admin to get started"}
-              </p>
-              {!hasActiveFilters && (
-                <Button
-                  onClick={() => router.push("/dashboard/admins/create")}
-                  className="h-9"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-2" />
-                  Create Admin
-                </Button>
-              )}
-            </div>
+          <Card className="border shadow-none">
+            <CardContent className="p-8">
+              <div className="text-center">
+                <ShieldAlert className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                  No admins found
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {hasActiveFilters
+                    ? "Try adjusting your filters"
+                    : "Create your first admin to get started"}
+                </p>
+                {!hasActiveFilters && (
+                  <Button
+                    onClick={() => router.push("/dashboard/admins/create")}
+                    className="h-9"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-2" />
+                    Create Admin
+                  </Button>
+                )}
+              </div>
+            </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

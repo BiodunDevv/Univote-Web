@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Calendar, Users, FileText, Loader2, Plus, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/College";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
@@ -413,13 +414,14 @@ export default function CreateSessionPage() {
           )}
 
           {/* Basic Information */}
-          <Card className="p-4 border shadow-none">
-            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              Basic Information
-            </h2>
-
-            <div className="space-y-3">
+          <Card className="border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Basic Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               {/* Title */}
               <div className="space-y-1.5">
                 <Label
@@ -472,9 +474,10 @@ export default function CreateSessionPage() {
                     </span>
                   ) : (
                     formData.categories.map((category, index) => (
-                      <div
+                      <Badge
                         key={index}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium"
+                        variant="default"
+                        className="inline-flex items-center gap-1.5"
                       >
                         <span>{category}</span>
                         <button
@@ -491,7 +494,7 @@ export default function CreateSessionPage() {
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      </div>
+                      </Badge>
                     ))
                   )}
                 </div>
@@ -672,65 +675,69 @@ export default function CreateSessionPage() {
                   Red marker shows center, blue circle shows voting area.
                 </p>
               </div>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Schedule */}
-          <Card className="p-4 border shadow-none">
-            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              Schedule
-            </h2>
+          <Card className="border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Schedule
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Start Time */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="start_time"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Start Time
+                  </Label>
+                  <Input
+                    id="start_time"
+                    name="start_time"
+                    type="datetime-local"
+                    value={formData.start_time}
+                    onChange={handleInputChange}
+                    required
+                    className="h-9 bg-background border-input text-sm"
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Start Time */}
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="start_time"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Start Time
-                </Label>
-                <Input
-                  id="start_time"
-                  name="start_time"
-                  type="datetime-local"
-                  value={formData.start_time}
-                  onChange={handleInputChange}
-                  required
-                  className="h-9 bg-background border-input text-sm"
-                />
+                {/* End Time */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="end_time"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    End Time
+                  </Label>
+                  <Input
+                    id="end_time"
+                    name="end_time"
+                    type="datetime-local"
+                    value={formData.end_time}
+                    onChange={handleInputChange}
+                    required
+                    className="h-9 bg-background border-input text-sm"
+                  />
+                </div>
               </div>
-
-              {/* End Time */}
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="end_time"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  End Time
-                </Label>
-                <Input
-                  id="end_time"
-                  name="end_time"
-                  type="datetime-local"
-                  value={formData.end_time}
-                  onChange={handleInputChange}
-                  required
-                  className="h-9 bg-background border-input text-sm"
-                />
-              </div>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Eligibility */}
-          <Card className="p-4 border shadow-none">
-            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              Eligibility Criteria (Step by Step)
-            </h2>
-
-            <div className="space-y-4">
+          <Card className="border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                Eligibility Criteria (Step by Step)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               {/* Quick Select by College */}
               {collegesData && collegesData.length > 0 && (
                 <CollegeQuickSelect
@@ -757,53 +764,58 @@ export default function CreateSessionPage() {
                 selectedDepartmentsCount={formData.eligible_departments.length}
                 onLevelChange={handleLevelChange}
               />
-            </div>
+            </CardContent>
           </Card>
 
           {/* Voting Options */}
-          <Card className="p-4 border shadow-none">
-            <h2 className="text-sm font-semibold text-foreground mb-3">
-              Voting Options
-            </h2>
-
-            <div className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                id="is_off_campus_allowed"
-                name="is_off_campus_allowed"
-                checked={formData.is_off_campus_allowed}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    is_off_campus_allowed: e.target.checked,
-                  })
-                }
-                className="w-4 h-4 mt-0.5 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              />
-              <div className="flex-1">
-                <Label
-                  htmlFor="is_off_campus_allowed"
-                  className="text-sm font-medium text-foreground cursor-pointer"
-                >
-                  Allow Off-Campus Voting
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Students can vote from any location
-                </p>
+          <Card className="border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">
+                Voting Options
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="is_off_campus_allowed"
+                  name="is_off_campus_allowed"
+                  checked={formData.is_off_campus_allowed}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      is_off_campus_allowed: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4 mt-0.5 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                />
+                <div className="flex-1">
+                  <Label
+                    htmlFor="is_off_campus_allowed"
+                    className="text-sm font-medium text-foreground cursor-pointer"
+                  >
+                    Allow Off-Campus Voting
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Students can vote from any location
+                  </p>
+                </div>
               </div>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Candidates */}
-          <Card className="p-4 border shadow-none">
-            <CandidateForm
-              candidates={formData.candidates}
-              categories={formData.categories}
-              onAddCandidate={addCandidate}
-              onRemoveCandidate={removeCandidate}
-              onUpdateCandidate={updateCandidate}
-              onUploadImage={uploadCandidateImage}
-            />
+          <Card className="border shadow-none">
+            <CardContent className="p-4">
+              <CandidateForm
+                candidates={formData.candidates}
+                categories={formData.categories}
+                onAddCandidate={addCandidate}
+                onRemoveCandidate={removeCandidate}
+                onUpdateCandidate={updateCandidate}
+                onUploadImage={uploadCandidateImage}
+              />
+            </CardContent>
           </Card>
 
           {/* Actions */}

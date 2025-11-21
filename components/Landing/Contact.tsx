@@ -3,44 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 
 export default function ContactSection() {
   return (
-    <section id="contact" className="py-32">
+    <section id="contact" className="py-20">
       <div className="mx-auto max-w-4xl px-4 lg:px-0">
         <h1 className="mb-12 text-center text-3xl font-semibold lg:text-5xl">
           Help us route your inquiry
         </h1>
 
-        <div className="grid divide-y border md:grid-cols-2 md:gap-4 md:divide-x md:divide-y-0">
-          <div className="flex flex-col justify-between space-y-8 p-6 sm:p-12">
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">Collaborate</h2>
-              <Link
-                href="mailto:hello@tailus.io"
-                className="text-lg text-blue-600 hover:underline dark:text-blue-400"
-              >
-                hello@tailus.io
-              </Link>
-              <p className="mt-3 text-sm">+243 000 000 000</p>
-            </div>
-          </div>
-          <div className="flex flex-col justify-between space-y-8 p-6 sm:p-12">
-            <div>
-              <h3 className="mb-3 text-lg font-semibold">Press</h3>
-              <Link
-                href="mailto:press@tailus.io"
-                className="text-lg text-blue-600 hover:underline dark:text-blue-400"
-              >
-                press@tailus.io
-              </Link>
-              <p className="mt-3 text-sm">+243 000 000 000</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-3 border-x bg-[repeating-linear-gradient(-45deg,var(--color-border),var(--color-border)_1px,transparent_1px,transparent_6px)]"></div>
         <form action="" className="border px-4 py-12 lg:px-0 lg:py-24">
           <Card className="mx-auto max-w-lg p-8 sm:p-16">
             <h3 className="text-xl font-semibold">

@@ -38,6 +38,7 @@ export interface VotingSession {
   is_geofenced: boolean;
   geofence_radius: number;
   total_votes: number;
+  students_voted?: number;
   created_by: string;
   createdAt: string;
   updatedAt: string;

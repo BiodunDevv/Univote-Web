@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Loader2,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteDepartmentDialog } from "@/components/DeleteDepartmentDialog";
@@ -130,110 +130,120 @@ export default function CollegesPage() {
         {/* Statistics Cards */}
         {statistics && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <Card className="p-3 border shadow-none">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="w-4 h-4 text-primary" />
+            <Card className="border shadow-none">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Building2 className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-foreground">
+                      {statistics.total_colleges}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total Colleges
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
-                    {statistics.total_colleges}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total Colleges
-                  </p>
-                </div>
-              </div>
+              </CardContent>
             </Card>
 
-            <Card className="p-3 border shadow-none">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <GraduationCap className="w-4 h-4 text-green-600" />
+            <Card className="border shadow-none">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <GraduationCap className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-foreground">
+                      {statistics.total_departments}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Departments</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
-                    {statistics.total_departments}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Departments</p>
-                </div>
-              </div>
+              </CardContent>
             </Card>
 
-            <Card className="p-3 border shadow-none">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Users className="w-4 h-4 text-blue-600" />
+            <Card className="border shadow-none">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-foreground">
+                      {statistics.total_students}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total Students
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
-                    {statistics.total_students}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total Students
-                  </p>
-                </div>
-              </div>
+              </CardContent>
             </Card>
 
-            <Card className="p-3 border shadow-none">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <TrendingUp className="w-4 h-4 text-purple-600" />
+            <Card className="border shadow-none">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-foreground">
+                      {statistics.active_colleges}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Active Colleges
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
-                    {statistics.active_colleges}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Active Colleges
-                  </p>
-                </div>
-              </div>
+              </CardContent>
             </Card>
           </div>
         )}
 
         {/* Filters */}
-        <Card className="p-3 border shadow-none">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search colleges by name or code..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-background text-sm"
-              />
-            </div>
+        <Card className="border shadow-none">
+          <CardContent className="p-3">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search colleges by name or code..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 bg-background text-sm"
+                />
+              </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant={statusFilter === "all" ? "default" : "outline"}
-                onClick={() => setStatusFilter("all")}
-                size="sm"
-                className="h-9 text-xs"
-              >
-                All
-              </Button>
-              <Button
-                variant={statusFilter === "active" ? "default" : "outline"}
-                onClick={() => setStatusFilter("active")}
-                size="sm"
-                className="h-9 text-xs"
-              >
-                Active
-              </Button>
-              <Button
-                variant={statusFilter === "inactive" ? "default" : "outline"}
-                onClick={() => setStatusFilter("inactive")}
-                size="sm"
-                className="h-9 text-xs text-muted-foreground"
-              >
-                Inactive
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant={statusFilter === "all" ? "default" : "outline"}
+                  onClick={() => setStatusFilter("all")}
+                  size="sm"
+                  className="h-9 text-xs"
+                >
+                  All
+                </Button>
+                <Button
+                  variant={statusFilter === "active" ? "default" : "outline"}
+                  onClick={() => setStatusFilter("active")}
+                  size="sm"
+                  className="h-9 text-xs"
+                >
+                  Active
+                </Button>
+                <Button
+                  variant={statusFilter === "inactive" ? "default" : "outline"}
+                  onClick={() => setStatusFilter("inactive")}
+                  size="sm"
+                  className="h-9 text-xs text-muted-foreground"
+                >
+                  Inactive
+                </Button>
+              </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
         {/* Error Message */}
@@ -371,27 +381,29 @@ export default function CollegesPage() {
 
         {/* Empty State */}
         {!loading && !initialLoad && filteredColleges.length === 0 && (
-          <Card className="p-8 border shadow-none">
-            <div className="text-center">
-              <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                No colleges found
-              </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                {searchQuery || statusFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : "Get started by creating your first college"}
-              </p>
-              {isSuperAdmin && !searchQuery && statusFilter === "all" && (
-                <Button
-                  onClick={() => router.push("/dashboard/colleges/create")}
-                  className="h-9"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-2" />
-                  Create College
-                </Button>
-              )}
-            </div>
+          <Card className="border shadow-none">
+            <CardContent className="p-8">
+              <div className="text-center">
+                <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                  No colleges found
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {searchQuery || statusFilter !== "all"
+                    ? "Try adjusting your filters"
+                    : "Get started by creating your first college"}
+                </p>
+                {isSuperAdmin && !searchQuery && statusFilter === "all" && (
+                  <Button
+                    onClick={() => router.push("/dashboard/colleges/create")}
+                    className="h-9"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-2" />
+                    Create College
+                  </Button>
+                )}
+              </div>
+            </CardContent>
           </Card>
         )}
       </div>
