@@ -22,6 +22,8 @@ import { DeleteDepartmentDialog } from "@/components/DeleteDepartmentDialog";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 
+import { PageHeader } from "@/components/College/PageHeader";
+
 export default function CollegesPage() {
   const router = useRouter();
   const { token, admin } = useAuthStore();
@@ -100,36 +102,30 @@ export default function CollegesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">
-                Colleges & Departments
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-                Manage academic colleges and their departments
-              </p>
-            </div>
-            {isSuperAdmin && (
-              <Button
-                onClick={() => router.push("/dashboard/colleges/create")}
-                className="h-8 md:h-9 text-xs shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Create College</span>
-                <span className="sm:hidden">Create</span>
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Colleges & Departments"
+        subtitle="Manage academic colleges and their departments"
+        actions={
+          isSuperAdmin ? (
+            <Button
+              onClick={() => router.push("/dashboard/colleges/create")}
+              size="sm"
+              variant="outline"
+            >
+              <Plus className="w-3.5 h-3.5 mr-2" />
+              Create College
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-4">
+      <main className="max-w-7xl mx-auto p-2 space-y-6">
         {/* Statistics Cards */}
         {statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <section
+            aria-label="Statistics"
+            className="grid grid-cols-1 md:grid-cols-4 gap-3"
+          >
             <Card className="border shadow-none">
               <CardContent className="p-3">
                 <div className="flex items-center gap-2.5">
@@ -199,62 +195,66 @@ export default function CollegesPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </section>
         )}
 
         {/* Filters */}
-        <Card className="border shadow-none">
-          <CardContent className="p-3">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search colleges by name or code..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 bg-background text-sm"
-                />
-              </div>
+        <section aria-label="Filters">
+          <Card className="border shadow-none">
+            <CardContent className="p-3">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search colleges by name or code..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 bg-background text-sm"
+                  />
+                </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  onClick={() => setStatusFilter("all")}
-                  size="sm"
-                  className="h-9 text-xs"
-                >
-                  All
-                </Button>
-                <Button
-                  variant={statusFilter === "active" ? "default" : "outline"}
-                  onClick={() => setStatusFilter("active")}
-                  size="sm"
-                  className="h-9 text-xs"
-                >
-                  Active
-                </Button>
-                <Button
-                  variant={statusFilter === "inactive" ? "default" : "outline"}
-                  onClick={() => setStatusFilter("inactive")}
-                  size="sm"
-                  className="h-9 text-xs text-muted-foreground"
-                >
-                  Inactive
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant={statusFilter === "all" ? "default" : "outline"}
+                    onClick={() => setStatusFilter("all")}
+                    size="sm"
+                    className="h-9 text-xs"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={statusFilter === "active" ? "default" : "outline"}
+                    onClick={() => setStatusFilter("active")}
+                    size="sm"
+                    className="h-9 text-xs"
+                  >
+                    Active
+                  </Button>
+                  <Button
+                    variant={
+                      statusFilter === "inactive" ? "default" : "outline"
+                    }
+                    onClick={() => setStatusFilter("inactive")}
+                    size="sm"
+                    className="h-9 text-xs text-muted-foreground"
+                  >
+                    Inactive
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* Error Message */}
         {error && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2.5">
+          <aside className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-medium text-destructive">Error</p>
               <p className="text-xs text-destructive/80">{error}</p>
             </div>
-          </div>
+          </aside>
         )}
 
         {/* Loading State */}
@@ -266,7 +266,10 @@ export default function CollegesPage() {
         )}
 
         {/* Colleges Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <section
+          aria-label="Colleges Grid"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+        >
           {filteredColleges.map((college) => (
             <Card
               key={college._id}
@@ -277,12 +280,12 @@ export default function CollegesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      <span className="font-mono text-xs font-semibold text-primary">
+                      <Building2 className="w-4 h-4 text-gray-600 " />
+                      <span className="font-mono text-xs font-semibold text-gray-600">
                         {college.code}
                       </span>
                     </div>
-                    <h3 className="text-sm font-semibold text-foreground line-clamp-2">
+                    <h3 className="text-sm font-semibold text-foreground line-clamp-1">
                       {college.name}
                     </h3>
                   </div>
@@ -334,9 +337,9 @@ export default function CollegesPage() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <Button
-                    variant="outline"
                     size="sm"
                     className="flex-1 h-8 text-xs"
+                    variant="outline"
                     onClick={() =>
                       router.push(`/dashboard/colleges/${college._id}`)
                     }
@@ -377,36 +380,38 @@ export default function CollegesPage() {
               </div>
             </Card>
           ))}
-        </div>
+        </section>
 
         {/* Empty State */}
         {!loading && !initialLoad && filteredColleges.length === 0 && (
-          <Card className="border shadow-none">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                  No colleges found
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  {searchQuery || statusFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Get started by creating your first college"}
-                </p>
-                {isSuperAdmin && !searchQuery && statusFilter === "all" && (
-                  <Button
-                    onClick={() => router.push("/dashboard/colleges/create")}
-                    className="h-9"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-2" />
-                    Create College
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <section aria-label="No Results">
+            <Card className="border shadow-none">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                    No colleges found
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {searchQuery || statusFilter !== "all"
+                      ? "Try adjusting your filters"
+                      : "Get started by creating your first college"}
+                  </p>
+                  {isSuperAdmin && !searchQuery && statusFilter === "all" && (
+                    <Button
+                      onClick={() => router.push("/dashboard/colleges/create")}
+                      className="h-9"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-2" />
+                      Create College
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </section>
         )}
-      </div>
+      </main>
 
       {/* Delete Confirmation Modal */}
       <DeleteDepartmentDialog

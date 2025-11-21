@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSettingsStore } from "@/lib/store/useSettingsStore";
 import { PageHeader } from "@/components/College/PageHeader";
@@ -32,8 +32,9 @@ import {
   EyeOff,
 } from "lucide-react";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { admin, token, updateAdmin } = useAuthStore();
   const {
     profile,
@@ -52,8 +53,13 @@ export default function SettingsPage() {
   } = useSettingsStore();
 
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Get tab from URL or default to profile
+  const tabParam = searchParams.get("tab");
+  const initialTab =
+    tabParam === "security" || tabParam === "system" ? tabParam : "profile";
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "system">(
-    "profile"
+    initialTab as "profile" | "security" | "system"
   );
 
   // Profile form
@@ -86,6 +92,18 @@ export default function SettingsPage() {
       router.push("/auth/signin");
     }
   }, [token, router, isHydrated]);
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    if (isHydrated) {
+      const tabParam = searchParams.get("tab");
+      if (tabParam === "security" || tabParam === "system") {
+        setActiveTab(tabParam as "profile" | "security" | "system");
+      } else if (tabParam === "profile" || !tabParam) {
+        setActiveTab("profile");
+      }
+    }
+  }, [searchParams, isHydrated]);
 
   useEffect(() => {
     if (isHydrated && token) {
@@ -220,7 +238,10 @@ export default function SettingsPage() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                router.push(`/dashboard/settings?tab=${tab.id}`);
+              }}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-primary text-primary"
@@ -621,5 +642,22 @@ export default function SettingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
   );
 }

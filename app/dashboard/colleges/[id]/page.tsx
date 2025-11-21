@@ -183,7 +183,7 @@ export default function CollegeDetailPage() {
             <>
               <div className="flex gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() =>
                     router.push(`/dashboard/colleges/${collegeId}/students`)
@@ -194,6 +194,7 @@ export default function CollegeDetailPage() {
                   <span className="inline">View All Students</span>
                 </Button>
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={() =>
                     router.push(`/dashboard/colleges/${collegeId}/edit`)

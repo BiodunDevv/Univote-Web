@@ -137,6 +137,7 @@ export default function SessionsPage() {
         actions={
           <Button
             onClick={() => router.push("/dashboard/sessions/create")}
+            variant="outline"
             className="h-8 md:h-9 text-xs shrink-0"
           >
             <Plus className="w-3.5 h-3.5 mr-1 md:mr-2" />

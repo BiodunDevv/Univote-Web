@@ -1,5 +1,8 @@
-import { ArrowLeft } from "lucide-react";
+"use client";
+
+import { ArrowLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface PageHeaderProps {
   title: string;
@@ -8,6 +11,7 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   badges?: React.ReactNode;
   hideTitleOnMobile?: boolean;
+  showSidebarToggle?: boolean;
 }
 
 export function PageHeader({
@@ -17,12 +21,25 @@ export function PageHeader({
   actions,
   badges,
   hideTitleOnMobile = false,
+  showSidebarToggle = true,
 }: PageHeaderProps) {
+  const { toggleSidebar, open } = useSidebar();
+
   return (
-    <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+    <div className="md:sticky md:top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+            {showSidebarToggle && !open && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+            )}
             {onBack && (
               <Button
                 variant="ghost"

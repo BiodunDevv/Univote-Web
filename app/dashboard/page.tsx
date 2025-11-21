@@ -2,387 +2,667 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { useSettingsStore } from "@/lib/store/useSettingsStore";
+import { useDashboardStore } from "@/lib/store/useDashboardStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import {
-  Vote,
   Users,
-  BarChart3,
-  Settings,
-  ArrowRight,
-  CheckCircle2,
+  GraduationCap,
+  Vote,
   Building2,
-  TrendingUp,
-  UserCheck,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
+  Calendar as CalendarIcon,
   Activity,
+  Clock,
+  Trophy,
+  Loader2,
 } from "lucide-react";
+import { PageHeader } from "@/components/College/PageHeader";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 export default function DashboardWelcomePage() {
   const router = useRouter();
   const { admin, token } = useAuthStore();
-  const { dashboardStats, getDashboardStats, loading } = useSettingsStore();
+  const { dashboardData, isLoading, fetchDashboardData } = useDashboardStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
-    // Wait for Zustand to hydrate from localStorage
     const timer = setTimeout(() => setIsHydrated(true), 0);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Only redirect after hydration is complete
     if (isHydrated && !token) {
       router.push("/auth/signin");
     }
   }, [token, router, isHydrated]);
 
   useEffect(() => {
-    // Fetch dashboard stats when hydrated and token is available
     if (isHydrated && token) {
-      getDashboardStats(token);
+      fetchDashboardData(token);
     }
-  }, [isHydrated, token, getDashboardStats]);
+  }, [isHydrated, token, fetchDashboardData]);
 
-  // Show loading while hydrating
   if (!isHydrated || !token || !admin) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-2" />
+          <p className="text-xs text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  const quickLinks = [
-    {
-      id: "elections",
-      title: "Elections",
-      description: "Create and manage voting sessions",
-      icon: Vote,
-      href: "/dashboard/sessions",
-      gradient: "from-blue-500/10 to-blue-500/5",
-      iconColor: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      id: "colleges",
-      title: "Colleges",
-      description: "Manage colleges and departments",
-      icon: Building2,
-      href: "/dashboard/colleges",
-      gradient: "from-indigo-500/10 to-indigo-500/5",
-      iconColor: "text-indigo-600 dark:text-indigo-400",
-    },
-    {
-      id: "reports",
-      title: "Reports",
-      description: "View election results and analytics",
-      icon: BarChart3,
-      href: "/dashboard/sessions",
-      gradient: "from-purple-500/10 to-purple-500/5",
-      iconColor: "text-purple-600 dark:text-purple-400",
-    },
-  ];
+  const currentDate = new Date();
+  const monthName = currentMonth.toLocaleString("default", { month: "long" });
+  const year = currentMonth.getFullYear();
 
-  if (admin?.role === "super_admin") {
-    quickLinks.unshift({
-      id: "admin-management",
-      title: "Admins",
-      description: "Manage administrators and permissions",
-      icon: Settings,
-      href: "/dashboard/admins",
-      gradient: "from-orange-500/10 to-orange-500/5",
-      iconColor: "text-orange-600 dark:text-orange-400",
+  // Generate calendar days
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    return { daysInMonth, startingDayOfWeek };
+  };
+
+  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
+  const today = currentDate.getDate();
+  const isCurrentMonth =
+    currentMonth.getMonth() === currentDate.getMonth() &&
+    currentMonth.getFullYear() === currentDate.getFullYear();
+
+  const handlePreviousMonth = () => {
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1)
+    );
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1)
+    );
+  };
+
+  // Get overview data
+  const overview = dashboardData?.overview;
+  const distributions = dashboardData?.distributions;
+  const recentSessions = dashboardData?.recent_sessions || [];
+  const topVoters = dashboardData?.top_voters || [];
+  const recentActivities = dashboardData?.recent_activities || [];
+
+  // Prepare chart data
+  const studentsByLevelData =
+    distributions?.students_by_level.map((item) => ({
+      level: `${item.level}`,
+      students: item.count,
+    })) || [];
+
+  const studentsByCollegeData =
+    distributions?.students_by_college.map((item, index) => ({
+      college: item.college,
+      students: item.count,
+      fill: `var(--color-college${index + 1})`,
+    })) || [];
+
+  // Chart configs
+  const levelChartConfig = {
+    students: {
+      label: "Students",
+      color: "var(--chart-1)",
+    },
+    label: {
+      color: "var(--background)",
+    },
+  } satisfies ChartConfig;
+
+  const collegeChartConfig = {
+    students: {
+      label: "Students",
+    },
+    college1: { label: "College 1", color: "var(--chart-1)" },
+    college2: { label: "College 2", color: "var(--chart-2)" },
+    college3: { label: "College 3", color: "var(--chart-3)" },
+    college4: { label: "College 4", color: "var(--chart-4)" },
+    college5: { label: "College 5", color: "var(--chart-5)" },
+    college6: { label: "College 6", color: "var(--chart-1)" },
+    college7: { label: "College 7", color: "var(--chart-2)" },
+  } satisfies ChartConfig;
+
+  // Map sessions to calendar dates
+  const getSessionsForDate = (day: number) => {
+    return recentSessions.filter((session) => {
+      const sessionDate = new Date(session.start_time);
+      return (
+        sessionDate.getDate() === day &&
+        sessionDate.getMonth() === currentMonth.getMonth() &&
+        sessionDate.getFullYear() === currentMonth.getFullYear()
+      );
     });
+  };
+
+  const hasSessionOnDate = (day: number) => {
+    return getSessionsForDate(day).length > 0;
+  };
+
+  const handleDateClick = (day: number) => {
+    const sessions = getSessionsForDate(day);
+    if (sessions.length > 0) {
+      // Navigate to the first session on that date
+      router.push(`/dashboard/sessions/${sessions[0]._id}`);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-2" />
+          <p className="text-xs text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3">
-          <div className="min-w-0">
-            <h1 className="text-sm md:text-lg font-semibold tracking-tight truncate">
-              Welcome back, {admin?.full_name}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-              {admin?.role === "super_admin"
-                ? "You have full system access and administrative privileges"
-                : "Manage elections and monitor voting activities"}
-            </p>
-          </div>
+      {/* Page Header */}
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Welcome back, ${admin.full_name}`}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex"
+            onClick={() => router.push("/dashboard/settings")}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        }
+      />
+
+      <div className="max-w-7xl mx-auto p-2 space-y-6">
+        {/* Metric Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Students */}
+          <Card className="border shadow-none">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-muted p-2">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">
+                    {overview?.total_students || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Total Students
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Active Sessions */}
+          <Card className="border shadow-none">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-muted p-2">
+                  <Vote className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">
+                    {overview?.active_sessions || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Active Sessions
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Colleges */}
+          <Card className="border shadow-none">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-muted p-2">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">
+                    {overview?.total_colleges || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Colleges</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Departments */}
+          <Card className="border shadow-none">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-muted p-2">
+                  <GraduationCap className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">
+                    {overview?.total_departments || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Departments</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-4 space-y-4">
-        {/* System Statistics */}
-        {dashboardStats && (
-          <div>
-            <h2 className="mb-3 text-sm font-semibold">System Overview</h2>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {/* Students */}
-              <Card className="border shadow-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                      <Users className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">
-                        {dashboardStats.students.total}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Students</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs">
-                    <UserCheck className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-muted-foreground">
-                      {dashboardStats.students.active} active •{" "}
-                      {dashboardStats.students.facial_registration_rate} with
-                      facial data
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Charts & Calendar Row */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Students by Level Chart */}
+          <Card className="lg:col-span-2 border shadow-none">
+            <CardHeader>
+              <CardTitle className="text-base">Students by Level</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={levelChartConfig}>
+                <BarChart
+                  accessibilityLayer
+                  data={studentsByLevelData}
+                  layout="vertical"
+                  margin={{
+                    right: 16,
+                  }}
+                >
+                  <CartesianGrid horizontal={false} />
+                  <YAxis
+                    dataKey="level"
+                    type="category"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(value) => value}
+                    hide
+                  />
+                  <XAxis dataKey="students" type="number" hide />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="line" />}
+                  />
+                  <Bar
+                    dataKey="students"
+                    layout="vertical"
+                    fill="var(--color-students)"
+                    radius={4}
+                  >
+                    <LabelList
+                      dataKey="level"
+                      position="insideLeft"
+                      offset={8}
+                      className="fill-white"
+                      fontSize={12}
+                    />
+                    <LabelList
+                      dataKey="students"
+                      position="right"
+                      offset={8}
+                      className="fill-foreground"
+                      fontSize={12}
+                    />
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
 
-              {/* Colleges */}
-              <Card className="border shadow-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-                      <Building2 className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">
-                        {dashboardStats.colleges.total}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Colleges</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs">
-                    <Activity className="h-3.5 w-3.5 text-purple-600" />
-                    <span className="text-muted-foreground">
-                      {dashboardStats.colleges.total_departments} departments
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Calendar Widget */}
+          <Card className="border shadow-none">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Calendar</CardTitle>
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="mb-3 flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={handlePreviousMonth}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">
+                  {monthName} {year}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={handleNextMonth}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
 
-              {/* Sessions */}
-              <Card className="border shadow-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                      <Vote className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">
-                        {dashboardStats.sessions.total}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Elections</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs">
-                    <TrendingUp className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-muted-foreground">
-                      {dashboardStats.sessions.active} active •{" "}
-                      {dashboardStats.sessions.completed} completed
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Votes */}
-              <Card className="border shadow-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-                      <BarChart3 className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">
-                        {dashboardStats.votes.total}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Total Votes
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-muted-foreground">
-                      All validated votes
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State for Stats */}
-        {loading && !dashboardStats && (
-          <div>
-            <h2 className="mb-3 text-sm font-semibold">System Overview</h2>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Card key={i} className="border shadow-none">
-                  <CardContent className="p-4">
-                    <Skeleton className="h-10 w-10 rounded-lg" />
-                    <Skeleton className="mt-3 h-4 w-20" />
-                    <Skeleton className="mt-2 h-3 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Access Cards */}
-        <div>
-          <h2 className="mb-3 text-sm font-semibold">Quick Access</h2>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {quickLinks.map((link) => (
-              <Card
-                key={link.id}
-                className="group cursor-pointer border shadow-none transition-all hover:shadow-md hover:border-primary/50"
-                onClick={() => router.push(link.href)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
+              {/* Calendar Grid */}
+              <TooltipProvider>
+                <div className="grid grid-cols-7 gap-1 text-center text-xs mb-4">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br ${link.gradient}`}
+                      key={day}
+                      className="py-1.5 font-medium text-muted-foreground"
                     >
-                      <link.icon className={`h-5 w-5 ${link.iconColor}`} />
+                      {day}
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
-                  <div className="mt-3">
-                    <h3 className="text-sm font-semibold">{link.title}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {link.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  ))}
+                  {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+                    <div key={`empty-${i}`} className="py-1.5"></div>
+                  ))}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const isToday = isCurrentMonth && day === today;
+                    const hasSessions = hasSessionOnDate(day);
+                    const sessionsOnDate = getSessionsForDate(day);
+
+                    const dateElement = (
+                      <div
+                        onClick={() => handleDateClick(day)}
+                        className={`py-1.5 rounded-full transition-colors relative ${
+                          isToday
+                            ? "bg-primary text-primary-foreground font-semibold cursor-pointer"
+                            : hasSessions
+                            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                            : "hover:bg-accent cursor-default"
+                        }`}
+                      >
+                        {day}
+                        {hasSessions && (
+                          <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                            {sessionsOnDate.slice(0, 3).map((_, idx) => (
+                              <div
+                                key={idx}
+                                className="h-1 w-1 rounded-full bg-current"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+
+                    return hasSessions ? (
+                      <Tooltip key={day}>
+                        <TooltipTrigger asChild>{dateElement}</TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="space-y-1">
+                            {sessionsOnDate.map((session, idx) => (
+                              <div key={idx} className="text-xs">
+                                <p className="font-medium">{session.title}</p>
+                                <p className="text-muted-foreground">
+                                  {session.status === "active"
+                                    ? "🟢"
+                                    : session.status === "upcoming"
+                                    ? "🔵"
+                                    : "⚪"}{" "}
+                                  {session.status}
+                                </p>
+                              </div>
+                            ))}
+                            <p className="text-xs text-muted-foreground italic mt-2">
+                              Click to view session details
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <div key={day}>{dateElement}</div>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
+
+              {/* Upcoming Sessions */}
+              <div className="space-y-2 border-t pt-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Upcoming Sessions
+                </p>
+                {recentSessions
+                  .filter(
+                    (s) => s.status === "upcoming" || s.status === "active"
+                  )
+                  .slice(0, 3).length > 0 ? (
+                  recentSessions
+                    .filter(
+                      (s) => s.status === "upcoming" || s.status === "active"
+                    )
+                    .slice(0, 3)
+                    .map((session) => (
+                      <div
+                        key={session._id}
+                        onClick={() =>
+                          router.push(`/dashboard/sessions/${session._id}`)
+                        }
+                        className="flex items-center gap-2 text-xs p-2 rounded-md hover:bg-accent cursor-pointer transition-colors"
+                      >
+                        <div
+                          className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                            session.status === "active"
+                              ? "bg-green-500"
+                              : "bg-blue-500"
+                          }`}
+                        />
+                        <span className="flex-1 truncate font-medium">
+                          {session.title}
+                        </span>
+                      </div>
+                    ))
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    No upcoming sessions
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Getting Started Section */}
-        <div>
-          <h2 className="mb-3 text-sm font-semibold">
-            Key Features & Capabilities
-          </h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {/* System Features */}
-            <Card className="border shadow-none">
-              <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Vote className="h-4 w-4 text-primary" />
-                  Election Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 py-4">
-                <div className="space-y-2.5">
-                  {[
-                    "Create and configure voting sessions with custom settings",
-                    "Set election dates, voting hours, and geographic boundaries",
-                    "Add candidates with photos, manifestos, and positions",
-                    "Define eligible voter groups by college, department, or level",
-                    "Location-based voting with configurable radius verification",
-                    "Real-time vote counting and live result tracking",
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
-                      <p className="text-xs text-muted-foreground">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+        {/* College Distribution & Top Voters */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* College Distribution Chart */}
+          <Card className="lg:col-span-2 border shadow-none">
+            <CardHeader>
+              <CardTitle className="text-base">Students by College</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={collegeChartConfig}
+                className="mx-auto aspect-square max-h-[200px]"
+              >
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <Pie
+                    data={studentsByCollegeData}
+                    dataKey="students"
+                    label
+                    nameKey="college"
+                  />
+                </PieChart>
+              </ChartContainer>
 
-            {/* Student & Data Management */}
-            <Card className="border shadow-none">
-              <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  Student & Data Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 py-4">
-                <div className="space-y-2.5">
-                  {[
-                    "Organize students by colleges, departments, and levels",
-                    "Bulk upload student data via CSV with validation",
-                    "Manage student profiles with photos and credentials",
-                    "Facial recognition integration for identity verification",
-                    "Track voting history and participation rates",
-                    "Generate detailed reports and analytics",
-                    ...(admin?.role === "super_admin"
-                      ? ["Full administrative control and user management"]
-                      : []),
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
-                      <p className="text-xs text-muted-foreground">{item}</p>
+              {/* College Legend with Numbers */}
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                {studentsByCollegeData.map((college, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-sm shrink-0"
+                      style={{ backgroundColor: college.fill }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium">{college.college}</p>
+                      <p className="text-muted-foreground">
+                        {college.students} students
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Quick Actions */}
-            <Card className="border shadow-none">
-              <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold">
-                  Quick Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 py-4">
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => router.push("/dashboard/sessions")}
-                    className="h-9 w-full justify-start text-sm"
-                    variant="outline"
-                  >
-                    <Vote className="mr-2 h-3.5 w-3.5" />
-                    Create New Election
-                  </Button>
-                  <Button
-                    onClick={() => router.push("/dashboard/students")}
-                    className="h-9 w-full justify-start text-sm"
-                    variant="outline"
-                  >
-                    <Users className="mr-2 h-3.5 w-3.5" />
-                    Upload Students
-                  </Button>
-                  <Button
-                    onClick={() => router.push("/dashboard/sessions")}
-                    className="h-9 w-full justify-start text-sm"
-                    variant="outline"
-                  >
-                    <BarChart3 className="mr-2 h-3.5 w-3.5" />
-                    View Reports
-                  </Button>
-                  {admin?.role === "super_admin" && (
-                    <Button
-                      onClick={() => router.push("/dashboard/admins")}
-                      className="h-9 w-full justify-start text-sm"
-                      variant="outline"
+          {/* Top Voters List */}
+          <Card className="border shadow-none">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Top Voters</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {topVoters.length > 0 ? (
+                  topVoters.map((voter, index) => (
+                    <div
+                      key={voter.matric_no}
+                      className="flex items-center gap-3"
                     >
-                      <Settings className="mr-2 h-3.5 w-3.5" />
-                      Manage Admins
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <p className="truncate text-sm font-medium">
+                          {voter.full_name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {voter.matric_no}
+                        </p>
+                      </div>
+                      <div className="text-xs font-medium">
+                        {voter.votes_cast} votes
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No votes recorded yet
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activities & Sessions */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent Activities */}
+          <Card className="lg:col-span-2 border shadow-none">
+            <CardHeader>
+              <CardTitle className="text-base">Recent Activities</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentActivities.length > 0 ? (
+                  recentActivities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-4">
+                      <div className="mt-1 rounded-full bg-muted p-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {activity.action.replace(/_/g, " ")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          by {activity.user_name} ({activity.user_type})
+                        </p>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(activity.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No recent activities
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Sessions */}
+          <Card className="border shadow-none">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Recent Sessions</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentSessions.length > 0 ? (
+                  recentSessions.map((session) => (
+                    <div
+                      key={session._id}
+                      onClick={() =>
+                        router.push(`/dashboard/sessions/${session._id}`)
+                      }
+                      className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer transition-colors"
+                    >
+                      <div
+                        className={`h-2 w-2 rounded-full shrink-0 ${
+                          session.status === "active"
+                            ? "bg-green-500"
+                            : session.status === "upcoming"
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                        }`}
+                      />
+                      <div className="flex-1 overflow-hidden">
+                        <p className="truncate text-sm font-medium">
+                          {session.title}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground capitalize">
+                          {session.status}
+                        </p>
+                      </div>
+                      <div className="text-xs font-medium">
+                        {session.vote_count} votes
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No sessions found
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
