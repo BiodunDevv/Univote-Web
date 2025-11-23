@@ -8,11 +8,12 @@ import React from "react";
 import { AnimatedThemeToggler } from "../theme-toggler";
 
 const menuItems = [
-  { name: "Home", href: "#hero" },
-  { name: "Features", href: "#features" },
-  { name: "Universities", href: "#universities" },
-  { name: "Students", href: "#students" },
-  { name: "Contact", href: "#contact" },
+  { name: "Home", href: "/" },
+  { name: "Features", href: "/#features" },
+  { name: "Learn More", href: "/learn-more" },
+  { name: "Universities", href: "/#universities" },
+  { name: "Students", href: "/#students" },
+  { name: "Contact", href: "/#contact" },
 ];
 
 export const HeroHeader = () => {

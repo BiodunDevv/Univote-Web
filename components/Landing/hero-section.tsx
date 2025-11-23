@@ -42,7 +42,7 @@ export default function HeroSection() {
                   variant="ghost"
                   className="px-5 text-base"
                 >
-                  <Link href="#features">
+                  <Link href="/learn-more">
                     <span className="text-nowrap">Learn More</span>
                   </Link>
                 </Button>
