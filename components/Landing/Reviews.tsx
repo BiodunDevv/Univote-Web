@@ -3,40 +3,40 @@ import { Marquee } from "@/components/magicui/marquee";
 
 const reviews = [
   {
-    name: "Student Union",
-    username: "@bowensu",
-    body: "Univote transformed our election process. No more paper ballots, no more disputes — just secure, transparent voting.",
-    img: "https://avatar.vercel.sh/su1",
+    name: "Chioma Adeleke",
+    username: "@chioma_unilag",
+    body: "Univote made our SUG elections so smooth! No more long queues under the sun. I voted from my hostel in less than 3 minutes.",
+    img: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=400&fit=crop&crop=faces",
   },
   {
-    name: "Faculty Staff",
-    username: "@faculty_bw",
-    body: "Fast, secure, and stress-free voting. The facial recognition feature ensures every vote is legitimate.",
-    img: "https://avatar.vercel.sh/faculty1",
+    name: "Dr. Olamide Bakare",
+    username: "@drola_lecturer",
+    body: "As a faculty advisor, I've seen the difference. Real-time results, zero disputes, and students actually trust the process now.",
+    img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces",
   },
   {
-    name: "Chidi Okonkwo",
-    username: "@chidiokonkwo",
-    body: "I voted from my phone in less than 2 minutes. The whole process was incredibly smooth and secure.",
-    img: "https://avatar.vercel.sh/chidi",
+    name: "Emeka Nwankwo",
+    username: "@emeka_covenant",
+    body: "The facial recognition is next level! We had zero electoral fraud this year. Best investment our university made.",
+    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces",
   },
   {
-    name: "Dr. Adewale",
-    username: "@dradewale",
-    body: "As an administrator, managing elections has never been easier. Real-time results and zero paperwork.",
-    img: "https://avatar.vercel.sh/adewale",
+    name: "Aisha Mohammed",
+    username: "@aisha_abu",
+    body: "I was skeptical at first, but Univote proved me wrong. The geofencing ensures only registered students can vote. Brilliant!",
+    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=faces",
   },
   {
-    name: "Blessing Eze",
-    username: "@blessing_eze",
-    body: "Finally, a voting system that works! No technical issues, no delays. Just simple and effective.",
-    img: "https://avatar.vercel.sh/blessing",
+    name: "Tunde Adebayo",
+    username: "@tunde_ui",
+    body: "Our voter turnout increased by 40%! Students love how easy it is. No more missing votes because of class schedules.",
+    img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces&sat=-100",
   },
   {
-    name: "Campus Tech Team",
-    username: "@campustech",
-    body: "The geofencing feature is brilliant. Only students on campus can vote, which adds an extra layer of security.",
-    img: "https://avatar.vercel.sh/techteam",
+    name: "Ngozi Okafor",
+    username: "@ngozi_uniben",
+    body: "Transparent, secure, and fast. Finally, a voting system that respects our time and intelligence. Every Nigerian university needs this!",
+    img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=faces",
   },
 ];
 
@@ -59,9 +59,9 @@ const ReviewCard = ({
       className={cn(
         "relative h-full w-64 cursor-pointer overflow-hidden rounded-xl border p-4",
         // light styles
-        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+        "border-gray-950/10 bg-gray-950/10 hover:bg-gray-950/5",
         // dark styles
-        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]"
+        "dark:border-gray-50/10 dark:bg-gray-50/10 dark:hover:bg-gray-50/15",
       )}
     >
       <div className="flex flex-row items-center gap-2">

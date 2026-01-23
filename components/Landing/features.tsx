@@ -74,56 +74,7 @@ export default function Features() {
             </CardContent>
           </Card>
 
-          <Card className="group border-0 shadow-none">
-            <CardHeader className="pb-3">
-              <CardDecorator>
-                <Settings2 className="size-6" aria-hidden />
-              </CardDecorator>
-
-              <h3 className="mt-6 font-medium">Admin Dashboard</h3>
-            </CardHeader>
-
-            <CardContent>
-              <p className="mt-3 text-sm">
-                Manage sessions, students, and results easily. Full control at
-                your fingertips.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="group border-0 shadow-none">
-            <CardHeader className="pb-3">
-              <CardDecorator>
-                <Zap className="size-6" aria-hidden />
-              </CardDecorator>
-
-              <h3 className="mt-6 font-medium">Email Notifications</h3>
-            </CardHeader>
-
-            <CardContent>
-              <p className="mt-3 text-sm">
-                Automated alerts for voting, results, and updates. Keep everyone
-                informed.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="group border-0 shadow-none">
-            <CardHeader className="pb-3">
-              <CardDecorator>
-                <Sparkles className="size-6" aria-hidden />
-              </CardDecorator>
-
-              <h3 className="mt-6 font-medium">Role-Based Access</h3>
-            </CardHeader>
-
-            <CardContent>
-              <p className="mt-3 text-sm">
-                Restrict permissions by department or level. Secure, organized,
-                and compliant.
-              </p>
-            </CardContent>
-          </Card>
+        
         </div>
       </div>
     </section>

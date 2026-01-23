@@ -1,63 +1,51 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { HeroHeader } from "@/components/Landing/header";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { HeroIllustration } from "../HeroIllustration";
 
-export default function HeroSection() {
+export function HeroSection() {
   const { token } = useAuthStore();
   const isSignedIn = !!token;
 
   return (
-    <>
-      <HeroHeader />
-      <section id="hero">
-        <div className="pb-24 pt-12 md:pb-32 lg:pb-56 lg:pt-44">
-          <div className="relative mx-auto flex max-w-6xl flex-col px-6 lg:block">
-            <div className="mx-auto max-w-xl text-center lg:ml-0 lg:w-1/2 lg:text-left">
-              <h1 className="mt-8 max-w-2xl text-balance text-4xl font-medium md:text-5xl lg:mt-16">
-                Smart, Secure, and Transparent Campus Voting.
-              </h1>
-              <p className="mt-8 max-w-2xl text-pretty text-lg">
-                Univote brings next-generation digital elections to your campus
-                — powered by facial recognition, geofencing, and real-time
-                results.
-              </p>
+    <section className="relative pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-7xl mx-auto sm:mt-12">
+          {/* Left Content */}
+          <div className="w-full lg:max-w-xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[3.5rem] font-bold tracking-tight text-foreground leading-[1.1] mb-4 sm:mb-6">
+              Revolutionize Campus Elections with Smart Digital Voting
+            </h1>
 
-              <div className="mt-12 flex flex-row items-center justify-center gap-2 sm:flex-row lg:justify-start">
-                <Button asChild size="lg" className="px-5 text-base">
-                  <Link href={isSignedIn ? "/dashboard" : "#contact"}>
-                    <span className="text-nowrap">
-                      {isSignedIn ? "Go to Dashboard" : "Get Started"}
-                    </span>
-                  </Link>
-                </Button>
-                <Button
-                  key={2}
-                  asChild
-                  size="lg"
-                  variant="ghost"
-                  className="px-5 text-base"
-                >
-                  <Link href="/learn-more">
-                    <span className="text-nowrap">Learn More</span>
-                  </Link>
-                </Button>
-              </div>
+            <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
+              Secure, transparent, and efficient digital elections tailored for
+              universities. Empower your campus with cutting-edge voting
+              technology.
+            </p>
+
+            <Button
+              size="lg"
+              className="rounded-xl px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base bg-foreground text-background hover:bg-foreground/90 font-medium transition-all duration-200 hover:scale-[1.02]"
+              asChild
+            >
+              <Link href={isSignedIn ? "/dashboard" : "/auth/signin"}>
+                {isSignedIn ? "Go to Dashboard" : "Login Admin"}
+              </Link>
+            </Button>
+          </div>
+
+          {/* Right Content - Hero Illustration */}
+          <div className="relative flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-xl">
+              <HeroIllustration />
             </div>
-            <Image
-              className="-z-10 order-first ml-auto h-56 w-full object-cover invert sm:h-96 lg:absolute lg:inset-0 lg:-right-20 lg:-top-96 lg:order-last lg:h-max lg:w-2/3 lg:object-contain dark:mix-blend-lighten dark:invert-0"
-              src="https://ik.imagekit.io/biodun/abstract-bg.jpg_updatedAt=1745733473768?updatedAt=1757245885515"
-              alt="Abstract Object"
-              height="4000"
-              width="3000"
-            />
           </div>
         </div>
-      </section>
-    </>
+
+        {/* Features Section */}
+      </div>
+    </section>
   );
 }
