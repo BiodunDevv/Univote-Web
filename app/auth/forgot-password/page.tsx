@@ -22,9 +22,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="mb-8">
-        <Logo />
-      </div>
+     
       <ForgotPasswordForm className="w-full max-w-md" />
     </div>
   );

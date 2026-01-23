@@ -9,9 +9,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 function ResetPasswordContent() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="mb-8">
-        <Logo />
-      </div>
+     
       <Suspense fallback={<div className="w-full max-w-md">Loading...</div>}>
         <ResetPasswordForm className="w-full max-w-md" />
       </Suspense>

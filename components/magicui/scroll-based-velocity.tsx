@@ -115,25 +115,38 @@ function ScrollVelocityRowImpl({
     io.observe(container);
 
     const handleVisibility = () => {
-      isPageVisibleRef.current = document.visibilityState === "visible";
+      if (typeof document !== "undefined") {
+        isPageVisibleRef.current = document.visibilityState === "visible";
+      }
     };
-    document.addEventListener("visibilitychange", handleVisibility, {
-      passive: true,
-    });
-    handleVisibility();
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility, {
+        passive: true,
+      });
+      handleVisibility();
+    }
 
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let mq: MediaQueryList | undefined;
     const handlePRM = () => {
-      prefersReducedMotionRef.current = mq.matches;
+      if (mq) {
+        prefersReducedMotionRef.current = mq.matches;
+      }
     };
-    mq.addEventListener("change", handlePRM);
-    handlePRM();
+    if (typeof window !== "undefined") {
+      mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", handlePRM);
+      handlePRM();
+    }
 
     return () => {
       ro.disconnect();
       io.disconnect();
-      document.removeEventListener("visibilitychange", handleVisibility);
-      mq.removeEventListener("change", handlePRM);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
+      if (mq) {
+        mq.removeEventListener("change", handlePRM);
+      }
     };
   }, [children, unitWidth]);
 

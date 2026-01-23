@@ -29,8 +29,12 @@ export const AnimatedThemeToggler = ({
 
     const newTheme = theme === "dark" ? "light" : "dark";
 
-    // Check if View Transitions API is supported
-    if (!document.startViewTransition) {
+    // Check if we're in a browser environment and if View Transitions API is supported
+    if (
+      typeof window === "undefined" ||
+      typeof document === "undefined" ||
+      !document.startViewTransition
+    ) {
       setTheme(newTheme);
       return;
     }
@@ -61,7 +65,7 @@ export const AnimatedThemeToggler = ({
         duration: 700,
         easing: "ease-in-out",
         pseudoElement: "::view-transition-new(root)",
-      }
+      },
     );
   };
 
@@ -72,7 +76,7 @@ export const AnimatedThemeToggler = ({
         ref={buttonRef}
         className={cn(
           variant === "with-text" ? "w-full justify-start gap-2" : "",
-          className
+          className,
         )}
       >
         <Moon className="h-3.5 w-3.5 shrink-0" />
@@ -106,7 +110,7 @@ export const AnimatedThemeToggler = ({
       className={cn(
         "relative inline-flex items-center justify-center rounded-md border border-input bg-background p-2 transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
         "h-10 w-10",
-        className
+        className,
       )}
       aria-label="Toggle theme"
     >
