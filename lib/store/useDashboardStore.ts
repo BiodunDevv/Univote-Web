@@ -106,13 +106,20 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   fetchDashboardData: async (token: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/api/dashboard/admin`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${API_URL}/api/dashboard/admin?fresh=true`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -120,7 +127,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       }
 
       const data: DashboardData = await response.json();
-      set({ dashboardData: data, isLoading: false, error: null });
+
+      set({
+        dashboardData: data,
+        isLoading: false,
+        error: null,
+      });
     } catch (error: unknown) {
       set({
         isLoading: false,
@@ -136,13 +148,20 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   fetchQuickStats: async (token: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/api/dashboard/stats`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${API_URL}/api/dashboard/stats?fresh=true`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -150,7 +169,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       }
 
       const data: QuickStats = await response.json();
-      set({ quickStats: data, isLoading: false, error: null });
+
+      set({
+        quickStats: data,
+        isLoading: false,
+        error: null,
+      });
     } catch (error: unknown) {
       set({
         isLoading: false,

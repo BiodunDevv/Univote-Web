@@ -1,33 +1,55 @@
 "use client";
 
 import { Moon, SunDim } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import { useTheme } from "next-themes";
 import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-type props = {
+type Props = {
   className?: string;
-  variant?: "icon-only" | "with-text";
+  variant?: "icon-only" | "with-text" | "header";
+  enableShortcut?: boolean;
+  shortcutLabel?: string;
 };
 
 export const AnimatedThemeToggler = ({
   className,
   variant = "icon-only",
-}: props) => {
-  const { theme, setTheme } = useTheme();
+  enableShortcut = false,
+  shortcutLabel,
+}: Props) => {
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+  const isDarkMode = (resolvedTheme ?? theme) === "dark";
+  const computedShortcutLabel = useMemo(() => {
+    if (shortcutLabel) return shortcutLabel;
+    if (typeof navigator === "undefined") return "Ctrl+D";
 
-  // Only show the component after mounting to avoid hydration mismatches
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+    const isMac = /Mac|iPhone|iPad|iPod/i.test(
+      navigator.userAgent || navigator.platform,
+    );
 
-  const changeTheme = async () => {
+    return isMac ? "⌘D" : "Ctrl+D";
+  }, [shortcutLabel]);
+
+  const changeTheme = useCallback(async () => {
     if (!buttonRef.current) return;
 
-    const newTheme = theme === "dark" ? "light" : "dark";
+    const newTheme = isDarkMode ? "light" : "dark";
 
     // Check if we're in a browser environment and if View Transitions API is supported
     if (
@@ -67,56 +89,97 @@ export const AnimatedThemeToggler = ({
         pseudoElement: "::view-transition-new(root)",
       },
     );
-  };
+  }, [isDarkMode, setTheme]);
+
+  useEffect(() => {
+    if (!mounted || !enableShortcut) return;
+
+    const handleShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isEditable =
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+
+      if (isEditable) return;
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        void changeTheme();
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [changeTheme, enableShortcut, mounted]);
 
   // Don't render anything until the component has mounted on the client
   if (!mounted) {
+    return null;
+  }
+
+  if (variant === "header") {
     return (
-      <button
+      <Button
         ref={buttonRef}
-        className={cn(
-          variant === "with-text" ? "w-full justify-start gap-2" : "",
-          className,
-        )}
+        type="button"
+        onClick={() => void changeTheme()}
+        variant="outline"
+        size="sm"
+        className={cn("h-9 gap-2", className)}
+        aria-label={`Toggle theme (${computedShortcutLabel})`}
+        title={`Toggle theme (${computedShortcutLabel})`}
       >
-        <Moon className="h-3.5 w-3.5 shrink-0" />
-        {variant === "with-text" && <span>Toggle theme</span>}
-      </button>
+        <span className="relative inline-flex size-4 items-center justify-center">
+          <SunDim className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </span>
+        <span className="hidden text-sm sm:inline">
+          {isDarkMode ? "Dark" : "Light"}
+        </span>
+        <Badge
+          variant="outline"
+          className="hidden rounded-md px-1.5 py-0 text-[10px] md:inline-flex"
+        >
+          {computedShortcutLabel}
+        </Badge>
+      </Button>
     );
   }
 
   if (variant === "with-text") {
     return (
-      <button
+      <Button
         ref={buttonRef}
         type="button"
-        onClick={changeTheme}
-        className={cn("flex items-center gap-2 w-full", className)}
+        onClick={() => void changeTheme()}
+        variant="ghost"
+        className={cn("w-full justify-start", className)}
         aria-label="Toggle theme"
       >
-        <SunDim className="h-3.5 w-3.5 shrink-0 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-3.5 w-3.5 shrink-0 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        <span className="dark:hidden">Light Mode</span>
-        <span className="hidden dark:inline">Dark Mode</span>
-      </button>
+        <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center">
+          <SunDim className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </span>
+        <span>{isDarkMode ? "Dark mode" : "Light mode"}</span>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       ref={buttonRef}
       type="button"
-      onClick={changeTheme}
-      className={cn(
-        "relative inline-flex items-center justify-center rounded-md border border-input bg-background p-2 transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
-        "h-10 w-10",
-        className,
-      )}
+      onClick={() => void changeTheme()}
+      variant="outline"
+      size="icon"
+      className={cn("relative", className)}
       aria-label="Toggle theme"
     >
       <SunDim className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">Toggle theme</span>
-    </button>
+    </Button>
   );
 };

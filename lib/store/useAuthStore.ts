@@ -11,10 +11,12 @@ interface Admin {
 interface AuthState {
   token: string | null;
   admin: Admin | null;
+  hasHydrated: boolean;
   isLoading: boolean;
   error: string | null;
 
   // Actions
+  setHasHydrated: (hasHydrated: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateAdmin: (updatedAdmin: Partial<Admin>) => void;
@@ -22,7 +24,7 @@ interface AuthState {
   resetPassword: (
     email: string,
     resetCode: string,
-    newPassword: string
+    newPassword: string,
   ) => Promise<void>;
   clearError: () => void;
 }
@@ -66,8 +68,11 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       admin: null,
+      hasHydrated: false,
       isLoading: false,
       error: null,
+
+      setHasHydrated: (hasHydrated: boolean) => set({ hasHydrated }),
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -125,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ email }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -149,7 +154,7 @@ export const useAuthStore = create<AuthState>()(
       resetPassword: async (
         email: string,
         resetCode: string,
-        newPassword: string
+        newPassword: string,
       ) => {
         set({ isLoading: true, error: null });
         try {
@@ -165,7 +170,7 @@ export const useAuthStore = create<AuthState>()(
                 reset_code: resetCode,
                 new_password: newPassword,
               }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -194,6 +199,9 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         admin: state.admin,
       }),
-    }
-  )
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    },
+  ),
 );

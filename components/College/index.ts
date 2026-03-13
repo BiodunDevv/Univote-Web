@@ -1,4 +1,3 @@
-export { StatCard } from "./StatCard";
-export { StudentAvatar } from "./StudentAvatar";
-export { PageHeader } from "./PageHeader";
-export { DepartmentCard } from "./DepartmentCard";
+export * from "./PageHeader";
+export * from "./StatCard";
+export * from "./DepartmentCard";

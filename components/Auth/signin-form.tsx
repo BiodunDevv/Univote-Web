@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,14 @@ import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { LogoIcon } from "@/components/logo";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +36,9 @@ export function LoginForm({
 
     try {
       await login(email, password);
-      router.push("/dashboard"); // Redirect to dashboard on success
+      const ref = searchParams.get("ref");
+      const redirectTarget = ref && ref.startsWith("/") ? ref : "/dashboard";
+      router.push(redirectTarget);
     } catch {
       // Error is handled by the store
     }
@@ -118,7 +122,16 @@ export function LoginForm({
 
               <Field>
                 <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? "Logging in..." : "Login"}
+                  {isLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="animate-spin animation-duration-[1.2s]">
+                        <LogoIcon className="h-4 w-4" />
+                      </span>
+                      <span>Logging in...</span>
+                    </span>
+                  ) : (
+                    "Login"
+                  )}
                 </Button>
               </Field>
             </FieldGroup>

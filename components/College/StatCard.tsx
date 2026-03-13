@@ -1,13 +1,13 @@
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-interface StatCardProps {
+type StatCardProps = {
   icon: LucideIcon;
-  value: string | number;
+  value: number | string;
   label: string;
   iconColor?: string;
   iconBgColor?: string;
-}
+};
 
 export function StatCard({
   icon: Icon,
@@ -17,13 +17,13 @@ export function StatCard({
   iconBgColor = "bg-primary/10",
 }: StatCardProps) {
   return (
-    <Card className="p-4 border shadow-none">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 ${iconBgColor} rounded-full`}>
-          <Icon className={`w-5 h-5 ${iconColor}`} />
+    <Card className="border p-3 shadow-none sm:p-4">
+      <div className="flex items-center gap-2.5">
+        <div className={`rounded-lg p-2 ${iconBgColor}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
-        <div>
-          <p className="text-xl sm:text-2xl font-semibold text-foreground">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground sm:text-base">
             {value}
           </p>
           <p className="text-xs text-muted-foreground">{label}</p>

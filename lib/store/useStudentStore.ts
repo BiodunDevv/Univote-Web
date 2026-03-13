@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getStoredToken } from "./useAuthStore";
+import { getStoredToken, useAuthStore } from "./useAuthStore";
 
 interface Student {
   _id: string;
@@ -62,10 +62,40 @@ interface VotingHistory {
   status: string;
 }
 
+interface StudentsOverview {
+  totals: {
+    total_students: number;
+    active_students: number;
+    inactive_students: number;
+    with_facial_data: number;
+  };
+  colleges: Array<{
+    id: string;
+    name: string;
+    code: string;
+    departments: Array<{
+      id: string;
+      name: string;
+      code: string;
+    }>;
+  }>;
+  by_college: Array<{
+    college: string;
+    total: number;
+    active: number;
+  }>;
+  by_department: Array<{
+    college: string;
+    department: string;
+    total: number;
+  }>;
+}
+
 interface StudentState {
   students: Student[];
   currentStudent: Student | null;
   votingHistory: VotingHistory[];
+  overview: StudentsOverview | null;
   loading: boolean;
   error: string | null;
   pagination: {
@@ -84,13 +114,17 @@ interface StudentState {
   fetchStudents: (
     token?: string,
     params?: {
+      college_id?: string;
+      department_id?: string;
       college?: string;
       department?: string;
       level?: string;
       search?: string;
+      is_active?: boolean;
+      has_facial_data?: boolean;
       page?: number;
       limit?: number;
-    }
+    },
   ) => Promise<void>;
 
   fetchStudentsByCollege: (
@@ -102,7 +136,7 @@ interface StudentState {
       search?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ) => Promise<void>;
 
   fetchStudentsByDepartment: (
@@ -114,10 +148,11 @@ interface StudentState {
       search?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ) => Promise<void>;
 
   fetchStudentById: (token?: string, id?: string) => Promise<void>;
+  fetchStudentsOverview: (token?: string) => Promise<void>;
 
   uploadStudents: (
     token: string,
@@ -126,21 +161,24 @@ interface StudentState {
       college?: string;
       department?: string;
       level?: string;
-    }
+    },
   ) => Promise<UploadStudentsResponse>;
 
   updateStudent: (
     token: string,
     id: string,
-    data: Partial<Student>
+    data: Partial<Student>,
   ) => Promise<{ warning?: string }>;
 
   deleteStudent: (token?: string, id?: string, soft?: boolean) => Promise<void>;
 
+  activateStudent: (token?: string, id?: string) => Promise<void>;
+  deactivateStudent: (token?: string, id?: string) => Promise<void>;
+
   bulkUpdateStudents: (
     token: string,
     studentIds: string[],
-    updates: Partial<Student>
+    updates: Partial<Student>,
   ) => Promise<void>;
 
   clearError: () => void;
@@ -148,10 +186,28 @@ interface StudentState {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+const handleAuthExpiry = () => {
+  if (typeof window === "undefined") return;
+
+  useAuthStore.getState().logout();
+  const ref = `${window.location.pathname}${window.location.search}`;
+  window.location.href = `/auth/signin?ref=${encodeURIComponent(ref)}`;
+};
+
+const getErrorMessage = async (response: Response, fallback: string) => {
+  try {
+    const errorData = await response.json();
+    return errorData.error || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const useStudentStore = create<StudentState>((set) => ({
   students: [],
   currentStudent: null,
   votingHistory: [],
+  overview: null,
   loading: false,
   error: null,
   pagination: {
@@ -165,13 +221,17 @@ export const useStudentStore = create<StudentState>((set) => ({
   fetchStudents: async (
     token?: string,
     params?: {
+      college_id?: string;
+      department_id?: string;
       college?: string;
       department?: string;
       level?: string;
       search?: string;
+      is_active?: boolean;
+      has_facial_data?: boolean;
       page?: number;
       limit?: number;
-    }
+    },
   ) => {
     const authToken = token || getStoredToken();
     if (!authToken) return;
@@ -179,11 +239,19 @@ export const useStudentStore = create<StudentState>((set) => ({
     set({ loading: true, error: null });
     try {
       const queryParams = new URLSearchParams();
+      if (params?.college_id)
+        queryParams.append("college_id", params.college_id);
+      if (params?.department_id)
+        queryParams.append("department_id", params.department_id);
       if (params?.college) queryParams.append("college", params.college);
       if (params?.department)
         queryParams.append("department", params.department);
       if (params?.level) queryParams.append("level", params.level);
       if (params?.search) queryParams.append("search", params.search);
+      if (params?.is_active !== undefined)
+        queryParams.append("is_active", String(params.is_active));
+      if (params?.has_facial_data !== undefined)
+        queryParams.append("has_facial_data", String(params.has_facial_data));
       if (params?.page) queryParams.append("page", params.page.toString());
       if (params?.limit) queryParams.append("limit", params.limit.toString());
 
@@ -193,12 +261,18 @@ export const useStudentStore = create<StudentState>((set) => ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch students");
+        throw new Error(
+          await getErrorMessage(response, "Failed to fetch students"),
+        );
       }
 
       const data = await response.json();
@@ -231,7 +305,7 @@ export const useStudentStore = create<StudentState>((set) => ({
       search?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ) => {
     const authToken = token || getStoredToken();
     if (!authToken || !collegeId) return;
@@ -252,12 +326,18 @@ export const useStudentStore = create<StudentState>((set) => ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch students");
+        throw new Error(
+          await getErrorMessage(response, "Failed to fetch students"),
+        );
       }
 
       const data = await response.json();
@@ -289,7 +369,7 @@ export const useStudentStore = create<StudentState>((set) => ({
       search?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ) => {
     const authToken = token || getStoredToken();
     if (!authToken || !collegeId || !departmentId) return;
@@ -308,12 +388,18 @@ export const useStudentStore = create<StudentState>((set) => ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch students");
+        throw new Error(
+          await getErrorMessage(response, "Failed to fetch students"),
+        );
       }
 
       const data = await response.json();
@@ -348,9 +434,15 @@ export const useStudentStore = create<StudentState>((set) => ({
         },
       });
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch student");
+        throw new Error(
+          await getErrorMessage(response, "Failed to fetch student"),
+        );
       }
 
       const data = await response.json();
@@ -364,6 +456,42 @@ export const useStudentStore = create<StudentState>((set) => ({
         loading: false,
         error:
           error instanceof Error ? error.message : "Failed to fetch student",
+      });
+    }
+  },
+
+  fetchStudentsOverview: async (token?: string) => {
+    const authToken = token || getStoredToken();
+    if (!authToken) return;
+
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${API_URL}/api/admin/students/overview`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          await getErrorMessage(response, "Failed to fetch students overview"),
+        );
+      }
+
+      const data = await response.json();
+      set({ overview: data, loading: false });
+    } catch (error) {
+      set({
+        loading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch students overview",
       });
     }
   },
@@ -385,9 +513,15 @@ export const useStudentStore = create<StudentState>((set) => ({
         }),
       });
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to upload students");
+        throw new Error(
+          await getErrorMessage(response, "Failed to upload students"),
+        );
       }
 
       const data = await response.json();
@@ -415,9 +549,15 @@ export const useStudentStore = create<StudentState>((set) => ({
         body: JSON.stringify(data),
       });
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update student");
+        throw new Error(
+          await getErrorMessage(response, "Failed to update student"),
+        );
       }
 
       const result = await response.json();
@@ -455,12 +595,18 @@ export const useStudentStore = create<StudentState>((set) => ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete student");
+        throw new Error(
+          await getErrorMessage(response, "Failed to delete student"),
+        );
       }
 
       set({ loading: false });
@@ -469,6 +615,90 @@ export const useStudentStore = create<StudentState>((set) => ({
         loading: false,
         error:
           error instanceof Error ? error.message : "Failed to delete student",
+      });
+      throw error;
+    }
+  },
+
+  activateStudent: async (token?: string, id?: string) => {
+    const authToken = token || getStoredToken();
+    if (!authToken || !id) {
+      set({ error: "Authentication required", loading: false });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/students/${id}/activate`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          await getErrorMessage(response, "Failed to activate student"),
+        );
+      }
+
+      set({ loading: false });
+    } catch (error) {
+      set({
+        loading: false,
+        error:
+          error instanceof Error ? error.message : "Failed to activate student",
+      });
+      throw error;
+    }
+  },
+
+  deactivateStudent: async (token?: string, id?: string) => {
+    const authToken = token || getStoredToken();
+    if (!authToken || !id) {
+      set({ error: "Authentication required", loading: false });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/students/${id}/deactivate`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          await getErrorMessage(response, "Failed to deactivate student"),
+        );
+      }
+
+      set({ loading: false });
+    } catch (error) {
+      set({
+        loading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to deactivate student",
       });
       throw error;
     }
@@ -489,12 +719,18 @@ export const useStudentStore = create<StudentState>((set) => ({
             student_ids: studentIds,
             updates,
           }),
-        }
+        },
       );
 
+      if (response.status === 401) {
+        handleAuthExpiry();
+        throw new Error("Session expired");
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to bulk update students");
+        throw new Error(
+          await getErrorMessage(response, "Failed to bulk update students"),
+        );
       }
 
       set({ loading: false });

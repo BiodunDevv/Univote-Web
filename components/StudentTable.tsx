@@ -147,7 +147,7 @@ export function StudentTable({
                         size="icon"
                         onClick={() =>
                           router.push(
-                            `/dashboard/colleges/${collegeId}/students/${student._id}`
+                            `/dashboard/colleges/${collegeId}/students/${student._id}`,
                           )
                         }
                         title="View Details"
@@ -160,7 +160,7 @@ export function StudentTable({
                         size="icon"
                         onClick={() =>
                           router.push(
-                            `/dashboard/colleges/${collegeId}/students/${student._id}/edit`
+                            `/dashboard/colleges/${collegeId}/students/${student._id}/edit`,
                           )
                         }
                         title="Edit Student"
@@ -175,7 +175,7 @@ export function StudentTable({
                           onDelete(
                             student._id,
                             student.full_name,
-                            student.matric_no
+                            student.matric_no,
                           )
                         }
                         title="Delete Student"

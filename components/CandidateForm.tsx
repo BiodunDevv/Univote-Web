@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, Plus, Upload, X } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,7 @@ interface CandidateFormProps {
   onUpdateCandidate: (
     index: number,
     field: keyof Candidate,
-    value: string | boolean
+    value: string | boolean,
   ) => void;
   onUploadImage: (index: number, file: File) => Promise<void>;
 }
@@ -194,10 +195,7 @@ export default function CandidateForm({
                     className="h-8 text-xs w-full"
                   >
                     {candidate.uploading ? (
-                      <>
-                        <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                        Uploading...
-                      </>
+                      <LoadingButtonContent label="Uploading..." />
                     ) : (
                       <>
                         <Upload className="w-3 h-3 mr-1.5" />

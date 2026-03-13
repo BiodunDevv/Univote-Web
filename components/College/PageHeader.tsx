@@ -21,23 +21,23 @@ export function PageHeader({
   actions,
   badges,
   hideTitleOnMobile = false,
-  showSidebarToggle = true,
+  showSidebarToggle = false,
 }: PageHeaderProps) {
   const { toggleSidebar, open } = useSidebar();
 
   return (
-    <div className="md:sticky md:top-0 z-10 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="rounded-xl border bg-card/60 p-4 shadow-none">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-2">
             {showSidebarToggle && !open && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleSidebar}
-                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
+                className="h-8 w-8 shrink-0"
               >
-                <Menu className="w-4 h-4" />
+                <Menu className="h-4 w-4" />
               </Button>
             )}
             {onBack && (
@@ -45,15 +45,15 @@ export function PageHeader({
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="rounded-full hover:bg-accent h-8 w-8 shrink-0"
+                className="h-8 w-8 shrink-0"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1
-                  className={`text-sm md:text-lg font-semibold text-foreground truncate ${
+                  className={`truncate text-xl font-semibold text-foreground ${
                     hideTitleOnMobile ? "hidden md:block" : ""
                   }`}
                 >
@@ -62,14 +62,14 @@ export function PageHeader({
                 {badges}
               </div>
               {subtitle && (
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 sm:line-clamp-2">
-                  {subtitle}
-                </p>
+                <p className="text-sm text-muted-foreground">{subtitle}</p>
               )}
             </div>
           </div>
           {actions && (
-            <div className="flex flex-row gap-2 shrink-0">{actions}</div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {actions}
+            </div>
           )}
         </div>
       </div>

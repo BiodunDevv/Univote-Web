@@ -3,11 +3,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { HeroIllustration } from "../HeroIllustration";
 
 export function HeroSection() {
   const { token } = useAuthStore();
-  const isSignedIn = !!token;
+  const { token: studentToken } = useStudentAuthStore();
+  const primaryHref = token
+    ? "/dashboard"
+    : studentToken
+      ? "/students/home"
+      : "/students/login";
+  const primaryLabel = token
+    ? "Open Admin Dashboard"
+    : studentToken
+      ? "Open Student Portal"
+      : "Student Login";
 
   return (
     <section className="relative pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 overflow-hidden">
@@ -25,15 +36,25 @@ export function HeroSection() {
               technology.
             </p>
 
-            <Button
-              size="lg"
-              className="rounded-xl px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base bg-foreground text-background hover:bg-foreground/90 font-medium transition-all duration-200 hover:scale-[1.02]"
-              asChild
-            >
-              <Link href={isSignedIn ? "/dashboard" : "/auth/signin"}>
-                {isSignedIn ? "Go to Dashboard" : "Login Admin"}
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                size="lg"
+                className="rounded-xl px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base bg-foreground text-background hover:bg-foreground/90 font-medium transition-all duration-200 hover:scale-[1.02]"
+                asChild
+              >
+                <Link href={primaryHref}>{primaryLabel}</Link>
+              </Button>
+              {!token && !studentToken ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-xl px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base font-medium"
+                  asChild
+                >
+                  <Link href="/auth/signin">Admin Login</Link>
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           {/* Right Content - Hero Illustration */}

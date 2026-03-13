@@ -20,11 +20,10 @@ export const Logo = ({ className }: { className?: string }) => {
   );
 };
 
-export const LogoIcon = () => {
+export const LogoIcon = ({ className }: { className?: string }) => {
   return (
     <svg
-      width="32"
-      height="32"
+      className={cn("h-8 w-8", className)}
       viewBox="0 0 80 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

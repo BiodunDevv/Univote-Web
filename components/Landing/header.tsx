@@ -5,7 +5,8 @@ import { Logo } from "@/components/logo";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import React, { useEffect, useState } from "react";
+import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { AnimatedThemeToggler } from "../theme-toggler";
 import {
   Sheet,
@@ -25,14 +26,18 @@ const menuItems = [
 export const HeroHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const { token } = useAuthStore();
-  const isSignedIn = !!token;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  const { token: studentToken } = useStudentAuthStore();
+  const activeHref = token
+    ? "/dashboard"
+    : studentToken
+      ? "/students/home"
+      : null;
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -87,7 +92,7 @@ export const HeroHeader = () => {
                 <div className="hidden md:inline-flex h-9 w-20 bg-muted animate-pulse rounded-md"></div>
                 <div className="hidden md:inline-flex h-9 w-9 bg-muted animate-pulse rounded-md"></div>
               </>
-            ) : isSignedIn ? (
+            ) : activeHref ? (
               // Authenticated user menu
               <Button
                 variant="outline"
@@ -95,20 +100,28 @@ export const HeroHeader = () => {
                 className="hidden transition-transform md:inline-flex"
                 size="sm"
               >
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href={activeHref}>
+                  {token ? "Admin Dashboard" : "Student Portal"}
+                </Link>
               </Button>
             ) : (
               // Non-authenticated user buttons
               <>
+                <Button
+                  asChild
+                  className="hidden transition-transform md:inline-flex"
+                  size="sm"
+                >
+                  <Link href="/students/login">Student Login</Link>
+                </Button>
                 <Button
                   variant="outline"
                   asChild
                   className="hidden transition-transform md:inline-flex"
                   size="sm"
                 >
-                  <Link href="/auth/signin">Login Admin</Link>
+                  <Link href="/auth/signin">Admin Login</Link>
                 </Button>
-               
               </>
             )}
 
@@ -166,7 +179,7 @@ export const HeroHeader = () => {
                         <div className="h-12 w-full bg-muted animate-pulse rounded-md"></div>
                         <div className="h-12 w-full bg-muted animate-pulse rounded-md"></div>
                       </>
-                    ) : isSignedIn ? (
+                    ) : activeHref ? (
                       // Authenticated mobile menu
                       <Button
                         variant="default"
@@ -174,18 +187,27 @@ export const HeroHeader = () => {
                         className="w-full py-3 text-base shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95"
                         onClick={handleLinkClick}
                       >
-                        <Link href="/dashboard">Dashboard</Link>
+                        <Link href={activeHref}>
+                          {token ? "Admin Dashboard" : "Student Portal"}
+                        </Link>
                       </Button>
                     ) : (
                       // Non-authenticated mobile menu
                       <>
-                       
                         <Button
                           asChild
                           className="w-full py-3 text-base "
                           onClick={handleLinkClick}
                         >
-                          <Link href="/auth/signin">Login Admin</Link>
+                          <Link href="/students/login">Student Login</Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          asChild
+                          className="w-full py-3 text-base"
+                          onClick={handleLinkClick}
+                        >
+                          <Link href="/auth/signin">Admin Login</Link>
                         </Button>
                       </>
                     )}

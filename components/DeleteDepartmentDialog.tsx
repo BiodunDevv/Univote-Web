@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,10 +100,7 @@ export function DeleteDepartmentDialog({
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Deleting...
-              </>
+              <LoadingButtonContent label="Deleting..." />
             ) : (
               "Delete Department"
             )}

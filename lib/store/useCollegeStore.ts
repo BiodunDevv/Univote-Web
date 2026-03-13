@@ -72,6 +72,26 @@ interface CollegeStatistics {
   }>;
 }
 
+interface CollegeDetailStatistics {
+  college_id: string;
+  college_name: string;
+  college_code: string;
+  total_departments: number;
+  total_students: number;
+  active_students: number;
+  inactive_students: number;
+  departments: Array<{
+    department_id: string;
+    department_name: string;
+    department_code: string;
+    is_active: boolean;
+    total_students: number;
+    active_students: number;
+    inactive_students: number;
+    level_distribution: Record<string, number>;
+  }>;
+}
+
 interface StudentStatisticsByCollege {
   college: {
     id: string;
@@ -99,6 +119,7 @@ interface CollegeState {
   colleges: College[];
   currentCollege: College | null;
   statistics: CollegeStatistics | null;
+  collegeDetailStats: CollegeDetailStatistics | null;
   collegeStudentStats: StudentStatisticsByCollege | null;
   loading: boolean;
   error: string | null;
@@ -107,15 +128,16 @@ interface CollegeState {
   fetchColleges: (token?: string, isActive?: boolean) => Promise<void>;
   fetchCollegeById: (token?: string, id?: string) => Promise<void>;
   fetchStatistics: (token?: string) => Promise<void>;
+  fetchCollegeDetailStats: (token?: string, id?: string) => Promise<void>;
   fetchCollegeStudentStatistics: (
     token?: string,
-    collegeId?: string
+    collegeId?: string,
   ) => Promise<void>;
   createCollege: (token: string, data: CollegeFormData) => Promise<College>;
   updateCollege: (
     token: string,
     id: string,
-    data: Partial<CollegeFormData>
+    data: Partial<CollegeFormData>,
   ) => Promise<College>;
   deleteCollege: (token: string, id: string, force?: boolean) => Promise<void>;
 
@@ -123,24 +145,24 @@ interface CollegeState {
   addDepartment: (
     token: string,
     collegeId: string,
-    data: DepartmentFormData
+    data: DepartmentFormData,
   ) => Promise<Department>;
   updateDepartment: (
     token: string,
     collegeId: string,
     deptId: string,
-    data: Partial<DepartmentFormData>
+    data: Partial<DepartmentFormData>,
   ) => Promise<Department>;
   deleteDepartment: (
     token: string,
     collegeId: string,
     deptId: string,
-    force?: boolean
+    force?: boolean,
   ) => Promise<void>;
   searchDepartments: (
     token: string,
     query: string,
-    collegeId?: string
+    collegeId?: string,
   ) => Promise<SearchResult[]>;
 
   clearError: () => void;
@@ -152,6 +174,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
   colleges: [],
   currentCollege: null,
   statistics: null,
+  collegeDetailStats: null,
   collegeStudentStats: null,
   loading: false,
   error: null,
@@ -240,6 +263,38 @@ export const useCollegeStore = create<CollegeState>((set) => ({
     }
   },
 
+  fetchCollegeDetailStats: async (token?: string, id?: string) => {
+    const authToken = token || getStoredToken();
+    if (!authToken || !id) return;
+
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/colleges/${id}/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to fetch college detail statistics",
+        );
+      }
+
+      const data = await response.json();
+      set({ collegeDetailStats: data, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : "An error occurred",
+        loading: false,
+      });
+    }
+  },
+
   createCollege: async (token: string, data: CollegeFormData) => {
     set({ loading: true, error: null });
     try {
@@ -275,7 +330,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
   updateCollege: async (
     token: string,
     id: string,
-    data: Partial<CollegeFormData>
+    data: Partial<CollegeFormData>,
   ) => {
     set({ loading: true, error: null });
     try {
@@ -296,7 +351,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
       const result = await response.json();
       set((state) => ({
         colleges: state.colleges.map((c) =>
-          c._id === id ? result.college : c
+          c._id === id ? result.college : c,
         ),
         currentCollege:
           state.currentCollege?._id === id
@@ -324,7 +379,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -348,7 +403,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
   addDepartment: async (
     token: string,
     collegeId: string,
-    data: DepartmentFormData
+    data: DepartmentFormData,
   ) => {
     set({ loading: true, error: null });
     try {
@@ -361,7 +416,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -374,7 +429,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
         colleges: state.colleges.map((c) =>
           c._id === collegeId
             ? { ...c, departments: [...c.departments, result.department] }
-            : c
+            : c,
         ),
         loading: false,
       }));
@@ -392,7 +447,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
     token: string,
     collegeId: string,
     deptId: string,
-    data: Partial<DepartmentFormData>
+    data: Partial<DepartmentFormData>,
   ) => {
     set({ loading: true, error: null });
     try {
@@ -405,7 +460,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -420,10 +475,10 @@ export const useCollegeStore = create<CollegeState>((set) => ({
             ? {
                 ...c,
                 departments: c.departments.map((d) =>
-                  d._id === deptId ? result.department : d
+                  d._id === deptId ? result.department : d,
                 ),
               }
-            : c
+            : c,
         ),
         loading: false,
       }));
@@ -441,7 +496,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
     token: string,
     collegeId: string,
     deptId: string,
-    force = false
+    force = false,
   ) => {
     set({ loading: true, error: null });
     try {
@@ -452,7 +507,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -467,7 +522,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
                 ...c,
                 departments: c.departments.filter((d) => d._id !== deptId),
               }
-            : c
+            : c,
         ),
         loading: false,
       }));
@@ -483,7 +538,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
   searchDepartments: async (
     token: string,
     query: string,
-    collegeId?: string
+    collegeId?: string,
   ) => {
     set({ loading: true, error: null });
     try {
@@ -496,7 +551,7 @@ export const useCollegeStore = create<CollegeState>((set) => ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -528,13 +583,13 @@ export const useCollegeStore = create<CollegeState>((set) => ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Failed to fetch college student statistics"
+          errorData.error || "Failed to fetch college student statistics",
         );
       }
 
