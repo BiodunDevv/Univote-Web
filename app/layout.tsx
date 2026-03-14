@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const spaceGrotesk = Space_Grotesk({
@@ -36,7 +36,7 @@ export default function RootLayout({
           <QueryProvider>
             <TooltipProvider>
               {children}
-              <Toaster richColors position="top-right" />
+              <Toaster position="top-center" />
             </TooltipProvider>
           </QueryProvider>
         </ThemeProvider>

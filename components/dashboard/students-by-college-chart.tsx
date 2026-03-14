@@ -13,22 +13,26 @@ import { StudentsByCollegeItem } from "@/components/dashboard/shared/types";
 type StudentsByCollegeChartProps = {
   data: StudentsByCollegeItem[];
   chartConfig: ChartConfig;
+  participantPluralLabel?: string;
+  dimensionLabel?: string;
 };
 
 export function StudentsByCollegeChart({
   data,
   chartConfig,
+  participantPluralLabel = "Participants",
+  dimensionLabel = "College",
 }: StudentsByCollegeChartProps) {
   return (
     <Card className="border shadow-none lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-base">Students by College</CardTitle>
+        <CardTitle className="text-base">{participantPluralLabel} by {dimensionLabel}</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
           <div className="flex h-[260px] items-center justify-center rounded-md border border-dashed">
             <p className="text-sm text-muted-foreground">
-              No college distribution data
+              No {dimensionLabel.toLowerCase()} distribution data
             </p>
           </div>
         ) : (
@@ -53,7 +57,7 @@ export function StudentsByCollegeChart({
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{college.college}</p>
                     <p className="text-muted-foreground">
-                      {college.students} students
+                      {college.students} {participantPluralLabel.toLowerCase()}
                     </p>
                   </div>
                 </div>

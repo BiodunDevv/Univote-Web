@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,9 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { AlertCircle, Building2, CheckCircle2, ArrowLeft } from "lucide-react";
 
 export function ForgotPasswordForm({
   className,
@@ -26,6 +27,8 @@ export function ForgotPasswordForm({
   const { forgotPassword, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
+  const hostTenantSlug = useMemo(() => deriveTenantSlugFromHostname(), []);
+  const backToLoginHref = "/auth/signin";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +36,12 @@ export function ForgotPasswordForm({
     setSuccess(false);
 
     try {
-      await forgotPassword(email);
+      await forgotPassword(email, hostTenantSlug || null);
       setSuccess(true);
       // Redirect to reset password page after 2 seconds
       setTimeout(() => {
-        router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+        const params = new URLSearchParams({ email });
+        router.push(`/auth/reset-password?${params.toString()}`);
       }, 2000);
     } catch {
       // Error is handled by the store
@@ -65,6 +69,24 @@ export function ForgotPasswordForm({
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
+              {hostTenantSlug ? (
+                <Alert>
+                  <Building2 className="h-4 w-4" />
+                  <AlertDescription>
+                    Tenant workspace detected:{" "}
+                    <span className="font-medium">{hostTenantSlug}</span>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert>
+                  <Building2 className="h-4 w-4" />
+                  <AlertDescription>
+                    Root recovery is enabled. Univote will restore access using your
+                    admin account and route you into the correct workspace after sign in.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -109,7 +131,7 @@ export function ForgotPasswordForm({
                 <div className="text-center text-sm">
                   Remember your password?{" "}
                   <Link
-                    href="/auth/signin"
+                    href={backToLoginHref}
                     className="underline underline-offset-4 hover:text-primary"
                   >
                     Back to login

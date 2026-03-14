@@ -1,7 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,29 +11,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
 export default function StudentCreatePasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(
+    typeof window === "undefined" ? "" : window.location.search,
+  );
   const {
     firstLoginToken,
+    token,
+    student,
     hasHydrated,
     isLoading,
     error,
     clearError,
     changePassword,
+    tenant,
   } = useStudentAuthStore();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const ref = searchParams.get("ref") || "/students/home";
+  const labels = getTenantParticipantLabels(tenant);
 
   useEffect(() => {
-    if (hasHydrated && !firstLoginToken) {
+    if (hasHydrated && !firstLoginToken && !(token && student?.first_login)) {
       router.replace("/students/login");
     }
-  }, [firstLoginToken, hasHydrated, router]);
+  }, [firstLoginToken, hasHydrated, router, student?.first_login, token]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -69,7 +78,7 @@ export default function StudentCreatePasswordPage() {
               <div>
                 <CardTitle>Create a new password</CardTitle>
                 <CardDescription>
-                  Secure your account before entering the student portal.
+                  Secure your account before entering the {labels.singular.toLowerCase()} portal.
                 </CardDescription>
               </div>
             </div>

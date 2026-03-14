@@ -18,29 +18,35 @@ import { StudentsByLevelItem } from "@/components/dashboard/shared/types";
 
 type StudentsByLevelChartProps = {
   data: StudentsByLevelItem[];
+  participantPluralLabel?: string;
+  dimensionLabel?: string;
 };
 
 const chartConfig = {
   students: {
-    label: "Students",
+    label: "Participants",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
-export function StudentsByLevelChart({ data }: StudentsByLevelChartProps) {
+export function StudentsByLevelChart({
+  data,
+  participantPluralLabel = "Participants",
+  dimensionLabel = "Level",
+}: StudentsByLevelChartProps) {
   return (
     <Card className="border shadow-none lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-base">Students by Level</CardTitle>
+        <CardTitle className="text-base">{participantPluralLabel} by {dimensionLabel}</CardTitle>
         <CardDescription>
-          Student distribution across academic levels
+          {participantPluralLabel} distribution across configured {dimensionLabel.toLowerCase()} groupings
         </CardDescription>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
           <div className="flex h-[280px] items-center justify-center rounded-md border border-dashed">
             <p className="text-sm text-muted-foreground">
-              No level data available
+              No {dimensionLabel.toLowerCase()} data available
             </p>
           </div>
         ) : (
@@ -67,9 +73,9 @@ export function StudentsByLevelChart({ data }: StudentsByLevelChartProps) {
                 content={
                   <ChartTooltipContent
                     indicator="line"
-                    labelFormatter={(label) => `Level ${label}`}
+                    labelFormatter={(label) => `${dimensionLabel} ${label}`}
                     formatter={(value) =>
-                      `${Number(value).toLocaleString()} students`
+                      `${Number(value).toLocaleString()} ${participantPluralLabel.toLowerCase()}`
                     }
                   />
                 }

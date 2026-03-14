@@ -1,23 +1,88 @@
 "use client";
 
-import { useEffect } from "react";
+export const dynamic = "force-dynamic";
+
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/Auth/signin-form";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+import { type AuthSessionData, useAuthStore } from "@/lib/store/useAuthStore";
+import {
+  buildTenantAppUrl,
+  buildTenantAuthAcceptUrl,
+  isTenantHost,
+} from "@/lib/tenant";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 
-export default function Page() {
+function SignInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token, hasHydrated } = useAuthStore();
+  const {
+    token,
+    hasHydrated,
+    admin,
+    tenant,
+    membership,
+    organizations,
+    logout,
+  } = useAuthStore();
 
   useEffect(() => {
     if (hasHydrated && token) {
+      if (!admin) {
+        return;
+      }
+
       const ref = searchParams.get("ref");
-      const redirectTarget = ref && ref.startsWith("/") ? ref : "/dashboard";
+      const redirectTarget =
+        ref && ref.startsWith("/")
+          ? ref
+          : admin.role === "super_admin"
+            ? "/super-admin"
+            : "/dashboard";
+
+      if (admin.role !== "super_admin") {
+        const tenantSlug = tenant?.slug;
+        if (tenantSlug) {
+          const tenantTarget = redirectTarget.startsWith("/dashboard")
+            ? redirectTarget
+            : "/dashboard";
+
+          if (!isTenantHost(tenantSlug)) {
+            const handoffSession: AuthSessionData = {
+              token,
+              admin,
+              tenant,
+              membership,
+              organizations,
+            };
+            const handoffUrl = buildTenantAuthAcceptUrl(
+              tenantSlug,
+              tenantTarget,
+              handoffSession,
+            );
+            logout();
+            window.location.replace(handoffUrl);
+            return;
+          }
+
+          window.location.replace(buildTenantAppUrl(tenantSlug, tenantTarget));
+          return;
+        }
+      }
+
       router.replace(redirectTarget);
     }
-  }, [token, router, hasHydrated, searchParams]);
+  }, [
+    admin,
+    hasHydrated,
+    logout,
+    membership,
+    organizations,
+    router,
+    searchParams,
+    tenant,
+    token,
+  ]);
 
   if (!hasHydrated || token) {
     return (
@@ -38,5 +103,24 @@ export default function Page() {
         <LoginForm />
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <ChangingLoadingState
+          fullHeight
+          messages={[
+            "Checking your session...",
+            "Verifying credentials...",
+            "Preparing sign-in...",
+          ]}
+        />
+      }
+    >
+      <SignInPageContent />
+    </Suspense>
   );
 }

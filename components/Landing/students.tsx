@@ -3,10 +3,10 @@ import Image from "next/image";
 
 export default function ContentSection() {
   return (
-    <section id="students" className="py-16 md:py-32">
-      <div className="mx-auto max-w-5xl space-y-8 px-6 md:space-y-16">
-        <h2 className="relative z-10 max-w-xl text-3xl font-medium lg:text-5xl">
-          Designed for Students
+    <section id="students" className="py-16 md:py-24">
+      <div className="mx-auto max-w-5xl space-y-6 px-2 sm:px-6 md:space-y-8">
+        <h2 className="relative z-10 max-w-xl text-lg font-semibold sm:text-xl">
+          Built for every participant
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
           <div className="relative mt-6 sm:mt-0 order-2 sm:order-1">
@@ -14,7 +14,7 @@ export default function ContentSection() {
               <Image
                 src="https://media.istockphoto.com/id/2181480843/photo/the-smartphone-screen-shows-a-vote-application-with-green-check-mark-and-red-cross-icon.webp?a=1&b=1&s=612x612&w=0&k=20&c=l4fXd8cZxO9v908BIJtP4GD-lbP1MOXOzVtZLDw41c8="
                 className="rounded-[15px] object-cover w-full h-full"
-                alt="Students voting on campus"
+                alt="Participants voting through the portal"
                 width={800}
                 height={600}
               />
@@ -30,8 +30,9 @@ export default function ContentSection() {
               reliable.
             </p>
             <p className="text-muted-foreground">
-              Univote makes campus voting simple and accessible for everyone.
-              Your voice matters, and we make it easy to be heard.
+              Univote makes secure participation simple and accessible for every
+              organization. Every voice matters, and the workflow stays fast and
+              clear from sign-in to final results.
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-6 sm:gap-4">

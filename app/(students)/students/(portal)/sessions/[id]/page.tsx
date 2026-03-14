@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AlertCircle, CalendarDays, MapPin, Vote } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { formatDateTime } from "@/components/students-portal/utils";
+import {
+  PortalEmptyState,
+  PortalHero,
+  PortalPage,
+  PortalSectionHeader,
+} from "@/components/students/portal/portal-page";
+import { formatDateTime } from "@/components/students/portal/utils";
 import { useStudentSessionDetailQuery } from "@/lib/queries/student";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +38,10 @@ export default function StudentSessionDetailPage() {
 
   if (!session || error) {
     return (
-      <Card className="border shadow-none">
-        <CardContent className="p-6 text-sm text-muted-foreground">
-          {(error as Error | undefined)?.message || "Session could not be loaded."}
-        </CardContent>
-      </Card>
+      <PortalEmptyState
+        title="Session unavailable"
+        description={(error as Error | undefined)?.message || "Session could not be loaded."}
+      />
     );
   }
 
@@ -57,30 +62,24 @@ export default function StudentSessionDetailPage() {
           };
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{session.status}</Badge>
-              <Badge variant="outline">
-                {session.has_voted ? "Vote submitted" : "Pending vote"}
-              </Badge>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-                {session.title}
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                {session.description || "No session description provided."}
-              </p>
-            </div>
+    <PortalPage>
+      <PortalHero
+        eyebrow={
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="text-[11px]">{session.status}</Badge>
+            <Badge variant="outline" className="text-[11px]">
+              {session.has_voted ? "Vote submitted" : "Pending vote"}
+            </Badge>
           </div>
-          <Button asChild>
+        }
+        title={session.title}
+        description={session.description || "No session description provided."}
+        actions={
+          <Button asChild size="sm">
             <Link href={primaryAction.href}>{primaryAction.label}</Link>
           </Button>
-        </div>
-      </section>
+        }
+      />
 
       {!session.eligible ? (
         <Alert variant="destructive">
@@ -91,35 +90,35 @@ export default function StudentSessionDetailPage() {
         </Alert>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-3">
         <Card className="border shadow-none">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-3">
             <CalendarDays className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">Start</p>
-              <p className="font-medium text-foreground">
+              <p className="text-xs text-muted-foreground">Start</p>
+              <p className="text-sm font-medium text-foreground">
                 {formatDateTime(session.start_time)}
               </p>
             </div>
           </CardContent>
         </Card>
         <Card className="border shadow-none">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-3">
             <CalendarDays className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">End</p>
-              <p className="font-medium text-foreground">
+              <p className="text-xs text-muted-foreground">End</p>
+              <p className="text-sm font-medium text-foreground">
                 {formatDateTime(session.end_time)}
               </p>
             </div>
           </CardContent>
         </Card>
         <Card className="border shadow-none">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-3">
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">Voting location</p>
-              <p className="font-medium text-foreground">
+              <p className="text-xs text-muted-foreground">Voting location</p>
+              <p className="text-sm font-medium text-foreground">
                 {session.is_off_campus_allowed
                   ? "Off-campus voting enabled"
                   : "Geofence enforced"}
@@ -129,28 +128,26 @@ export default function StudentSessionDetailPage() {
         </Card>
       </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Ballot preview</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Browse the candidates grouped by position before you cast a vote.
-          </p>
-        </div>
+      <section className="space-y-3">
+        <PortalSectionHeader
+          title="Ballot preview"
+          description="Browse the candidates grouped by position before you cast a vote."
+        />
 
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {Object.entries(session.candidates_by_position).map(([position, candidates]) => (
             <Card key={position} className="border shadow-none">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">{position}</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{position}</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-2">
+              <CardContent className="grid gap-2">
                 {candidates.map((candidate) => (
                   <div
                     key={candidate.id}
-                    className="rounded-2xl border bg-muted/20 p-4"
+                    className="rounded-2xl border bg-muted/20 p-3"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="h-14 w-14 overflow-hidden rounded-2xl border bg-muted">
+                      <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-muted">
                         {candidate.photo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -161,7 +158,7 @@ export default function StudentSessionDetailPage() {
                         ) : null}
                       </div>
                       <div className="space-y-1">
-                        <p className="font-semibold text-foreground">{candidate.name}</p>
+                        <p className="text-sm font-semibold text-foreground">{candidate.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {candidate.bio || "No biography submitted."}
                         </p>
@@ -179,6 +176,6 @@ export default function StudentSessionDetailPage() {
           ))}
         </div>
       </section>
-    </div>
+    </PortalPage>
   );
 }

@@ -3,6 +3,10 @@ export type DashboardOverview = {
   active_sessions: number;
   total_colleges: number;
   total_departments: number;
+  participation_rate?: number;
+  total_votes?: number;
+  avg_votes_per_session?: number;
+  new_students_7days?: number;
 };
 
 export type DashboardRecentSession = {
@@ -14,7 +18,12 @@ export type DashboardRecentSession = {
 };
 
 export type DashboardTopVoter = {
-  matric_no: string;
+  matric_no?: string | null;
+  member_id?: string | null;
+  employee_id?: string | null;
+  username?: string | null;
+  email?: string | null;
+  display_identifier?: string | null;
   full_name: string;
   votes_cast: number;
 };

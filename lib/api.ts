@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getResolvedTenantSlug } from "@/lib/tenant";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -24,6 +25,11 @@ api.interceptors.request.use((config) => {
       } catch (error) {
         console.error("Error parsing auth storage:", error);
       }
+    }
+
+    const tenantSlug = getResolvedTenantSlug();
+    if (tenantSlug && !config.headers["X-Tenant-Slug"]) {
+      config.headers["X-Tenant-Slug"] = tenantSlug;
     }
   }
   return config;

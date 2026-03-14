@@ -1,9 +1,13 @@
 "use client";
 
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { StudentSessionCard } from "@/components/students-portal/session-card";
+import {
+  PortalEmptyState,
+  PortalHero,
+  PortalPage,
+} from "@/components/students/portal/portal-page";
+import { StudentSessionCard } from "@/components/students/portal/session-card";
 import { useStudentSessionsQuery } from "@/lib/queries/student";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default function StudentVoteLandingPage() {
   const activeQuery = useStudentSessionsQuery({ status: "active" });
@@ -26,22 +30,20 @@ export default function StudentVoteLandingPage() {
   const sessions = activeSessions.length > 0 ? activeSessions : upcomingSessions;
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Vote</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Choose a session below to open its ballot. Active sessions are shown first.
-        </p>
-      </div>
+    <PortalPage>
+      <PortalHero
+        eyebrow="Vote"
+        title="Ready ballots"
+        description="Choose a session below to open its ballot. Active sessions are shown first."
+      />
 
       {sessions.length === 0 ? (
-        <Card className="border shadow-none">
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            There are no active or upcoming sessions available to vote in right now.
-          </CardContent>
-        </Card>
+        <PortalEmptyState
+          title="No ready ballots"
+          description="There are no active or upcoming sessions available to vote in right now."
+        />
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-3">
           {sessions.map((session) => (
             <StudentSessionCard
               key={session._id}
@@ -52,6 +54,6 @@ export default function StudentVoteLandingPage() {
           ))}
         </div>
       )}
-    </div>
+    </PortalPage>
   );
 }

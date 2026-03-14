@@ -3,7 +3,15 @@
 import { useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { ResetPasswordForm } from "@/components/Auth/reset-password-form";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+import {
+  type AuthSessionData,
+  useAuthStore,
+} from "@/lib/store/useAuthStore";
+import {
+  buildTenantAppUrl,
+  buildTenantAuthAcceptUrl,
+  isTenantHost,
+} from "@/lib/tenant";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 
 function ResetPasswordContent() {
@@ -25,13 +33,46 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const { token, hasHydrated } = useAuthStore();
+  const { token, hasHydrated, admin, tenant, membership, organizations, logout } =
+    useAuthStore();
 
   useEffect(() => {
     if (hasHydrated && token) {
+      if (admin && admin.role !== "super_admin" && tenant?.slug) {
+        if (!isTenantHost(tenant.slug)) {
+          const handoffSession: AuthSessionData = {
+            token,
+            admin,
+            tenant,
+            membership,
+            organizations,
+          };
+          const handoffUrl = buildTenantAuthAcceptUrl(
+            tenant.slug,
+            "/dashboard",
+            handoffSession,
+          );
+          logout();
+          window.location.replace(handoffUrl);
+          return;
+        }
+
+        window.location.replace(buildTenantAppUrl(tenant.slug, "/dashboard"));
+        return;
+      }
+
       router.replace("/dashboard");
     }
-  }, [token, router, hasHydrated]);
+  }, [
+    admin,
+    hasHydrated,
+    logout,
+    membership,
+    organizations,
+    router,
+    tenant,
+    token,
+  ]);
 
   if (!hasHydrated || token) {
     return (

@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { StudentSessionCard } from "@/components/students-portal/session-card";
+import {
+  PortalEmptyState,
+  PortalHero,
+  PortalPage,
+} from "@/components/students/portal/portal-page";
+import { StudentSessionCard } from "@/components/students/portal/session-card";
 import { useStudentSessionsQuery } from "@/lib/queries/student";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const statusTabs = [
@@ -35,37 +39,34 @@ export default function StudentSessionsPage() {
   const sessions = data?.sessions || [];
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Sessions</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Review every voting session that matches your profile and permissions.
-        </p>
-      </div>
+    <PortalPage>
+      <PortalHero
+        eyebrow="Sessions"
+        title="Your session workspace"
+        description="Review every voting session that matches your profile and permissions."
+      />
 
       <Tabs value={status} onValueChange={setStatus}>
         <TabsList variant="line" className="w-full justify-start overflow-x-auto">
           {statusTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="px-4">
+            <TabsTrigger key={tab.value} value={tab.value} className="px-3 text-xs">
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
         <TabsContent value={status} className="mt-4">
           {error ? (
-            <Card className="border shadow-none">
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                {(error as Error).message}
-              </CardContent>
-            </Card>
+            <PortalEmptyState
+              title="Sessions unavailable"
+              description={(error as Error).message}
+            />
           ) : sessions.length === 0 ? (
-            <Card className="border shadow-none">
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                No sessions matched this filter.
-              </CardContent>
-            </Card>
+            <PortalEmptyState
+              title="No sessions matched"
+              description="No sessions matched this filter."
+            />
           ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-3">
               {sessions.map((session) => (
                 <StudentSessionCard
                   key={session._id}
@@ -77,6 +78,6 @@ export default function StudentSessionsPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </PortalPage>
   );
 }

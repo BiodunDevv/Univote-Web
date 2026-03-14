@@ -1,6 +1,8 @@
 import { create } from "zustand";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const fetch = tenantFetch;
 
 // Types based on API response
 interface DashboardOverview {

@@ -8,6 +8,24 @@ type RecentSessionsCardProps = {
   onOpenSession: (sessionId: string) => void;
 };
 
+function formatSessionDate(value: string) {
+  const date = new Date(value);
+  const day = date.getDate();
+  const suffix =
+    day % 10 === 1 && day % 100 !== 11
+      ? "st"
+      : day % 10 === 2 && day % 100 !== 12
+        ? "nd"
+        : day % 10 === 3 && day % 100 !== 13
+          ? "rd"
+          : "th";
+  const month = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+  }).format(date);
+
+  return `${month} ${day}${suffix}, ${date.getFullYear()}`;
+}
+
 export function RecentSessionsCard({
   sessions,
   onOpenSession,
@@ -36,7 +54,7 @@ export function RecentSessionsCard({
                     {session.title}
                   </p>
                   <p className="truncate text-xs capitalize text-muted-foreground">
-                    {session.status}
+                    {session.status} • {formatSessionDate(session.start_time)}
                   </p>
                 </div>
                 <div className="text-xs font-medium">

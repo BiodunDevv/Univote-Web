@@ -1,0 +1,313 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BarChart3,
+  Bell,
+  Building2,
+  House,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  Search,
+  ShieldCheck,
+  UserRound,
+  Vote,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
+import { cn } from "@/lib/utils";
+import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+import {
+  formatParticipantIdentifier,
+  getTenantParticipantLabels,
+} from "@/lib/tenant-config";
+import { compactUi } from "@/lib/compact-ui";
+
+const navigationItems = [
+  { href: "/students/home", label: "Home", icon: House },
+  { href: "/students/sessions", label: "Sessions", icon: ShieldCheck },
+  { href: "/students/vote", label: "Vote", icon: Vote },
+  { href: "/students/results", label: "Results", icon: BarChart3 },
+  { href: "/students/profile", label: "Profile", icon: UserRound },
+];
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/students/home") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function titleFromPath(pathname: string) {
+  if (
+    pathname === "/students/notifications" ||
+    pathname.startsWith("/students/notifications/")
+  ) {
+    return "Notifications";
+  }
+
+  if (pathname === "/students/support" || pathname.startsWith("/students/support/")) {
+    return "Support";
+  }
+
+  const matched = navigationItems.find((item) => isActivePath(pathname, item.href));
+  if (!matched) return "Portal";
+  return matched.label;
+}
+
+export function StudentShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { student, tenant, logout } = useStudentAuthStore();
+  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("student");
+  const participantLabels = getTenantParticipantLabels(tenant);
+
+  const pageTitle = useMemo(() => titleFromPath(pathname), [pathname]);
+  const initials = student?.full_name
+    ?.split(" ")
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
+  const participantIdentifier = formatParticipantIdentifier(
+    student as unknown as Record<string, unknown>,
+    tenant,
+  );
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/students/login");
+  };
+
+  return (
+    <div className="min-h-svh bg-muted/20">
+      <div className="mx-auto flex min-h-svh w-full max-w-6xl gap-4 px-3 pb-24 pt-3 sm:px-4 lg:pb-6">
+        <aside className="hidden w-72 shrink-0 xl:block">
+          <Card className="sticky top-4 flex h-[calc(100svh-2rem)] flex-col justify-between border bg-card/95 p-4 shadow-none">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{
+                      backgroundColor:
+                        tenant?.branding?.accent_color ||
+                        tenant?.branding?.primary_color ||
+                        "currentColor",
+                    }}
+                  />
+                  {tenant?.name || `Univote ${participantLabels.singular}`}
+                </div>
+                <div>
+                  <h1 className={compactUi.typography.pageTitle}>Voting workspace</h1>
+                  
+                  {tenant ? (
+                    <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5" />
+                        <span>{tenant.slug}</span>
+                      </div>
+                      {tenant.branding?.support_email ? (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-3.5 w-3.5" />
+                          <span>{tenant.branding.support_email}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <nav className="space-y-1.5">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActivePath(pathname, item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+                        active
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="rounded-2xl border bg-muted/20 p-3">
+                <p className={compactUi.typography.cardTitle}>Need help?</p>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                  Open a support ticket and keep all replies in one thread.
+                </p>
+                <Button variant="outline" className="mt-4 w-full" asChild>
+                  <Link href="/students/support">
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    Support
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-2xl border bg-muted/20 p-3">
+              <div className="flex items-center gap-3">
+                <Avatar size="lg">
+                  <AvatarImage src={student?.photo_url || undefined} alt={student?.full_name || participantLabels.singular} />
+                  <AvatarFallback>{initials || "PT"}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {student?.full_name || participantLabels.singular}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {participantIdentifier || "Portal access"}
+                    {tenant?.name ? ` • ${tenant.name}` : ""}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => void handleLogout()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </Button>
+            </div>
+          </Card>
+        </aside>
+
+        <main className="min-w-0 flex-1">
+          <div className="sticky top-0 z-20 mb-3 rounded-[1.5rem] border bg-background/95 p-3 shadow-none backdrop-blur">
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className={compactUi.typography.eyebrow}>
+                    {pageTitle}
+                  </p>
+                  <h2 className={compactUi.typography.pageTitle}>
+                    {student ? `Hi, ${student.full_name.split(" ")[0]}` : `${participantLabels.singular} portal`}
+                  </h2>
+                  {tenant ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {tenant.name}
+                      {tenant.primary_domain ? ` • ${tenant.primary_domain}` : ""}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" asChild className="relative size-8 rounded-xl">
+                    <Link href="/students/notifications" aria-label="Notifications">
+                      <Bell className="h-4 w-4" />
+                      <NotificationCountBadge
+                        count={unreadNotifications}
+                        className="absolute -right-1.5 -top-1.5"
+                      />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="icon" asChild className="size-8 rounded-xl md:hidden">
+                    <Link href="/students/support" aria-label="Support">
+                      <LifeBuoy className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={student?.photo_url || undefined}
+                      alt={student?.full_name || "Participant"}
+                    />
+                    <AvatarFallback>{initials || "PT"}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 xl:hidden">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActivePath(pathname, item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                        active
+                          ? "border-foreground bg-foreground text-background"
+                          : "bg-background text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <div className="flex items-center gap-2 rounded-2xl border bg-muted/30 px-3 py-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {participantIdentifier || "Portal access"}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {tenant?.slug || "Organization context"}
+                    </p>
+                  </div>
+                </div>
+                <div className="hidden items-center gap-2 md:flex">
+                  <Button variant="outline" size="sm" asChild className="rounded-xl">
+                    <Link href="/students/support">
+                      <LifeBuoy className="mr-2 h-4 w-4" />
+                      Support
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => void handleLogout()} className="rounded-xl">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-auto max-w-4xl space-y-3">{children}</div>
+        </main>
+      </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-3 py-2 backdrop-blur lg:hidden">
+        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActivePath(pathname, item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium transition-colors",
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}

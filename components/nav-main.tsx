@@ -25,8 +25,10 @@ import {
 export function NavMain({
   items,
   label = "Platform",
+  rootUrl = "/dashboard",
 }: {
   label?: string;
+  rootUrl?: string;
   items: {
     title: string;
     url: string;
@@ -34,16 +36,18 @@ export function NavMain({
     isActive?: boolean;
     comingSoon?: boolean;
     items?: {
-      title: string;
-      url: string;
-      comingSoon?: boolean;
-    }[];
+    title: string;
+    url: string;
+    comingSoon?: boolean;
+    badge?: string | number | null;
+  }[];
+    badge?: string | number | null;
   }[];
 }) {
   const pathname = usePathname();
 
   const isActive = (url: string) =>
-    url === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(url);
+    url === rootUrl ? pathname === rootUrl : pathname.startsWith(url);
 
   const isGroupActive = (item: { url: string; items?: { url: string }[] }) =>
     isActive(item.url) || (item.items?.some((s) => isActive(s.url)) ?? false);
@@ -97,6 +101,14 @@ export function NavMain({
                                 Soon
                               </Badge>
                             )}
+                            {subItem.badge ? (
+                              <Badge
+                                variant="default"
+                                className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                              >
+                                {subItem.badge}
+                              </Badge>
+                            ) : null}
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -123,6 +135,14 @@ export function NavMain({
                       Soon
                     </Badge>
                   )}
+                  {item.badge ? (
+                    <Badge
+                      variant="default"
+                      className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                    >
+                      {item.badge}
+                    </Badge>
+                  ) : null}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

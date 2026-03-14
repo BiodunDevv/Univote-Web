@@ -11,32 +11,32 @@ const links = [
     href: "/#features",
   },
   {
-    title: "Learn More",
-    href: "/learn-more",
+    title: "Pricing",
+    href: "/#pricing",
   },
   {
-    title: "Universities",
-    href: "/#universities",
+    title: "Stories",
+    href: "/#stories",
   },
   {
-    title: "Students",
-    href: "/#students",
+    title: "Apply",
+    href: "/#apply",
   },
   {
-    title: "Contact",
-    href: "/#contact",
+    title: "Participant Login",
+    href: "/students/login",
   },
 ];
 
 export default function FooterSection() {
   return (
-    <footer className="py-16 md:py-32">
-      <div className="mx-auto max-w-5xl px-6">
+    <footer className="py-16 md:py-24">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <Link href="/" aria-label="go home" className="mx-auto block size-fit">
           <Logo />
         </Link>
 
-        <div className="my-8 flex flex-wrap justify-center gap-6 text-sm">
+        <div className="my-8 flex flex-wrap justify-center gap-4 text-xs sm:text-sm">
           {links.map((link, index) => (
             <Link
               key={index}
@@ -46,6 +46,20 @@ export default function FooterSection() {
               <span>{link.title}</span>
             </Link>
           ))}
+        </div>
+        <div className="mb-8 flex flex-wrap justify-center gap-2.5">
+          <Link
+            href="/auth/signin"
+            className="rounded-full border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Admin Access
+          </Link>
+          <Link
+            href="/super-admin"
+            className="rounded-full border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Platform Console
+          </Link>
         </div>
         <div className="my-8 flex flex-wrap justify-center gap-6 text-sm">
           <Link

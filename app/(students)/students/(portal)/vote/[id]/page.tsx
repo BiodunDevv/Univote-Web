@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Camera, LocateFixed, MapPin, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import { PortalHero, PortalPage } from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { useStudentSessionDetailQuery, useSubmitVoteMutation } from "@/lib/queries/student";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -136,37 +137,21 @@ export default function StudentVotePage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Badge variant="outline">Active ballot</Badge>
-            <h1 className="mt-3 text-2xl font-semibold text-foreground">
-              {session.title}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Select one candidate per category, then verify your location and selfie before submitting.
-            </p>
-          </div>
-          <Button
-            onClick={() => void handleSubmitVote()}
-            disabled={
-              submitVote.isPending || !allCategoriesSelected || !imageUrl || !location
-            }
-          >
-            {submitVote.isPending ? "Submitting vote..." : "Submit vote"}
-          </Button>
-        </div>
-      </div>
+    <PortalPage className="pb-20">
+      <PortalHero
+        eyebrow={<Badge variant="outline">Active ballot</Badge>}
+        title={session.title}
+        description="Select one candidate per category, then verify your location and selfie before submitting."
+      />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.85fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
         <div className="space-y-4">
           {categories.map(([position, candidates]) => (
             <Card key={position} className="border shadow-none">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">{position}</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{position}</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-2">
+              <CardContent className="grid gap-2">
                 {candidates.map((candidate) => {
                   const selected = selectedByCategory[position] === candidate.id;
 
@@ -180,14 +165,14 @@ export default function StudentVotePage() {
                           [position]: candidate.id,
                         }))
                       }
-                      className={`rounded-2xl border p-4 text-left transition-colors ${
+                      className={`rounded-2xl border p-3 text-left transition-colors ${
                         selected
                           ? "border-foreground bg-foreground text-background"
                           : "border-border bg-muted/20 text-foreground hover:border-foreground/40"
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="h-14 w-14 overflow-hidden rounded-2xl border bg-background/70">
+                        <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-background/70">
                           {candidate.photo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -199,10 +184,10 @@ export default function StudentVotePage() {
                         </div>
                         <div>
                           <p className="font-semibold">{candidate.name}</p>
-                          <p className="mt-1 text-sm opacity-80">
-                            {candidate.bio || "No biography provided."}
-                          </p>
-                        </div>
+                            <p className="mt-1 text-xs opacity-80">
+                              {candidate.bio || "No biography provided."}
+                            </p>
+                          </div>
                       </div>
                     </button>
                   );
@@ -213,9 +198,9 @@ export default function StudentVotePage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Verification checklist</CardTitle>
+            <Card className="border shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Verification checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-2xl border bg-muted/20 p-4">
@@ -288,6 +273,33 @@ export default function StudentVotePage() {
           </Card>
         </div>
       </div>
-    </div>
+
+      <div className="fixed inset-x-0 bottom-[4.5rem] z-30 px-3 lg:static lg:px-0">
+        <div className="mx-auto max-w-4xl">
+          <div className="rounded-2xl border bg-background/95 p-3 shadow-none backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  Ready to submit
+                </p>
+                <p className="truncate text-sm font-medium text-foreground">
+                  {allCategoriesSelected ? "All categories selected" : "Select every category to continue"}
+                </p>
+              </div>
+              <Button
+                onClick={() => void handleSubmitVote()}
+                disabled={
+                  submitVote.isPending || !allCategoriesSelected || !imageUrl || !location
+                }
+                size="sm"
+                className="shrink-0"
+              >
+                {submitVote.isPending ? "Submitting..." : "Submit vote"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </PortalPage>
   );
 }

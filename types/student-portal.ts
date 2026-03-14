@@ -1,6 +1,12 @@
+import type { TenantContext } from "@/types/tenant";
+
 export interface StudentPortalUser {
   id: string;
-  matric_no: string;
+  matric_no?: string | null;
+  member_id?: string | null;
+  employee_id?: string | null;
+  username?: string | null;
+  display_identifier?: string | null;
   full_name: string;
   email: string;
   department: string;
@@ -33,8 +39,13 @@ export interface StudentDashboardNotification {
 }
 
 export interface StudentDashboardResponse {
+  tenant?: TenantContext | null;
   student_info: {
-    matric_no: string;
+    matric_no?: string | null;
+    member_id?: string | null;
+    employee_id?: string | null;
+    username?: string | null;
+    display_identifier?: string | null;
     full_name: string;
     email: string;
     department: string;
@@ -42,6 +53,7 @@ export interface StudentDashboardResponse {
     level: string;
     photo_url?: string | null;
     has_facial_data: boolean;
+    first_login?: boolean;
     member_since?: string;
     last_login?: string | null;
   };

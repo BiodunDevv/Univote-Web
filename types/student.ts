@@ -1,14 +1,18 @@
 export interface Student {
   _id: string;
-  matric_no: string;
+  matric_no?: string | null;
+  member_id?: string | null;
+  employee_id?: string | null;
+  username?: string | null;
+  display_identifier?: string | null;
   full_name: string;
-  email: string;
+  email?: string | null;
   first_login: boolean;
-  department: string;
-  department_code: string;
-  college: string;
-  level: string;
-  photo_url?: string;
+  department?: string | null;
+  department_code?: string | null;
+  college?: string | null;
+  level?: string | null;
+  photo_url?: string | null;
   has_facial_data?: boolean;
   is_active: boolean;
   has_voted_sessions?: string[];
@@ -27,9 +31,12 @@ export interface StudentListResponse {
 }
 
 export interface StudentCSVData {
-  matric_no: string;
+  matric_no?: string;
+  member_id?: string;
+  employee_id?: string;
+  username?: string;
   full_name: string;
-  email: string;
+  email?: string;
   college?: string;
   department?: string;
   level?: string;

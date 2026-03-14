@@ -4,10 +4,11 @@ import Link from "next/link";
 import {
   Folder,
   Forward,
+  type LucideIcon,
   MoreHorizontal,
   Trash2,
-  type LucideIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 import {
   DropdownMenu,
@@ -34,6 +35,7 @@ export function NavProjects({
     name: string;
     url: string;
     icon: LucideIcon;
+    badge?: string | number | null;
   }[];
   label?: string;
 }) {
@@ -49,6 +51,14 @@ export function NavProjects({
               <Link href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
+                {item.badge ? (
+                  <Badge
+                    variant="default"
+                    className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                  >
+                    {item.badge}
+                  </Badge>
+                ) : null}
               </Link>
             </SidebarMenuButton>
             <DropdownMenu>

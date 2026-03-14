@@ -2,7 +2,12 @@
 
 import { useParams } from "next/navigation";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { ResultGroups } from "@/components/students-portal/result-groups";
+import {
+  PortalEmptyState,
+  PortalHero,
+  PortalPage,
+} from "@/components/students/portal/portal-page";
+import { ResultGroups } from "@/components/students/portal/result-groups";
 import {
   useStudentFinalResultsQuery,
   useStudentLiveResultsQuery,
@@ -41,12 +46,13 @@ export default function StudentResultDetailPage() {
 
   if (!session || sessionQuery.error) {
     return (
-      <Card className="border shadow-none">
-        <CardContent className="p-6 text-sm text-muted-foreground">
-          {(sessionQuery.error as Error | undefined)?.message ||
-            "Results could not be loaded."}
-        </CardContent>
-      </Card>
+      <PortalEmptyState
+        title="Results unavailable"
+        description={
+          (sessionQuery.error as Error | undefined)?.message ||
+          "Results could not be loaded."
+        }
+      />
     );
   }
 
@@ -56,19 +62,17 @@ export default function StudentResultDetailPage() {
   const error = isLive ? liveQuery.error : finalQuery.error;
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{session.status}</Badge>
-          <Badge variant="outline">{isLive ? "Live tally" : "Final tally"}</Badge>
-        </div>
-        <h1 className="mt-3 text-2xl font-semibold text-foreground">
-          {session.title}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {session.description || "No session description provided."}
-        </p>
-      </section>
+    <PortalPage>
+      <PortalHero
+        eyebrow={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="text-[11px]">{session.status}</Badge>
+            <Badge variant="outline" className="text-[11px]">{isLive ? "Live tally" : "Final tally"}</Badge>
+          </div>
+        }
+        title={session.title}
+        description={session.description || "No session description provided."}
+      />
 
       {error ? (
         <Alert variant="destructive">
@@ -83,6 +87,6 @@ export default function StudentResultDetailPage() {
       {!isLive && finalData ? (
         <ResultGroups groups={finalData.results} />
       ) : null}
-    </div>
+    </PortalPage>
   );
 }

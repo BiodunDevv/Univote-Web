@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { Menu } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import React, { useEffect, useState, useSyncExternalStore } from "react";
+import { buildTenantAppUrl } from "@/lib/tenant";
+import {
+  readSharedAdminContext,
+  subscribeSharedAdminContext,
+} from "@/lib/shared-admin-context";
 import { AnimatedThemeToggler } from "../theme-toggler";
+import { LandingOrganizationSwitcher } from "./organization-switcher";
 import {
   Sheet,
   SheetContent,
@@ -18,9 +24,9 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   { name: "Features", href: "/#features" },
-  { name: "Universities", href: "/#universities" },
-  { name: "Students", href: "/#students" },
-  { name: "Contact", href: "/#contact" },
+  { name: "Pricing", href: "/#pricing" },
+  { name: "Stories", href: "/#stories" },
+  { name: "Apply", href: "/#apply" },
 ];
 
 export const HeroHeader = () => {
@@ -31,17 +37,39 @@ export const HeroHeader = () => {
     () => true,
     () => false,
   );
-  const { token } = useAuthStore();
+  const sharedAdminContext = useSyncExternalStore(
+    subscribeSharedAdminContext,
+    readSharedAdminContext,
+    () => null,
+  );
+  const { token, admin, tenant } = useAuthStore();
   const { token: studentToken } = useStudentAuthStore();
+  const tenantWorkspaceHref =
+    tenant?.slug ||
+    sharedAdminContext?.tenant?.slug ||
+    sharedAdminContext?.organizations[0]?.slug
+      ? buildTenantAppUrl(
+          tenant?.slug ||
+            sharedAdminContext?.tenant?.slug ||
+            sharedAdminContext?.organizations[0]?.slug ||
+            "",
+          "/dashboard",
+        )
+      : null;
+  const isTenantAuthenticated =
+    (Boolean(token) && admin?.role !== "super_admin") ||
+    Boolean(sharedAdminContext?.organizations.length);
   const activeHref = token
-    ? "/dashboard"
+    ? admin?.role === "super_admin"
+      ? "/super-admin"
+      : tenantWorkspaceHref
     : studentToken
       ? "/students/home"
       : null;
+
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 50);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -53,30 +81,26 @@ export const HeroHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-50 p-2 sm:p-4">
+    <header className="fixed top-0 right-0 left-0 z-50 p-2 sm:p-3">
       <div className="mx-auto max-w-7xl">
         <div
           className={cn(
-            "flex items-center justify-between rounded-2xl border border-transparent px-3 py-2 transition-all duration-300 ease-out sm:px-4 sm:py-3",
+            "grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-2xl border border-transparent px-3 py-2 transition-all duration-300 ease-out sm:px-4 md:flex md:justify-between",
             isScrolled
-              ? "bg-background/40 border-border/50 shadow-lg shadow-black/5 backdrop-blur-2xl"
-              : "bg-transparent"
+              ? "border-border/50 bg-background/40 shadow-lg shadow-black/5 backdrop-blur-2xl"
+              : "bg-transparent",
           )}
         >
-          {/* Left section - Logo and Navigation */}
-          <div className="flex items-center gap-8">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-xl font-bold"
-            >
+          <div className="flex min-w-0 items-center gap-5">
+            <Link href="/" className="flex items-center gap-2 text-xl font-bold">
               <Logo />
             </Link>
-            <nav className="hidden items-center gap-6 md:flex">
-              {menuItems.map((item, index) => (
+            <nav className="hidden items-center gap-5 md:flex">
+              {menuItems.map((item) => (
                 <Link
-                  key={index}
+                  key={item.href}
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground text-sm"
+                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {item.name}
                 </Link>
@@ -84,16 +108,23 @@ export const HeroHeader = () => {
             </nav>
           </div>
 
-          {/* Right section - Actions and Theme Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex justify-center md:hidden">
+            {mounted && isTenantAuthenticated ? (
+              <LandingOrganizationSwitcher compact />
+            ) : null}
+          </div>
+
+          <div className="flex items-center justify-end gap-2 sm:gap-3">
             {!mounted ? (
-              // Loading state to prevent hydration flash
               <>
-                <div className="hidden md:inline-flex h-9 w-20 bg-muted animate-pulse rounded-md"></div>
-                <div className="hidden md:inline-flex h-9 w-9 bg-muted animate-pulse rounded-md"></div>
+                <div className="hidden h-9 w-20 animate-pulse rounded-md bg-muted md:inline-flex" />
+                <div className="hidden h-9 w-9 animate-pulse rounded-md bg-muted md:inline-flex" />
               </>
+            ) : isTenantAuthenticated ? (
+              <div className="hidden md:flex">
+                <LandingOrganizationSwitcher />
+              </div>
             ) : activeHref ? (
-              // Authenticated user menu
               <Button
                 variant="outline"
                 asChild
@@ -101,18 +132,17 @@ export const HeroHeader = () => {
                 size="sm"
               >
                 <Link href={activeHref}>
-                  {token ? "Admin Dashboard" : "Student Portal"}
+                  {token ? "Platform Console" : "Portal"}
                 </Link>
               </Button>
             ) : (
-              // Non-authenticated user buttons
               <>
                 <Button
                   asChild
                   className="hidden transition-transform md:inline-flex"
                   size="sm"
                 >
-                  <Link href="/students/login">Student Login</Link>
+                  <Link href="/students/login">Portal Login</Link>
                 </Button>
                 <Button
                   variant="outline"
@@ -127,7 +157,6 @@ export const HeroHeader = () => {
 
             <AnimatedThemeToggler />
 
-            {/* Mobile Menu */}
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
               <SheetTrigger asChild>
                 <Button
@@ -141,29 +170,27 @@ export const HeroHeader = () => {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="border-border/50 bg-background/95 w-[85vw] max-w-sm backdrop-blur-xl p-0"
+                className="w-[85vw] max-w-sm border-border/50 bg-background/95 p-0 backdrop-blur-xl"
               >
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="flex h-full flex-col p-6">
-                  {/* Header */}
-                  <div className="border-border/20 mb-8 border-b pb-6">
+                  <div className="mb-8 border-b border-border/20 pb-6">
                     <Link
                       href="/"
                       onClick={handleLinkClick}
-                      className="hover:text-primary flex items-center gap-3 text-xl font-bold transition-colors"
+                      className="flex items-center gap-3 text-xl font-bold transition-colors hover:text-primary"
                     >
                       <Logo />
                     </Link>
                   </div>
 
-                  {/* Navigation Links */}
                   <div className="flex-1 space-y-2">
-                    {menuItems.map((item, index) => (
+                    {menuItems.map((item) => (
                       <Link
-                        key={index}
+                        key={item.href}
                         href={item.href}
                         onClick={handleLinkClick}
-                        className="group text-muted-foreground hover:bg-primary/10 hover:text-foreground relative flex items-center rounded-lg px-4 py-3 text-base font-medium transition-all duration-300 hover:translate-x-1 active:scale-95"
+                        className="group text-muted-foreground hover:bg-primary/10 hover:text-foreground relative flex items-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 hover:translate-x-1 active:scale-95"
                       >
                         <span className="relative z-10">{item.name}</span>
                         <div className="from-primary/5 absolute inset-0 rounded-lg bg-linear-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -171,40 +198,52 @@ export const HeroHeader = () => {
                     ))}
                   </div>
 
-                  {/* Footer Section */}
-                  <div className="border-border/20 space-y-3 border-t pt-6 mt-6">
+                  <div className="mt-6 space-y-3 border-t border-border/20 pt-6">
                     {!mounted ? (
-                      // Loading state for mobile menu
                       <>
-                        <div className="h-12 w-full bg-muted animate-pulse rounded-md"></div>
-                        <div className="h-12 w-full bg-muted animate-pulse rounded-md"></div>
+                        <div className="h-12 w-full animate-pulse rounded-md bg-muted" />
+                        <div className="h-12 w-full animate-pulse rounded-md bg-muted" />
                       </>
+                    ) : isTenantAuthenticated ? (
+                      <div className="space-y-3">
+                        <LandingOrganizationSwitcher />
+                        {tenantWorkspaceHref ? (
+                          <Button
+                            variant="outline"
+                            asChild
+                            className="w-full py-3 text-sm"
+                            onClick={handleLinkClick}
+                          >
+                            <Link href={tenantWorkspaceHref}>
+                              Open current workspace
+                            </Link>
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : activeHref ? (
-                      // Authenticated mobile menu
                       <Button
                         variant="default"
                         asChild
-                        className="w-full py-3 text-base shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95"
+                        className="w-full py-3 text-sm shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95"
                         onClick={handleLinkClick}
                       >
                         <Link href={activeHref}>
-                          {token ? "Admin Dashboard" : "Student Portal"}
+                          {token ? "Platform Console" : "Portal"}
                         </Link>
                       </Button>
                     ) : (
-                      // Non-authenticated mobile menu
                       <>
                         <Button
                           asChild
-                          className="w-full py-3 text-base "
+                          className="w-full py-3 text-sm"
                           onClick={handleLinkClick}
                         >
-                          <Link href="/students/login">Student Login</Link>
+                          <Link href="/students/login">Portal Login</Link>
                         </Button>
                         <Button
                           variant="outline"
                           asChild
-                          className="w-full py-3 text-base"
+                          className="w-full py-3 text-sm"
                           onClick={handleLinkClick}
                         >
                           <Link href="/auth/signin">Admin Login</Link>

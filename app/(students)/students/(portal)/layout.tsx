@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { StudentShell } from "@/components/students-portal/student-shell";
+import { StudentShell } from "@/components/students/portal/student-shell";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 
 export default function StudentPortalLayout({

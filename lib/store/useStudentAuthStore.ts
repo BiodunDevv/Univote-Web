@@ -6,27 +6,35 @@ import {
   getStoredStudentToken,
 } from "@/lib/api/client";
 import type { StudentPortalUser } from "@/types/student-portal";
+import type { TenantContext } from "@/types/tenant";
 
 type StudentLoginResponse = {
   token: string;
   student: StudentPortalUser;
   new_device?: boolean;
+  tenant?: TenantContext | null;
 };
 
 type StudentProfileResponse = {
   student?: StudentPortalUser;
   profile?: StudentPortalUser;
+  tenant?: TenantContext | null;
 };
 
 interface StudentAuthState {
   token: string | null;
   firstLoginToken: string | null;
   student: StudentPortalUser | null;
+  tenant: TenantContext | null;
   hasHydrated: boolean;
   isLoading: boolean;
   error: string | null;
   setHasHydrated: (value: boolean) => void;
-  login: (matricNo: string, password: string) => Promise<{ newDevice: boolean }>;
+  login: (
+    identifier: string,
+    password: string,
+    tenantSlug?: string | null,
+  ) => Promise<{ newDevice: boolean; requiresPasswordChange: boolean }>;
   changePassword: (newPassword: string) => Promise<void>;
   fetchProfile: () => Promise<StudentPortalUser>;
   updateProfile: (payload: {
@@ -34,13 +42,26 @@ interface StudentAuthState {
     email?: string;
     photo_url?: string | null;
   }) => Promise<StudentPortalUser>;
+  forgotPassword: (identifier: string, tenantSlug?: string | null) => Promise<void>;
+  resetPassword: (
+    identifier: string,
+    resetCode: string,
+    newPassword: string,
+    tenantSlug?: string | null,
+  ) => Promise<void>;
   updatePassword: (oldPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
 
 function normalizeStudentProfile(
-  payload: (StudentPortalUser & { _id?: string }) | undefined,
+  payload: (StudentPortalUser & {
+    _id?: string;
+    display_identifier?: string | null;
+    member_id?: string | null;
+    employee_id?: string | null;
+    username?: string | null;
+  }) | undefined,
 ): StudentPortalUser {
   if (!payload) {
     throw new Error("Student profile is unavailable");
@@ -48,7 +69,15 @@ function normalizeStudentProfile(
 
   return {
     ...payload,
-    id: payload.id || payload._id || payload.matric_no,
+    id:
+      payload.id ||
+      payload._id ||
+      payload.display_identifier ||
+      payload.member_id ||
+      payload.employee_id ||
+      payload.username ||
+      payload.matric_no ||
+      payload.email,
     photo_url: payload.photo_url || null,
     has_facial_data: Boolean(payload.has_facial_data),
   };
@@ -60,26 +89,28 @@ export const useStudentAuthStore = create<StudentAuthState>()(
       token: null,
       firstLoginToken: null,
       student: null,
+      tenant: null,
       hasHydrated: false,
       isLoading: false,
       error: null,
 
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
-      login: async (matricNo, password) => {
+      login: async (identifier, password, tenantSlug) => {
         set({ isLoading: true, error: null });
 
         try {
           const response = await apiRequest<StudentLoginResponse>("/api/auth/login", {
             method: "POST",
             data: {
-              matric_no: matricNo.toUpperCase(),
+              identifier: identifier.trim(),
               password,
               device_id:
                 typeof navigator !== "undefined"
                   ? navigator.userAgent
                   : "web-client",
             },
+            headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
             auth: "optional",
             redirectOnAuthError: false,
           });
@@ -88,12 +119,16 @@ export const useStudentAuthStore = create<StudentAuthState>()(
           set({
             token: response.token,
             student,
-            firstLoginToken: null,
+            tenant: response.tenant || null,
+            firstLoginToken: student.first_login ? response.token : null,
             isLoading: false,
             error: null,
           });
 
-          return { newDevice: Boolean(response.new_device) };
+          return {
+            newDevice: Boolean(response.new_device),
+            requiresPasswordChange: Boolean(student.first_login),
+          };
         } catch (error) {
           if (
             error instanceof ApiError &&
@@ -116,7 +151,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
       },
 
       changePassword: async (newPassword) => {
-        const firstLoginToken = get().firstLoginToken;
+        const firstLoginToken = get().firstLoginToken || get().token;
 
         if (!firstLoginToken) {
           throw new Error("No first-login token available");
@@ -128,6 +163,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
           const response = await apiRequest<{
             token: string;
             student: StudentPortalUser;
+            tenant?: TenantContext | null;
           }>("/api/auth/change-password", {
             method: "PATCH",
             body: JSON.stringify({ new_password: newPassword }),
@@ -142,6 +178,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
           set({
             token: response.token,
             student: normalizeStudentProfile(response.student),
+            tenant: response.tenant || null,
             firstLoginToken: null,
             isLoading: false,
             error: null,
@@ -168,13 +205,14 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         const student = normalizeStudentProfile(
           response.profile || response.student,
         );
-        set({ token, student, error: null });
+        set({ token, student, tenant: response.tenant || null, error: null });
         return student;
       },
 
       updateProfile: async (payload) => {
         const response = await apiRequest<{
           profile: StudentPortalUser;
+          tenant?: TenantContext | null;
         }>("/api/auth/me", {
           method: "PATCH",
           auth: "student",
@@ -182,8 +220,62 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         });
 
         const student = normalizeStudentProfile(response.profile);
-        set({ student, error: null });
+        set({ student, tenant: response.tenant || null, error: null });
         return student;
+      },
+
+      forgotPassword: async (identifier, tenantSlug) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          await apiRequest("/api/auth/forgot-password", {
+            method: "POST",
+            auth: "optional",
+            data: { identifier },
+            headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
+            redirectOnAuthError: false,
+          });
+          set({ isLoading: false, error: null });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to send reset code";
+          set({ isLoading: false, error: message });
+          throw error;
+        }
+      },
+
+      resetPassword: async (identifier, resetCode, newPassword, tenantSlug) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          await apiRequest("/api/auth/reset-password", {
+            method: "POST",
+            auth: "optional",
+            data: {
+              identifier,
+              reset_code: resetCode,
+              new_password: newPassword,
+            },
+            headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
+            redirectOnAuthError: false,
+          });
+          set({
+            token: null,
+            firstLoginToken: null,
+            student: null,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to reset password";
+          set({ isLoading: false, error: message });
+          throw error;
+        }
       },
 
       updatePassword: async (oldPassword, newPassword) => {
@@ -225,6 +317,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
             token: null,
             firstLoginToken: null,
             student: null,
+            tenant: null,
             error: null,
             isLoading: false,
           });
@@ -239,6 +332,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         token: state.token,
         firstLoginToken: state.firstLoginToken,
         student: state.student,
+        tenant: state.tenant,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

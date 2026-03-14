@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getStoredToken, useAuthStore } from "./useAuthStore";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 interface Student {
   _id: string;
@@ -185,6 +186,7 @@ interface StudentState {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const fetch = tenantFetch;
 
 const handleAuthExpiry = () => {
   if (typeof window === "undefined") return;

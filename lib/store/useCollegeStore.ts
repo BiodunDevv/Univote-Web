@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getStoredToken } from "./useAuthStore";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 interface Department {
   _id: string;
@@ -169,6 +170,7 @@ interface CollegeState {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const fetch = tenantFetch;
 
 export const useCollegeStore = create<CollegeState>((set) => ({
   colleges: [],

@@ -1,4 +1,38 @@
 export const queryKeys = {
+  public: {
+    landing: () => ["public", "landing"] as const,
+    testimonials: () => ["public", "testimonials"] as const,
+    organizations: (search: string) => ["public", "organizations", search] as const,
+    organization: (slug: string) => ["public", "organization", slug] as const,
+  },
+  announcements: {
+    list: () => ["announcements", "list"] as const,
+  },
+  platform: {
+    overview: () => ["platform", "overview"] as const,
+    tenants: (filters: Record<string, unknown>) =>
+      ["platform", "tenants", filters] as const,
+    tenant: (tenantId: string) => ["platform", "tenant", tenantId] as const,
+    billing: () => ["platform", "billing"] as const,
+    plans: () => ["platform", "plans"] as const,
+    tenantBilling: (tenantId: string) => ["platform", "tenant-billing", tenantId] as const,
+    auditLogs: (filters: Record<string, unknown>) =>
+      ["platform", "audit-logs", filters] as const,
+    auditActions: () => ["platform", "audit-actions"] as const,
+    systemHealth: () => ["platform", "system-health"] as const,
+    databaseStats: () => ["platform", "database-stats"] as const,
+    testimonials: (filters: Record<string, unknown>) =>
+      ["platform", "testimonials", filters] as const,
+  },
+  billing: {
+    summary: () => ["billing", "summary"] as const,
+    invoices: (filters: Record<string, unknown>) =>
+      ["billing", "invoices", filters] as const,
+  },
+  analytics: {
+    overview: () => ["analytics", "overview"] as const,
+    session: (id: string) => ["analytics", "session", id] as const,
+  },
   dashboard: {
     admin: () => ["dashboard", "admin"] as const,
     student: () => ["dashboard", "student"] as const,
@@ -24,6 +58,8 @@ export const queryKeys = {
   colleges: {
     list: (filters: Record<string, unknown>) =>
       ["colleges", "list", filters] as const,
+    detail: (id: string) => ["colleges", "detail", id] as const,
+    detailStats: (id: string) => ["colleges", "detail-stats", id] as const,
     stats: () => ["colleges", "stats"] as const,
   },
   departments: {
@@ -37,6 +73,9 @@ export const queryKeys = {
     health: () => ["settings", "health"] as const,
     database: () => ["settings", "database"] as const,
     notifications: () => ["settings", "notifications"] as const,
+    auditLogs: (filters: Record<string, unknown>) =>
+      ["settings", "audit-logs", filters] as const,
+    auditActions: () => ["settings", "audit-actions"] as const,
   },
   candidates: {
     list: (filters: Record<string, unknown>) =>
@@ -47,6 +86,21 @@ export const queryKeys = {
     session: (id: string) => ["results", "session", id] as const,
     overview: () => ["results", "overview"] as const,
   },
+  support: {
+    overview: (scope: "student" | "admin") => ["support", scope, "overview"] as const,
+    tickets: (scope: "student" | "admin", filters: Record<string, unknown>) =>
+      ["support", scope, "tickets", filters] as const,
+    detail: (scope: "student" | "admin", id: string) =>
+      ["support", scope, "detail", id] as const,
+    messages: (scope: "student" | "admin", id: string) =>
+      ["support", scope, "messages", id] as const,
+  },
+  notifications: {
+    summary: (scope: "student" | "admin") =>
+      ["notifications", scope, "summary"] as const,
+    list: (scope: "student" | "admin", filters: Record<string, unknown>) =>
+      ["notifications", scope, "list", filters] as const,
+  },
   history: {
     voting: () => ["history", "voting"] as const,
   },
@@ -56,5 +110,11 @@ export const queryKeys = {
   admins: {
     list: (filters: Record<string, unknown>) =>
       ["admins", "list", filters] as const,
+    detail: (id: string) => ["admins", "detail", id] as const,
+    tenantList: (filters: Record<string, unknown>) =>
+      ["admins", "tenant-list", filters] as const,
+    tenantDetail: (id: string) => ["admins", "tenant-detail", id] as const,
+    tenantOverview: () => ["admins", "tenant-overview"] as const,
+    tenantRoles: () => ["admins", "tenant-roles"] as const,
   },
 } as const;

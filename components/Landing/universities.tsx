@@ -3,9 +3,9 @@ import Image from "next/image";
 
 export default function ContentSection() {
   return (
-    <section id="universities" className="py-16 md:py-32">
-      <div className="mx-auto max-w-5xl space-y-8 px-6 md:space-y-16">
-        <h2 className="relative z-10 max-w-xl text-3xl font-medium lg:text-5xl">
+    <section id="universities" className="py-16 md:py-24">
+      <div className="mx-auto max-w-5xl space-y-6 px-2 sm:px-6 md:space-y-8">
+        <h2 className="relative z-10 max-w-xl text-lg font-semibold sm:text-xl">
           Built for Universities
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
@@ -32,10 +32,10 @@ export default function ContentSection() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Users className="size-4" />
-                  <h3 className="text-sm font-medium">Upload Student Data</h3>
+                  <h3 className="text-sm font-medium">Upload Participant Records</h3>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  Bulk import student records and manage permissions
+                  Bulk import participant records and manage permissions
                   effortlessly.
                 </p>
               </div>

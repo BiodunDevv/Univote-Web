@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import {
+  PortalEmptyState,
+  PortalHero,
+  PortalPage,
+} from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import {
   useStudentProfileQuery,
@@ -45,12 +50,13 @@ export default function StudentProfileEditPage() {
 
   if (!profileQuery.data || profileQuery.error) {
     return (
-      <Card className="border shadow-none">
-        <CardContent className="p-6 text-sm text-muted-foreground">
-          {(profileQuery.error as Error | undefined)?.message ||
-            "Profile could not be loaded."}
-        </CardContent>
-      </Card>
+      <PortalEmptyState
+        title="Profile unavailable"
+        description={
+          (profileQuery.error as Error | undefined)?.message ||
+          "Profile could not be loaded."
+        }
+      />
     );
   }
 
@@ -71,81 +77,88 @@ export default function StudentProfileEditPage() {
   };
 
   return (
-    <Card className="border shadow-none">
-      <CardHeader>
-        <CardTitle>Edit profile</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="full-name">Full name</Label>
-          <Input
-            id="full-name"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </div>
-        <div className="space-y-3">
-          <Label>Profile photo</Label>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="inline-flex cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    void handleUpload(file);
-                  }
-                  event.target.value = "";
-                }}
-              />
-              <Button type="button" variant="outline" disabled={uploading}>
-                <Camera className="mr-2 h-4 w-4" />
-                {uploading ? "Uploading..." : "Upload photo"}
-              </Button>
-            </label>
+    <PortalPage>
+      <PortalHero
+        eyebrow="Profile"
+        title="Edit your details"
+        description="Keep your account identity, email, and profile photo current."
+      />
+      <Card className="border shadow-none">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Profile details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="full-name">Full name</Label>
             <Input
-              value={photoUrl}
-              onChange={(event) => setPhotoUrl(event.target.value)}
-              placeholder="https://example.com/photo.jpg"
+              id="full-name"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
             />
           </div>
-        </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
+          <div className="space-y-3">
+            <Label>Profile photo</Label>
+            <div className="grid gap-3">
+              <label className="inline-flex cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      void handleUpload(file);
+                    }
+                    event.target.value = "";
+                  }}
+                />
+                <Button type="button" variant="outline" disabled={uploading}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  {uploading ? "Uploading..." : "Upload photo"}
+                </Button>
+              </label>
+              <Input
+                value={photoUrl}
+                onChange={(event) => setPhotoUrl(event.target.value)}
+                placeholder="https://example.com/photo.jpg"
+              />
+            </div>
+          </div>
 
-        {updateProfile.error ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {(updateProfile.error as Error).message}
-            </AlertDescription>
-          </Alert>
-        ) : null}
+          {updateProfile.error ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {(updateProfile.error as Error).message}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-        <div className="flex justify-end">
-          <Button
-            onClick={async () => {
-              await updateProfile.mutateAsync({
-                full_name: fullName,
-                email,
-                photo_url: photoUrl || null,
-              });
-              toast.success("Profile updated");
-            }}
-            disabled={updateProfile.isPending}
-          >
-            {updateProfile.isPending ? "Saving..." : "Save changes"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex justify-end">
+            <Button
+              onClick={async () => {
+                await updateProfile.mutateAsync({
+                  full_name: fullName,
+                  email,
+                  photo_url: photoUrl || null,
+                });
+                toast.success("Profile updated");
+              }}
+              disabled={updateProfile.isPending}
+            >
+              {updateProfile.isPending ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </PortalPage>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useUpdateStudentPasswordMutation } from "@/lib/queries/student";
+import { PortalHero, PortalPage } from "@/components/students/portal/portal-page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,53 +42,60 @@ export default function StudentProfilePasswordPage() {
   };
 
   return (
-    <Card className="border shadow-none">
-      <CardHeader>
-        <CardTitle>Change password</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="current-password">Current password</Label>
-          <Input
-            id="current-password"
-            type="password"
-            value={oldPassword}
-            onChange={(event) => setOldPassword(event.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="next-password">New password</Label>
-          <Input
-            id="next-password"
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="confirm-next-password">Confirm new password</Label>
-          <Input
-            id="confirm-next-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-          />
-        </div>
+    <PortalPage>
+      <PortalHero
+        eyebrow="Security"
+        title="Update password"
+        description="Use a strong password that only you know. It should be at least 6 characters long."
+      />
+      <Card className="border shadow-none">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Password details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="current-password">Current password</Label>
+            <Input
+              id="current-password"
+              type="password"
+              value={oldPassword}
+              onChange={(event) => setOldPassword(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="next-password">New password</Label>
+            <Input
+              id="next-password"
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm-next-password">Confirm new password</Label>
+            <Input
+              id="confirm-next-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </div>
 
-        {localError || updatePassword.error ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {localError || (updatePassword.error as Error).message}
-            </AlertDescription>
-          </Alert>
-        ) : null}
+          {localError || updatePassword.error ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {localError || (updatePassword.error as Error).message}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-        <div className="flex justify-end">
-          <Button onClick={() => void handleSave()} disabled={updatePassword.isPending}>
-            {updatePassword.isPending ? "Updating..." : "Update password"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex justify-end">
+            <Button onClick={() => void handleSave()} disabled={updatePassword.isPending}>
+              {updatePassword.isPending ? "Updating..." : "Update password"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </PortalPage>
   );
 }

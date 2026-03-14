@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, Plus } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
+import { useTenantWorkspaceSwitch } from "@/hooks/use-tenant-workspace-switch";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -26,10 +26,16 @@ export function TeamSwitcher({
     name: string;
     logo: React.ElementType;
     plan: string;
+    slug: string;
+    active?: boolean;
   }[];
 }) {
   const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const { switchWorkspace, isSwitching } = useTenantWorkspaceSwitch();
+  const activeTeam = React.useMemo(
+    () => teams.find((team) => team.active) || teams[0],
+    [teams],
+  );
 
   if (!activeTeam) return null;
 
@@ -40,6 +46,7 @@ export function TeamSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
+              disabled={isSwitching}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -65,29 +72,30 @@ export function TeamSwitcher({
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
+                key={team.slug}
+                onClick={() => {
+                  if (team.slug !== activeTeam.slug) {
+                    void switchWorkspace(team.slug);
+                  }
+                }}
                 className="gap-2 p-2"
+                disabled={isSwitching}
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   <team.logo className="size-3.5 shrink-0" />
                 </div>
                 {team.name}
-                <DropdownMenuShortcut>
-                  {String.fromCharCode(8984)}
-                  {index + 1}
-                </DropdownMenuShortcut>
+                {team.active ? (
+                  <DropdownMenuShortcut>Active</DropdownMenuShortcut>
+                ) : (
+                  <DropdownMenuShortcut>
+                    {isSwitching
+                      ? "..."
+                      : `${String.fromCharCode(8984)}${index + 1}`}
+                  </DropdownMenuShortcut>
+                )}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
-              </div>
-              <div className="font-medium text-muted-foreground">
-                Add organisation
-              </div>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

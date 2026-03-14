@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,16 +12,29 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { TenantHeaderSwitcher } from "@/components/tenants/tenant-header-switcher";
 import { Kbd } from "@/components/ui/kbd";
+import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
+import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
+import { AdminChatWidget } from "@/components/support/admin-chat-widget";
+import {
+  getTenantParticipantLabels,
+  isTenantParticipantFieldEnabled,
+} from "@/lib/tenant-config";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const segmentLabels: Record<string, string> = {
   dashboard: "Dashboard",
+  "super-admin": "Platform Console",
   sessions: "Sessions",
   create: "Create",
   edit: "Edit",
   colleges: "Colleges",
+  structure: "Structure",
   admins: "Admins",
   settings: "Settings",
   "audit-logs": "Audit Logs",
@@ -29,12 +43,17 @@ const segmentLabels: Record<string, string> = {
   reports: "Reports",
   notifications: "Notifications",
   integrations: "Integrations",
-  students: "Students",
+  students: "Participants",
+  participants: "Participants",
   candidates: "Candidates",
   departments: "Departments",
   permissions: "Permissions",
   "election-analytics": "Election Analytics",
   "system-health": "System Health",
+  tenants: "Tenants",
+  plans: "Plans",
+  onboarding: "Onboarding",
+  testimonials: "Testimonials",
 };
 
 function titleFromSegment(segment: string, previous?: string) {
@@ -46,7 +65,9 @@ function titleFromSegment(segment: string, previous?: string) {
     if (previous === "sessions") return "Session Details";
     if (previous === "admins") return "Admin Details";
     if (previous === "colleges") return "College Details";
-    if (previous === "students") return "Student Details";
+    if (previous === "students" || previous === "participants") {
+      return "Participant Details";
+    }
     if (previous === "candidates") return "Candidate Details";
     if (previous === "departments") return "Department Details";
     return "Details";
@@ -58,32 +79,293 @@ function titleFromSegment(segment: string, previous?: string) {
     .join(" ");
 }
 
-export function DashboardShellHeader() {
+export function DashboardShellHeader({
+  rootSegment = "dashboard",
+}: {
+  rootSegment?: "dashboard" | "super-admin";
+}) {
+  const router = useRouter();
   const pathname = usePathname();
+  const { admin, organizations, tenant, membership } = useAuthStore();
+  const participantLabels = getTenantParticipantLabels(tenant);
+  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
   const segments = pathname.split("/").filter(Boolean);
-  const dashboardIndex = segments.indexOf("dashboard");
+  const dashboardIndex = segments.indexOf(rootSegment);
   const trail =
-    dashboardIndex >= 0 ? segments.slice(dashboardIndex) : ["dashboard"];
-  const currentSegment = trail[trail.length - 1] ?? "dashboard";
-  const currentTitle = titleFromSegment(
+    dashboardIndex >= 0 ? segments.slice(dashboardIndex) : [rootSegment];
+  const getTrailLabel = (segment: string, previous?: string) => {
+    if (segment === "students" || segment === "participants") {
+      return participantLabels.plural;
+    }
+
+    if (segment === "edit" && (previous === "students" || previous === "participants")) {
+      return `Edit ${participantLabels.singular}`;
+    }
+
+    if (
+      /^[a-f0-9]{20,}$/i.test(segment) &&
+      (previous === "students" || previous === "participants")
+    ) {
+      return `${participantLabels.singular} Details`;
+    }
+
+    return titleFromSegment(segment, previous);
+  };
+  const currentSegment = trail[trail.length - 1] ?? rootSegment;
+  const currentTitle = getTrailLabel(
     currentSegment,
     trail[trail.length - 2],
   );
+  const showTenantSwitcher =
+    rootSegment === "dashboard" &&
+    admin?.role !== "super_admin" &&
+    Boolean(tenant || organizations.length > 0);
+  const notificationsPath =
+    rootSegment === "super-admin" ? "/super-admin/notifications" : "/dashboard/notifications";
+  const supportPath =
+    rootSegment === "super-admin" ? "/super-admin/support" : "/dashboard/support";
+  const permissions = React.useMemo(
+    () =>
+      new Set([
+        ...(admin?.permissions || []),
+        ...(membership?.permissions || []),
+      ]),
+    [admin?.permissions, membership?.permissions],
+  );
+  const structureEnabled =
+    isTenantParticipantFieldEnabled(tenant, "college") ||
+    isTenantParticipantFieldEnabled(tenant, "department");
+  const tenantTabs = React.useMemo(
+    () =>
+      [
+        {
+          value: "/dashboard",
+          label: "Overview",
+          match: (path: string) => path === "/dashboard",
+          visible: true,
+        },
+        {
+          value: "/dashboard/participants",
+          label: participantLabels.plural,
+          match: (path: string) =>
+            path.startsWith("/dashboard/participants") ||
+            path.startsWith("/dashboard/students"),
+          visible: true,
+        },
+        {
+          value: "/dashboard/structure/colleges",
+          label: "Structure",
+          match: (path: string) =>
+            path.startsWith("/dashboard/structure") ||
+            path.startsWith("/dashboard/colleges") ||
+            path.startsWith("/dashboard/departments"),
+          visible: structureEnabled,
+        },
+        {
+          value: "/dashboard/sessions",
+          label: "Sessions",
+          match: (path: string) => path.startsWith("/dashboard/sessions"),
+          visible: true,
+        },
+        {
+          value: "/dashboard/admins",
+          label: "Admins",
+          match: (path: string) => path.startsWith("/dashboard/admins"),
+          visible:
+            permissions.size === 0 ||
+            permissions.has("tenant.roles.manage") ||
+            permissions.has("tenant.manage"),
+        },
+        {
+          value: "/dashboard/analytics",
+          label: "Monitoring",
+          match: (path: string) =>
+            path.startsWith("/dashboard/analytics") ||
+            path.startsWith("/dashboard/reports") ||
+            path.startsWith("/dashboard/system-health") ||
+            path.startsWith("/dashboard/audit-logs") ||
+            path.startsWith("/dashboard/election-analytics") ||
+            path.startsWith("/dashboard/facepp-test"),
+          visible:
+            tenant?.entitlements?.advanced_analytics !== false ||
+            tenant?.entitlements?.advanced_reports !== false,
+        },
+        {
+          value: "/dashboard/settings",
+          label: "Configuration",
+          match: (path: string) =>
+            path.startsWith("/dashboard/settings") ||
+            path.startsWith("/dashboard/notifications") ||
+            path.startsWith("/dashboard/integrations"),
+          visible: true,
+        },
+        {
+          value: supportPath,
+          label: "Support",
+          match: (path: string) => path.startsWith("/dashboard/support"),
+          visible:
+            permissions.size === 0 ||
+            permissions.has("support.manage") ||
+            permissions.has("tenant.manage"),
+        },
+        {
+          value: "/dashboard/announcements",
+          label: "Announcements",
+          match: (path: string) => path.startsWith("/dashboard/announcements"),
+          visible: true,
+        },
+        {
+          value: "/dashboard/billing",
+          label: "Billing",
+          match: (path: string) => path.startsWith("/dashboard/billing"),
+          visible:
+            permissions.size === 0 ||
+            permissions.has("tenant.billing.manage") ||
+            permissions.has("billing.manage") ||
+            permissions.has("tenant.manage"),
+        },
+      ].filter((tab) => tab.visible),
+    [participantLabels.plural, permissions, structureEnabled, supportPath, tenant?.entitlements],
+  );
+  const superAdminTabs = React.useMemo(
+    () => [
+      {
+        value: "/super-admin",
+        label: "Overview",
+        match: (path: string) => path === "/super-admin",
+      },
+      {
+        value: "/super-admin/tenants",
+        label: "Tenants",
+        match: (path: string) => path.startsWith("/super-admin/tenants"),
+      },
+      {
+        value: "/super-admin/plans",
+        label: "Plans",
+        match: (path: string) =>
+          path.startsWith("/super-admin/plans") ||
+          path.startsWith("/super-admin/billing"),
+      },
+      {
+        value: "/super-admin/onboarding",
+        label: "Onboarding",
+        match: (path: string) => path.startsWith("/super-admin/onboarding"),
+      },
+      {
+        value: "/super-admin/announcements",
+        label: "Announcements",
+        match: (path: string) => path.startsWith("/super-admin/announcements"),
+      },
+      {
+        value: "/super-admin/testimonials",
+        label: "Testimonials",
+        match: (path: string) => path.startsWith("/super-admin/testimonials"),
+      },
+      {
+        value: "/super-admin/system-health",
+        label: "System Health",
+        match: (path: string) => path.startsWith("/super-admin/system-health"),
+      },
+      {
+        value: "/super-admin/settings",
+        label: "Settings",
+        match: (path: string) => path.startsWith("/super-admin/settings"),
+      },
+      {
+        value: "/super-admin/notifications",
+        label: "Notifications",
+        match: (path: string) => path.startsWith("/super-admin/notifications"),
+      },
+    ],
+    [],
+  );
+  const navTabs = rootSegment === "super-admin" ? superAdminTabs : tenantTabs;
+  const activeTab =
+    navTabs.find((tab) => tab.match(pathname))?.value ?? navTabs[0]?.value ?? `/${rootSegment}`;
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-2 py-3">
+        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 md:flex md:justify-between">
+          <div className="flex min-w-0 items-center gap-3 md:flex-1">
           <SidebarTrigger className="shrink-0 rounded-lg border border-border/70 bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground md:hidden">
+            <p className="truncate text-xs font-medium text-foreground md:hidden">
               {currentTitle}
             </p>
-            <Breadcrumb className="hidden md:block">
+            <p className="hidden text-xs font-medium text-muted-foreground md:block">
+              {rootSegment === "super-admin" ? "Platform operations" : "Tenant operations"}
+            </p>
+            <p className="hidden truncate text-sm font-semibold text-foreground md:block">
+              {currentTitle}
+            </p>
+          </div>
+        </div>
+
+          <div className="flex justify-center md:hidden">
+            {showTenantSwitcher ? <TenantHeaderSwitcher compact /> : null}
+          </div>
+
+          <div className="flex shrink-0 items-center justify-end gap-2">
+            {showTenantSwitcher ? (
+              <div className="hidden md:block">
+                <TenantHeaderSwitcher />
+              </div>
+            ) : null}
+            <AdminChatWidget
+              supportPath={supportPath}
+              showTenant={rootSegment === "super-admin"}
+            />
+            <Button variant="outline" asChild className="relative">
+              <Link href={notificationsPath}>
+                <Bell className="h-4 w-4" />
+                <span className="hidden sm:inline">Notifications</span>
+                <NotificationCountBadge
+                  count={unreadNotifications}
+                  className="absolute -right-1.5 -top-1.5"
+                />
+              </Link>
+            </Button>
+            <div className="hidden items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground md:flex">
+              <span>Search</span>
+              <Kbd>/</Kbd>
+            </div>
+            <AnimatedThemeToggler
+              variant="header"
+              enableShortcut
+              className="max-w-full"
+            />
+          </div>
+        </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => router.push(value)}
+          className="w-full"
+        >
+          <TabsList
+            variant="line"
+            className="w-full justify-start overflow-x-auto border-b border-border/70 px-0"
+          >
+            {navTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none px-3 py-2 text-xs sm:px-4"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        {trail.length > 1 ? (
+          <div className="hidden md:block">
+            <Breadcrumb>
               <BreadcrumbList>
                 {trail.map((segment, index) => {
                   const href = `/${trail.slice(0, index + 1).join("/")}`;
-                  const label = titleFromSegment(segment, trail[index - 1]);
+                  const label = getTrailLabel(segment, trail[index - 1]);
                   const isLast = index === trail.length - 1;
 
                   return (
@@ -106,18 +388,7 @@ export function DashboardShellHeader() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="hidden items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground md:flex">
-            <span>Search</span>
-            <Kbd>/</Kbd>
-          </div>
-          <AnimatedThemeToggler
-            variant="header"
-            enableShortcut
-            className="max-w-full"
-          />
-        </div>
+        ) : null}
       </div>
     </header>
   );

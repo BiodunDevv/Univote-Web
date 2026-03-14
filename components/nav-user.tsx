@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Bell,
   ChevronsUpDown,
+  LifeBuoy,
   LogOut,
   Settings,
   Shield,
@@ -40,6 +41,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
+import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
+import { useSupportOverviewQuery } from "@/lib/queries/support";
+import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
+import { buildPublicAppUrl } from "@/lib/tenant";
 
 function initials(name: string) {
   return name
@@ -56,6 +61,7 @@ function roleLabel(role: string) {
 
 export function NavUser({
   user,
+  scope = "tenant",
 }: {
   user: {
     name: string;
@@ -63,21 +69,34 @@ export function NavUser({
     avatar: string;
     role?: string;
   };
+  scope?: "tenant" | "super-admin";
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
   const { logout, admin } = useAuthStore();
+  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
+  const supportOverviewQuery = useSupportOverviewQuery("admin");
+  const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
   const [showLogout, setShowLogout] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
 
   const role = user.role ?? admin?.role ?? "admin";
   const abbr = initials(user.name);
+  const profilePath =
+    scope === "super-admin" ? "/super-admin/settings#profile" : "/dashboard/settings";
+  const securityPath =
+    scope === "super-admin"
+      ? "/super-admin/settings#security"
+      : "/dashboard/settings?tab=security";
+  const settingsPath = scope === "super-admin" ? "/super-admin/settings" : "/dashboard/settings";
+  const notificationsPath = scope === "super-admin" ? "/super-admin/notifications" : "/dashboard/notifications";
+  const supportPath = scope === "super-admin" ? "/super-admin/support" : "/dashboard/support";
 
   const handleLogout = async () => {
     setLoggingOut(true);
     logout();
     await new Promise((r) => setTimeout(r, 400));
-    router.push("/auth/signin");
+    window.location.assign(buildPublicAppUrl("/auth/signin"));
   };
 
   return (
@@ -137,34 +156,33 @@ export function NavUser({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/settings")}
-                >
+                <DropdownMenuItem onClick={() => router.push(profilePath)}>
                   <BadgeCheck />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push("/dashboard/settings?tab=security")
-                  }
-                >
+                <DropdownMenuItem onClick={() => router.push(securityPath)}>
                   <Shield />
                   Security
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/settings")}
-                >
+                <DropdownMenuItem onClick={() => router.push(settingsPath)}>
                   <Settings />
                   Settings
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/notifications")}
-                >
+                <DropdownMenuItem onClick={() => router.push(notificationsPath)}>
                   <Bell />
                   Notifications
+                  <NotificationCountBadge
+                    count={unreadNotifications}
+                    className="ml-auto"
+                  />
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(supportPath)}>
+                  <LifeBuoy />
+                  Support
+                  <NotificationCountBadge count={unreadSupport} className="ml-auto" />
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />

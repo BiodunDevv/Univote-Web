@@ -8,14 +8,12 @@ import {
 } from "@/components/logos";
 import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function IntegrationsSection() {
   return (
     <section>
-      <div className="bg-muted dark:bg-background py-24 md:py-32">
-        <div className="mx-auto max-w-5xl px-6">
+      <div className="bg-muted py-20 dark:bg-background md:py-24">
+        <div className="mx-auto max-w-5xl px-2 sm:px-6">
           <div className="relative mx-auto flex max-w-sm items-center justify-between">
             <div className="space-y-6">
               <IntegrationCard position="left-top">
@@ -55,11 +53,11 @@ export default function IntegrationsSection() {
               </IntegrationCard>
             </div>
           </div>
-          <div className="mx-auto mt-12 max-w-lg space-y-6 text-center">
-            <h2 className="text-balance text-3xl font-semibold md:text-4xl">
+          <div className="mx-auto mt-10 max-w-lg space-y-3 text-center">
+            <h2 className="text-balance text-lg font-semibold sm:text-xl">
               Integrated with Leading Technologies
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Univote connects with Microsoft Azure, Paystack, and modern email
               APIs to ensure reliability and accuracy.
             </p>

@@ -53,7 +53,7 @@ export function ChangingLoadingState({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-2 text-sm font-medium text-current",
+          "inline-flex items-center gap-2 text-xs font-medium text-current",
           className,
         )}
       >
@@ -70,20 +70,20 @@ export function ChangingLoadingState({
   return (
     <div
       className={cn(
-        "flex items-center justify-center px-4 py-10",
+        "flex items-center justify-center px-3 py-8",
         resolvedVariant === "page"
           ? "min-h-screen"
-          : "min-h-[260px] rounded-xl border bg-card/40",
+          : "min-h-[180px] rounded-xl border bg-card/40",
         className,
       )}
     >
-      <div className="flex flex-col items-center gap-3 text-center">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-background/90 shadow-sm">
+      <div className="flex flex-col items-center gap-2.5 text-center">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/90 shadow-sm">
           <span className="animate-spin animation-duration-[1.2s] text-primary">
-            <LogoIcon className="h-6 w-6" />
+            <LogoIcon className="h-4.5 w-4.5" />
           </span>
         </span>
-        <p className="text-sm font-medium text-foreground transition-opacity duration-200">
+        <p className="text-xs font-medium text-foreground transition-opacity duration-200">
           {normalizedMessages[index % normalizedMessages.length]}
         </p>
       </div>
