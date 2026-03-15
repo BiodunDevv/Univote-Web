@@ -47,9 +47,18 @@ export function deriveTenantSlugFromHostname(hostname?: string | null) {
   }
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
-  if (rootDomain && normalized.endsWith(rootDomain.toLowerCase())) {
-    const suffix = `.${rootDomain.toLowerCase()}`;
-    const slug = normalized.replace(suffix, "");
+  if (rootDomain) {
+    const normalizedRootDomain = rootDomain.toLowerCase().replace(/^\./, "");
+    if (normalized === normalizedRootDomain) {
+      return null;
+    }
+
+    if (!normalized.endsWith(`.${normalizedRootDomain}`)) {
+      return null;
+    }
+
+    const suffix = `.${normalizedRootDomain}`;
+    const slug = normalized.slice(0, -suffix.length);
     return slug && slug !== "www" && slug !== "api"
       ? normalizeTenantSlug(slug)
       : null;
