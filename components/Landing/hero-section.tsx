@@ -116,7 +116,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
             </div>
 
             <div className="mt-5 max-w-3xl space-y-4">
-              <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground lg:leading-[1.02]">
+              <h1 className="text-balance text-2xl sm:text-4xl font-semibold tracking-tight text-foreground lg:leading-[1.02]">
                 Elections for universities, institutes, associations, and every
                 organised voting body.
               </h1>
