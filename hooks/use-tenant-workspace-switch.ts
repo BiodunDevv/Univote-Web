@@ -8,7 +8,7 @@ import { buildTenantAuthAcceptUrl, isTenantHost } from "@/lib/tenant";
 export function useTenantWorkspaceSwitch() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { setSession, switchOrganization, logout } = useAuthStore();
+  const { setSession, switchOrganization } = useAuthStore();
   const [isSwitching, setIsSwitching] = useState(false);
 
   const currentRef = useMemo(() => {
@@ -30,7 +30,6 @@ export function useTenantWorkspaceSwitch() {
           targetRef,
           session,
         );
-        logout();
         window.location.assign(handoffUrl);
         return;
       }

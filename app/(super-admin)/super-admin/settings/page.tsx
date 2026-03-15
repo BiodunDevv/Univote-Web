@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Bell,
@@ -121,6 +121,7 @@ export default function PlatformSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
+  const lastProfileSyncKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!biometrics || !facepp) return;
@@ -141,13 +142,23 @@ export default function PlatformSettingsPage() {
   }, [getProfile, token]);
 
   useEffect(() => {
-    if (profile?.full_name && profile.full_name !== fullName) {
-      setFullName(profile.full_name);
+    if (!profile) return;
+
+    const syncKey = [
+      profile._id || "",
+      profile.updatedAt || "",
+      profile.full_name || "",
+      profile.email || "",
+    ].join(":");
+
+    if (lastProfileSyncKey.current === syncKey) {
+      return;
     }
-    if (profile?.email && profile.email !== email) {
-      setEmail(profile.email);
-    }
-  }, [email, fullName, profile]);
+
+    setFullName(profile.full_name || "");
+    setEmail(profile.email || "");
+    lastProfileSyncKey.current = syncKey;
+  }, [profile]);
 
   const handleSaveProfile = async () => {
     if (!token) return;
@@ -156,6 +167,12 @@ export default function PlatformSettingsPage() {
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
       });
+      lastProfileSyncKey.current = [
+        updatedProfile._id || "",
+        updatedProfile.updatedAt || "",
+        updatedProfile.full_name || "",
+        updatedProfile.email || "",
+      ].join(":");
       updateAdmin({
         full_name: updatedProfile.full_name,
         email: updatedProfile.email,

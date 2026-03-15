@@ -83,6 +83,16 @@ function normalizeStudentProfile(
   };
 }
 
+function clearPersistedParticipantAuthState() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem("student-auth-storage");
+  } catch {
+    return;
+  }
+}
+
 export const useStudentAuthStore = create<StudentAuthState>()(
   persist(
     (set, get) => ({
@@ -313,6 +323,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         } catch {
           // Local session clear still takes priority.
         } finally {
+          clearPersistedParticipantAuthState();
           set({
             token: null,
             firstLoginToken: null,

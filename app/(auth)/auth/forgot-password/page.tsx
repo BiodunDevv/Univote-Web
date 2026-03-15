@@ -16,7 +16,7 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { token, hasHydrated, admin, tenant, membership, organizations, logout } =
+  const { token, hasHydrated, admin, tenant, membership, organizations } =
     useAuthStore();
 
   useEffect(() => {
@@ -35,7 +35,6 @@ export default function ForgotPasswordPage() {
             "/dashboard",
             handoffSession,
           );
-          logout();
           window.location.replace(handoffUrl);
           return;
         }
@@ -49,7 +48,6 @@ export default function ForgotPasswordPage() {
   }, [
     admin,
     hasHydrated,
-    logout,
     membership,
     organizations,
     router,

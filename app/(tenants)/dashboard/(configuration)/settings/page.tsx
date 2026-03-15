@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -48,6 +48,7 @@ type ParticipantFieldPolicy = {
 };
 
 type SettingsTab = "profile" | "security" | "system";
+type ParticipantStructureTab = "identity" | "structure" | "media";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -82,6 +83,8 @@ function SettingsContent() {
   }, [searchParams]);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  const [participantStructureTab, setParticipantStructureTab] =
+    useState<ParticipantStructureTab>("structure");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
@@ -102,6 +105,7 @@ function SettingsContent() {
   const [fieldsLoading, setFieldsLoading] = useState(false);
   const [fieldsSaving, setFieldsSaving] = useState(false);
   const [fieldsMessage, setFieldsMessage] = useState("");
+  const lastProfileSyncKey = useRef<string | null>(null);
 
   const isSuperAdmin = admin?.role === "super_admin";
   const isLoadingProfile = loading && !profile;
@@ -190,13 +194,23 @@ function SettingsContent() {
   }, [API_BASE_URL, hasHydrated, isSuperAdmin, token]);
 
   useEffect(() => {
-    if (profile?.full_name && profile.full_name !== fullName) {
-      setFullName(profile.full_name);
+    if (!profile) return;
+
+    const syncKey = [
+      profile._id || "",
+      profile.updatedAt || "",
+      profile.full_name || "",
+      profile.email || "",
+    ].join(":");
+
+    if (lastProfileSyncKey.current === syncKey) {
+      return;
     }
-    if (profile?.email && profile.email !== email) {
-      setEmail(profile.email);
-    }
-  }, [email, fullName, profile]);
+
+    setFullName(profile.full_name || "");
+    setEmail(profile.email || "");
+    lastProfileSyncKey.current = syncKey;
+  }, [profile]);
 
   if (!hasHydrated || !token || !admin) {
     return (
@@ -230,6 +244,12 @@ function SettingsContent() {
         full_name: fullName,
         email,
       });
+      lastProfileSyncKey.current = [
+        updatedProfile._id || "",
+        updatedProfile.updatedAt || "",
+        updatedProfile.full_name || "",
+        updatedProfile.email || "",
+      ].join(":");
       updateAdmin({
         full_name: updatedProfile.full_name,
         email: updatedProfile.email,
@@ -374,7 +394,10 @@ function SettingsContent() {
         onValueChange={handleTabChange}
         className="space-y-6"
       >
-        <TabsList className="h-auto w-full justify-start gap-2 rounded-2xl border border-border/70 bg-muted/20 p-2">
+        <TabsList
+          variant="line"
+          className="h-auto w-full justify-start overflow-x-auto border-b border-border/70 px-0"
+        >
           <TabsTrigger value="profile" className="rounded-xl px-4 py-2">
             Profile
           </TabsTrigger>
@@ -529,104 +552,149 @@ function SettingsContent() {
                       allows sessions to restrict who can vote using that field.
                     </AlertDescription>
                   </Alert>
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {Object.entries(participantFields)
-                      .filter(([fieldKey]) =>
-                        ["email", "college", "department", "level", "photo_url"].includes(
-                          fieldKey,
-                        ),
-                      )
-                      .map(([fieldKey, field]) => (
-                        <div
-                          key={fieldKey}
-                          className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-                        >
-                          <div className="mb-3">
-                            <p className="text-sm font-semibold text-foreground">
-                              {field.label || fieldKey}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {fieldKey === "email"
-                                ? "Use this for notifications, recovery, and direct communication with participants."
-                                : fieldKey === "college"
-                                  ? "Use this for top-level groups such as schools, regions, divisions, or broad units."
-                                  : fieldKey === "department"
-                                    ? "Use this for smaller units such as departments, teams, chapters, or programs."
-                                    : fieldKey === "level"
-                                      ? "Use this for stages like year of study, cohort, class, or membership tier."
-                                      : "Use this when profile images or biometric verification are part of your workflow."}
-                            </p>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs text-muted-foreground">Enabled</span>
-                              <Switch
-                                checked={field.enabled !== false}
-                                onCheckedChange={(checked) =>
-                                  handleParticipantFieldToggle(fieldKey, "enabled", checked)
-                                }
-                              />
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs text-muted-foreground">Required</span>
-                              <Switch
-                                checked={Boolean(field.required)}
-                                disabled={field.enabled === false}
-                                onCheckedChange={(checked) =>
-                                  handleParticipantFieldToggle(fieldKey, "required", checked)
-                                }
-                              />
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs text-muted-foreground">Show in profile</span>
-                              <Switch
-                                checked={Boolean(field.show_in_profile)}
-                                disabled={field.enabled === false}
-                                onCheckedChange={(checked) =>
-                                  handleParticipantFieldToggle(
-                                    fieldKey,
-                                    "show_in_profile",
-                                    checked,
-                                  )
-                                }
-                              />
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs text-muted-foreground">Show in filters</span>
-                              <Switch
-                                checked={Boolean(field.show_in_filters)}
-                                disabled={field.enabled === false}
-                                onCheckedChange={(checked) =>
-                                  handleParticipantFieldToggle(
-                                    fieldKey,
-                                    "show_in_filters",
-                                    checked,
-                                  )
-                                }
-                              />
-                            </div>
-                            {["college", "department", "level"].includes(fieldKey) ? (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs text-muted-foreground">
-                                  Allow in eligibility
-                                </span>
-                                <Switch
-                                  checked={Boolean(field.allow_in_eligibility)}
-                                  disabled={field.enabled === false}
-                                  onCheckedChange={(checked) =>
-                                    handleParticipantFieldToggle(
-                                      fieldKey,
-                                      "allow_in_eligibility",
-                                      checked,
-                                    )
-                                  }
-                                />
+                  <Tabs
+                    value={participantStructureTab}
+                    onValueChange={(value) =>
+                      setParticipantStructureTab(value as ParticipantStructureTab)
+                    }
+                    className="space-y-4"
+                  >
+                    <TabsList
+                      variant="line"
+                      className="w-full justify-start overflow-x-auto border-b border-border/70 px-0"
+                    >
+                      <TabsTrigger value="identity" className="px-4 py-2">
+                        Identity fields
+                      </TabsTrigger>
+                      <TabsTrigger value="structure" className="px-4 py-2">
+                        Structure fields
+                      </TabsTrigger>
+                      <TabsTrigger value="media" className="px-4 py-2">
+                        Media & verification
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {(
+                      [
+                        {
+                          value: "identity",
+                          fields: ["email"],
+                        },
+                        {
+                          value: "structure",
+                          fields: ["college", "department", "level"],
+                        },
+                        {
+                          value: "media",
+                          fields: ["photo_url"],
+                        },
+                      ] as Array<{
+                        value: ParticipantStructureTab;
+                        fields: string[];
+                      }>
+                    ).map((group) => (
+                      <TabsContent
+                        key={group.value}
+                        value={group.value}
+                        className="space-y-4"
+                      >
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                          {Object.entries(participantFields)
+                            .filter(([fieldKey]) => group.fields.includes(fieldKey))
+                            .map(([fieldKey, field]) => (
+                              <div
+                                key={fieldKey}
+                                className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                              >
+                                <div className="mb-3">
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {field.label || fieldKey}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {fieldKey === "email"
+                                      ? "Use this for notifications, recovery, and direct communication with participants."
+                                      : fieldKey === "college"
+                                        ? "Use this for top-level groups such as schools, regions, divisions, or broad units."
+                                        : fieldKey === "department"
+                                          ? "Use this for smaller units such as departments, teams, chapters, or programs."
+                                          : fieldKey === "level"
+                                            ? "Use this for stages like year of study, cohort, class, or membership tier."
+                                            : "Use this when profile images or biometric verification are part of your workflow."}
+                                  </p>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs text-muted-foreground">Enabled</span>
+                                    <Switch
+                                      checked={field.enabled !== false}
+                                      onCheckedChange={(checked) =>
+                                        handleParticipantFieldToggle(fieldKey, "enabled", checked)
+                                      }
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs text-muted-foreground">Required</span>
+                                    <Switch
+                                      checked={Boolean(field.required)}
+                                      disabled={field.enabled === false}
+                                      onCheckedChange={(checked) =>
+                                        handleParticipantFieldToggle(fieldKey, "required", checked)
+                                      }
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs text-muted-foreground">Show in profile</span>
+                                    <Switch
+                                      checked={Boolean(field.show_in_profile)}
+                                      disabled={field.enabled === false}
+                                      onCheckedChange={(checked) =>
+                                        handleParticipantFieldToggle(
+                                          fieldKey,
+                                          "show_in_profile",
+                                          checked,
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs text-muted-foreground">Show in filters</span>
+                                    <Switch
+                                      checked={Boolean(field.show_in_filters)}
+                                      disabled={field.enabled === false}
+                                      onCheckedChange={(checked) =>
+                                        handleParticipantFieldToggle(
+                                          fieldKey,
+                                          "show_in_filters",
+                                          checked,
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                  {["college", "department", "level"].includes(fieldKey) ? (
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span className="text-xs text-muted-foreground">
+                                        Allow in eligibility
+                                      </span>
+                                      <Switch
+                                        checked={Boolean(field.allow_in_eligibility)}
+                                        disabled={field.enabled === false}
+                                        onCheckedChange={(checked) =>
+                                          handleParticipantFieldToggle(
+                                            fieldKey,
+                                            "allow_in_eligibility",
+                                            checked,
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
-                            ) : null}
-                          </div>
+                            ))}
                         </div>
-                      ))}
-                  </div>
+                      </TabsContent>
+                    ))}
+                  </Tabs>
                   {fieldsMessage ? (
                     <Alert>
                       <AlertDescription>{fieldsMessage}</AlertDescription>

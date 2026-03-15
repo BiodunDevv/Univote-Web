@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useEffect, useState, useSyncExternalStore } from "react";
-import { Menu } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -42,8 +42,18 @@ export const HeroHeader = () => {
     readSharedAdminContext,
     () => null,
   );
-  const { token, admin, tenant } = useAuthStore();
-  const { token: studentToken } = useStudentAuthStore();
+  const {
+    token,
+    admin,
+    tenant,
+    hasHydrated: adminHasHydrated,
+  } = useAuthStore();
+  const {
+    token: studentToken,
+    hasHydrated: participantHasHydrated,
+  } = useStudentAuthStore();
+  const isCheckingSession = !mounted || !adminHasHydrated || !participantHasHydrated;
+
   const tenantWorkspaceHref =
     tenant?.slug ||
     sharedAdminContext?.tenant?.slug ||
@@ -85,176 +95,186 @@ export const HeroHeader = () => {
       <div className="mx-auto max-w-7xl">
         <div
           className={cn(
-            "grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-2xl border border-transparent px-3 py-2 transition-all duration-300 ease-out sm:px-4 md:flex md:justify-between",
+            "rounded-2xl border border-transparent px-3 py-2 transition-all duration-300 ease-out sm:px-4",
             isScrolled
               ? "border-border/50 bg-background/40 shadow-lg shadow-black/5 backdrop-blur-2xl"
               : "bg-transparent",
           )}
         >
-          <div className="flex min-w-0 items-center gap-5">
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-              <Logo />
-            </Link>
-            <nav className="hidden items-center gap-5 md:flex">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
-          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-5">
+              <Link href="/" className="flex items-center gap-2 text-xl font-bold">
+                <Logo />
+              </Link>
+              <nav className="hidden items-center gap-5 md:flex">
+                {menuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+            </div>
 
-          <div className="flex justify-center md:hidden">
-            {mounted && isTenantAuthenticated ? (
-              <LandingOrganizationSwitcher compact />
-            ) : null}
-          </div>
-
-          <div className="flex items-center justify-end gap-2 sm:gap-3">
-            {!mounted ? (
-              <>
-                <div className="hidden h-9 w-20 animate-pulse rounded-md bg-muted md:inline-flex" />
-                <div className="hidden h-9 w-9 animate-pulse rounded-md bg-muted md:inline-flex" />
-              </>
-            ) : isTenantAuthenticated ? (
-              <div className="hidden md:flex">
-                <LandingOrganizationSwitcher />
-              </div>
-            ) : activeHref ? (
-              <Button
-                variant="outline"
-                asChild
-                className="hidden transition-transform md:inline-flex"
-                size="sm"
-              >
-                <Link href={activeHref}>
-                  {token ? "Platform Console" : "Portal"}
-                </Link>
-              </Button>
-            ) : (
-              <>
-                <Button
-                  asChild
-                  className="hidden transition-transform md:inline-flex"
-                  size="sm"
-                >
-                  <Link href="/students/login">Portal Login</Link>
-                </Button>
+            <div className="flex items-center justify-end gap-2 sm:gap-3">
+              {isCheckingSession ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden md:inline-flex"
+                    disabled
+                  >
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Checking
+                  </Button>
+                  <div className="hidden h-9 w-9 animate-pulse rounded-md bg-muted md:inline-flex" />
+                </>
+              ) : isTenantAuthenticated ? (
+                <div className="hidden md:flex">
+                  <LandingOrganizationSwitcher />
+                </div>
+              ) : activeHref ? (
                 <Button
                   variant="outline"
                   asChild
                   className="hidden transition-transform md:inline-flex"
                   size="sm"
                 >
-                  <Link href="/auth/signin">Admin Login</Link>
+                  <Link href={activeHref}>
+                    {token ? "Platform Console" : "Portal"}
+                  </Link>
                 </Button>
-              </>
-            )}
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    className="hidden transition-transform md:inline-flex"
+                    size="sm"
+                  >
+                    <Link href="/students/login">Portal Login</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="hidden transition-transform md:inline-flex"
+                    size="sm"
+                  >
+                    <Link href="/auth/signin">Admin Login</Link>
+                  </Button>
+                </>
+              )}
 
-            <AnimatedThemeToggler />
+              <AnimatedThemeToggler />
 
-            <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 transition-transform md:hidden"
+              <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 transition-transform md:hidden"
+                  >
+                    <Menu className="size-5" />
+                    <span className="sr-only">Toggle navigation menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-[85vw] max-w-sm border-border/50 bg-background/95 p-0 backdrop-blur-xl"
                 >
-                  <Menu className="size-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[85vw] max-w-sm border-border/50 bg-background/95 p-0 backdrop-blur-xl"
-              >
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <nav className="flex h-full flex-col p-6">
-                  <div className="mb-8 border-b border-border/20 pb-6">
-                    <Link
-                      href="/"
-                      onClick={handleLinkClick}
-                      className="flex items-center gap-3 text-xl font-bold transition-colors hover:text-primary"
-                    >
-                      <Logo />
-                    </Link>
-                  </div>
-
-                  <div className="flex-1 space-y-2">
-                    {menuItems.map((item) => (
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                  <nav className="flex h-full flex-col p-6">
+                    <div className="mb-8 border-b border-border/20 pb-6">
                       <Link
-                        key={item.href}
-                        href={item.href}
+                        href="/"
                         onClick={handleLinkClick}
-                        className="group text-muted-foreground hover:bg-primary/10 hover:text-foreground relative flex items-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 hover:translate-x-1 active:scale-95"
+                        className="flex items-center gap-3 text-xl font-bold transition-colors hover:text-primary"
                       >
-                        <span className="relative z-10">{item.name}</span>
-                        <div className="from-primary/5 absolute inset-0 rounded-lg bg-linear-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <Logo />
                       </Link>
-                    ))}
-                  </div>
+                    </div>
 
-                  <div className="mt-6 space-y-3 border-t border-border/20 pt-6">
-                    {!mounted ? (
-                      <>
-                        <div className="h-12 w-full animate-pulse rounded-md bg-muted" />
-                        <div className="h-12 w-full animate-pulse rounded-md bg-muted" />
-                      </>
-                    ) : isTenantAuthenticated ? (
-                      <div className="space-y-3">
-                        <LandingOrganizationSwitcher />
-                        {tenantWorkspaceHref ? (
+                    <div className="flex-1 space-y-2">
+                      {menuItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={handleLinkClick}
+                          className="group text-muted-foreground hover:bg-primary/10 hover:text-foreground relative flex items-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 hover:translate-x-1 active:scale-95"
+                        >
+                          <span className="relative z-10">{item.name}</span>
+                          <div className="from-primary/5 absolute inset-0 rounded-lg bg-linear-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 space-y-3 border-t border-border/20 pt-6">
+                      {isCheckingSession ? (
+                        <Button disabled className="w-full py-3 text-sm">
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          Checking session
+                        </Button>
+                      ) : isTenantAuthenticated ? (
+                        <div className="space-y-3">
+                          <LandingOrganizationSwitcher />
+                          {tenantWorkspaceHref ? (
+                            <Button
+                              variant="outline"
+                              asChild
+                              className="w-full py-3 text-sm"
+                              onClick={handleLinkClick}
+                            >
+                              <Link href={tenantWorkspaceHref}>
+                                Open current workspace
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : activeHref ? (
+                        <Button
+                          variant="default"
+                          asChild
+                          className="w-full py-3 text-sm shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95"
+                          onClick={handleLinkClick}
+                        >
+                          <Link href={activeHref}>
+                            {token ? "Platform Console" : "Portal"}
+                          </Link>
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            asChild
+                            className="w-full py-3 text-sm"
+                            onClick={handleLinkClick}
+                          >
+                            <Link href="/students/login">Portal Login</Link>
+                          </Button>
                           <Button
                             variant="outline"
                             asChild
                             className="w-full py-3 text-sm"
                             onClick={handleLinkClick}
                           >
-                            <Link href={tenantWorkspaceHref}>
-                              Open current workspace
-                            </Link>
+                            <Link href="/auth/signin">Admin Login</Link>
                           </Button>
-                        ) : null}
-                      </div>
-                    ) : activeHref ? (
-                      <Button
-                        variant="default"
-                        asChild
-                        className="w-full py-3 text-sm shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95"
-                        onClick={handleLinkClick}
-                      >
-                        <Link href={activeHref}>
-                          {token ? "Platform Console" : "Portal"}
-                        </Link>
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          asChild
-                          className="w-full py-3 text-sm"
-                          onClick={handleLinkClick}
-                        >
-                          <Link href="/students/login">Portal Login</Link>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          asChild
-                          className="w-full py-3 text-sm"
-                          onClick={handleLinkClick}
-                        >
-                          <Link href="/auth/signin">Admin Login</Link>
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </nav>
-              </SheetContent>
-            </Sheet>
+                        </>
+                      )}
+                    </div>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
+
+          {!isCheckingSession && isTenantAuthenticated ? (
+            <div className="mt-2 border-t border-border/40 pt-2 md:hidden">
+              <LandingOrganizationSwitcher compact className="max-w-none" />
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

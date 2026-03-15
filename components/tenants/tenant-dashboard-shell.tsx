@@ -10,6 +10,7 @@ import {
 } from "@/lib/tenant";
 import { AdminSidebar } from "@/components/tenants/admin-sidebar";
 import { DashboardShellHeader } from "@/components/dashboard-shell-header";
+import { AdminProductTour } from "@/components/guided-tour/admin-product-tour";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -26,7 +27,6 @@ export function TenantDashboardShell({
     tenant,
     membership,
     organizations,
-    logout,
     hasHydrated,
   } = useAuthStore();
 
@@ -72,14 +72,12 @@ export function TenantDashboardShell({
         currentRef,
         handoffSession,
       );
-      logout();
       window.location.replace(handoffUrl);
     }
   }, [
     admin,
     currentRef,
     hasHydrated,
-    logout,
     membership,
     needsTenantHostRedirect,
     organizations,
@@ -119,6 +117,7 @@ export function TenantDashboardShell({
       <SidebarProvider>
         <AdminSidebar />
         <SidebarInset>
+          <AdminProductTour scope="tenant" />
           <DashboardShellHeader />
           <div className="flex min-w-0 w-full max-w-full flex-1 flex-col overflow-x-hidden p-2">
             {children}

@@ -176,7 +176,7 @@ export function SuperAdminSidebar({ ...props }: React.ComponentProps<typeof Side
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" data-tour="admin-sidebar" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

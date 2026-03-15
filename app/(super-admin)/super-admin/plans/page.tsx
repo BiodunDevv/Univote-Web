@@ -47,7 +47,7 @@ function toEditableState(plan: BillingPlan): EditablePlanState {
     entitlements: {
       custom_terminology: Boolean(plan.entitlements.custom_terminology),
       custom_identity_policy: Boolean(plan.entitlements.custom_identity_policy),
-      custom_participant_structure: Boolean(plan.entitlements.custom_participant_structure),
+      custom_participant_structure: true,
       custom_branding: Boolean(plan.entitlements.custom_branding),
       advanced_analytics: Boolean(plan.entitlements.advanced_analytics),
       advanced_reports: Boolean(plan.entitlements.advanced_reports),
@@ -64,7 +64,6 @@ const entitlementFields: Array<{
 }> = [
   { key: "custom_terminology", label: "Custom terminology" },
   { key: "custom_identity_policy", label: "Custom identity" },
-  { key: "custom_participant_structure", label: "Custom structure" },
   { key: "custom_branding", label: "Custom branding" },
   { key: "advanced_analytics", label: "Advanced analytics" },
   { key: "advanced_reports", label: "Advanced reports" },
@@ -116,7 +115,11 @@ export default function PlatformPlansPage() {
             .split("\n")
             .map((feature) => feature.trim())
             .filter(Boolean),
-          entitlements: draft.entitlements,
+          entitlements: {
+            ...draft.entitlements,
+            // Participant structure is platform-wide, not a paid gate.
+            custom_participant_structure: true,
+          },
         },
       });
       toast.success(result.message);

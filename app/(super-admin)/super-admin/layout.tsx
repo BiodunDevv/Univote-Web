@@ -7,6 +7,7 @@ import { SuperAdminSidebar } from "@/components/super-admin/super-admin-sidebar"
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { buildTenantAppUrl } from "@/lib/tenant";
 import { DashboardShellHeader } from "@/components/dashboard-shell-header";
+import { AdminProductTour } from "@/components/guided-tour/admin-product-tour";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function SuperAdminLayout({
@@ -65,6 +66,7 @@ export default function SuperAdminLayout({
       <SidebarProvider>
         <SuperAdminSidebar />
         <SidebarInset>
+          <AdminProductTour scope="super-admin" />
           <DashboardShellHeader rootSegment="super-admin" />
           <div className="flex min-w-0 w-full max-w-full flex-1 flex-col overflow-x-hidden p-2">
             {children}

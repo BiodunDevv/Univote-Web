@@ -328,7 +328,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" data-tour="admin-sidebar" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
         <NavSearch items={searchItems} />

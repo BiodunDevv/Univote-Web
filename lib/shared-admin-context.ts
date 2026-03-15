@@ -9,6 +9,8 @@ const SHARED_ADMIN_CONTEXT_COOKIE = "univote-shared-admin-context";
 const SHARED_ADMIN_CONTEXT_STORAGE = "univote-shared-admin-context";
 const SHARED_ADMIN_CONTEXT_EVENT = "univote:shared-admin-context";
 const SHARED_ADMIN_CONTEXT_SYNC_FRAME = "__univote_shared_admin_context_sync__";
+let cachedSharedAdminContextRaw: string | null | undefined;
+let cachedSharedAdminContextValue: SharedAdminContext | null = null;
 
 export type SharedAdminContext = {
   admin: {
@@ -85,6 +87,8 @@ function writeStorageValue(context: SharedAdminContext | null) {
   } catch {
     return;
   } finally {
+    cachedSharedAdminContextRaw = context ? JSON.stringify(context) : null;
+    cachedSharedAdminContextValue = context;
     window.dispatchEvent(new Event(SHARED_ADMIN_CONTEXT_EVENT));
   }
 }
@@ -161,12 +165,18 @@ function parseSharedAdminContext(value: string | null) {
 }
 
 export function readSharedAdminContext() {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") return cachedSharedAdminContextValue;
 
-  const storageContext = parseSharedAdminContext(readStorageValue());
-  if (storageContext) return storageContext;
+  const rawValue =
+    readStorageValue() ?? readCookieValue(SHARED_ADMIN_CONTEXT_COOKIE) ?? null;
 
-  return parseSharedAdminContext(readCookieValue(SHARED_ADMIN_CONTEXT_COOKIE));
+  if (rawValue === cachedSharedAdminContextRaw) {
+    return cachedSharedAdminContextValue;
+  }
+
+  cachedSharedAdminContextRaw = rawValue;
+  cachedSharedAdminContextValue = parseSharedAdminContext(rawValue);
+  return cachedSharedAdminContextValue;
 }
 
 export function writeSharedAdminContext(
@@ -184,6 +194,8 @@ export function writeSharedAdminContext(
   if (!context) {
     document.cookie = `${SHARED_ADMIN_CONTEXT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${domainPart}${securePart}`;
     document.cookie = `${SHARED_ADMIN_CONTEXT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${securePart}`;
+    cachedSharedAdminContextRaw = null;
+    cachedSharedAdminContextValue = null;
     if (options.syncToRoot !== false) {
       syncSharedContextToRoot(null);
     }
@@ -192,6 +204,8 @@ export function writeSharedAdminContext(
 
   const payload = encodeURIComponent(JSON.stringify(context));
   document.cookie = `${SHARED_ADMIN_CONTEXT_COOKIE}=${payload}; Path=/; Max-Age=1209600; SameSite=Lax${domainPart}${securePart}`;
+  cachedSharedAdminContextRaw = JSON.stringify(context);
+  cachedSharedAdminContextValue = context;
 
   if (options.syncToRoot !== false) {
     syncSharedContextToRoot(context);

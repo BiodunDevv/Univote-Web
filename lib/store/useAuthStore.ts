@@ -46,6 +46,16 @@ function syncSharedAdminContext(session: AuthSessionData | null) {
   });
 }
 
+function clearPersistedAdminAuthState() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem("auth-storage");
+  } catch {
+    return;
+  }
+}
+
 interface AuthState {
   token: string | null;
   admin: AuthAdmin | null;
@@ -221,7 +231,20 @@ export const useAuthStore = create<AuthState>()(
             );
             syncSharedAdminContext(data);
           } else {
-            set({ isLoading: false, error: null });
+            set((state) => ({
+              token: data.token,
+              admin: data.admin,
+              tenant: data.tenant || state.tenant,
+              organizations: data.organizations || state.organizations,
+              membership: data.membership || state.membership,
+              isLoading: false,
+              error: null,
+              hasHydrated: state.hasHydrated,
+            }));
+            setTenantSlugOverride(
+              data.admin.role === "super_admin" ? null : (data.tenant?.slug ?? null),
+            );
+            syncSharedAdminContext(data);
           }
 
           return data;
@@ -239,6 +262,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         setTenantSlugOverride(null);
         clearSharedAdminContext();
+        clearPersistedAdminAuthState();
         set({
           token: null,
           admin: null,

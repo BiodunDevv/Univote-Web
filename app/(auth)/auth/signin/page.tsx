@@ -23,7 +23,6 @@ function SignInPageContent() {
     tenant,
     membership,
     organizations,
-    logout,
   } = useAuthStore();
 
   useEffect(() => {
@@ -60,7 +59,6 @@ function SignInPageContent() {
               tenantTarget,
               handoffSession,
             );
-            logout();
             window.location.replace(handoffUrl);
             return;
           }
@@ -75,7 +73,6 @@ function SignInPageContent() {
   }, [
     admin,
     hasHydrated,
-    logout,
     membership,
     organizations,
     router,

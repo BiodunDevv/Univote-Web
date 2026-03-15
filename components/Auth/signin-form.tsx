@@ -91,7 +91,6 @@ export function LoginForm({
           tenantTarget,
           session,
         );
-        useAuthStore.getState().logout();
         window.location.assign(handoffUrl);
         return;
       }

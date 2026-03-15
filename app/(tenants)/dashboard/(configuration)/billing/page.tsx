@@ -47,7 +47,6 @@ const entitlementLabels: Array<{
   key:
     | "custom_terminology"
     | "custom_identity_policy"
-    | "custom_participant_structure"
     | "advanced_analytics"
     | "advanced_reports"
     | "realtime_support"
@@ -58,7 +57,6 @@ const entitlementLabels: Array<{
 }> = [
   { key: "custom_terminology", label: "Custom terminology" },
   { key: "custom_identity_policy", label: "Custom identity" },
-  { key: "custom_participant_structure", label: "Custom structure" },
   { key: "advanced_analytics", label: "Advanced analytics" },
   { key: "advanced_reports", label: "Advanced reports" },
   { key: "realtime_support", label: "Realtime support" },
@@ -66,6 +64,22 @@ const entitlementLabels: Array<{
   { key: "custom_branding", label: "Custom branding" },
   { key: "face_verification", label: "Face verification" },
 ];
+
+function getEnabledEntitlements(
+  plan: { entitlements?: Record<string, boolean | undefined> },
+) {
+  return entitlementLabels.filter((entitlement) =>
+    Boolean(plan.entitlements?.[entitlement.key]),
+  );
+}
+
+function getLockedEntitlements(
+  plan: { entitlements?: Record<string, boolean | undefined> },
+) {
+  return entitlementLabels.filter(
+    (entitlement) => !plan.entitlements?.[entitlement.key],
+  );
+}
 
 export default function BillingPage() {
   const { tenant: authTenant } = useAuthStore();
@@ -339,25 +353,40 @@ export default function BillingPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="space-y-2 rounded-xl border p-3">
-                      <p className="text-xs font-medium text-foreground">
-                        Included entitlements
-                      </p>
+                    <div className="space-y-3 rounded-xl border p-3">
+                      <div>
+                        <p className="text-xs font-medium text-foreground">
+                          Tier capabilities
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Participant structure is included for every tenant. These
+                          badges only show plan-dependent capabilities.
+                        </p>
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {entitlementLabels.map((entitlement) => (
+                        {getEnabledEntitlements(plan).map((entitlement) => (
                           <Badge
                             key={entitlement.key}
-                            variant={
-                              plan.entitlements?.[entitlement.key]
-                                ? "default"
-                                : "outline"
-                            }
+                            variant="default"
                             className="text-[11px]"
                           >
                             {entitlement.label}
                           </Badge>
                         ))}
                       </div>
+                      {getLockedEntitlements(plan).length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {getLockedEntitlements(plan).map((entitlement) => (
+                            <Badge
+                              key={entitlement.key}
+                              variant="outline"
+                              className="text-[11px]"
+                            >
+                              {entitlement.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                     <Button
                       className="w-full"
@@ -439,10 +468,17 @@ export default function BillingPage() {
               <CardHeader>
                 <CardTitle>Included capabilities</CardTitle>
                 <CardDescription>
-                  Active feature gates for the current plan.
+                  Active feature gates for the current plan. Participant structure
+                  remains available across every plan tier.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Participant structure
+                  </span>
+                  <Badge variant="default">Included</Badge>
+                </div>
                 {entitlementLabels.map((entitlement) => (
                   <div
                     key={entitlement.key}

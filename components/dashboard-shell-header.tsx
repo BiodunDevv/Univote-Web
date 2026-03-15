@@ -286,29 +286,25 @@ export function DashboardShellHeader({
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-2 py-3">
-        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 md:flex md:justify-between">
+        <div className="flex w-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 md:flex-1">
-          <SidebarTrigger className="shrink-0 rounded-lg border border-border/70 bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-foreground md:hidden">
-              {currentTitle}
-            </p>
-            <p className="hidden text-xs font-medium text-muted-foreground md:block">
-              {rootSegment === "super-admin" ? "Platform operations" : "Tenant operations"}
-            </p>
-            <p className="hidden truncate text-sm font-semibold text-foreground md:block">
-              {currentTitle}
-            </p>
-          </div>
-        </div>
-
-          <div className="flex justify-center md:hidden">
-            {showTenantSwitcher ? <TenantHeaderSwitcher compact /> : null}
+            <SidebarTrigger className="shrink-0 rounded-lg border border-border/70 bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-foreground md:hidden">
+                {currentTitle}
+              </p>
+              <p className="hidden text-xs font-medium text-muted-foreground md:block">
+                {rootSegment === "super-admin" ? "Platform operations" : "Tenant operations"}
+              </p>
+              <p className="hidden truncate text-sm font-semibold text-foreground md:block">
+                {currentTitle}
+              </p>
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2">
             {showTenantSwitcher ? (
-              <div className="hidden md:block">
+              <div className="hidden md:block" data-tour="admin-workspace-switcher">
                 <TenantHeaderSwitcher />
               </div>
             ) : null}
@@ -316,10 +312,10 @@ export function DashboardShellHeader({
               supportPath={supportPath}
               showTenant={rootSegment === "super-admin"}
             />
-            <Button variant="outline" asChild className="relative">
+            <Button variant="outline" asChild className="relative" data-tour="admin-notifications">
               <Link href={notificationsPath}>
                 <Bell className="h-4 w-4" />
-                <span className="hidden sm:inline">Notifications</span>
+                <span className="hidden lg:inline">Notifications</span>
                 <NotificationCountBadge
                   count={unreadNotifications}
                   className="absolute -right-1.5 -top-1.5"
@@ -338,10 +334,17 @@ export function DashboardShellHeader({
           </div>
         </div>
 
+        {showTenantSwitcher ? (
+          <div className="md:hidden" data-tour="admin-workspace-switcher">
+            <TenantHeaderSwitcher compact />
+          </div>
+        ) : null}
+
         <Tabs
           value={activeTab}
           onValueChange={(value) => router.push(value)}
           className="w-full"
+          data-tour="admin-header-tabs"
         >
           <TabsList
             variant="line"

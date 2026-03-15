@@ -94,9 +94,10 @@ export function NavUser({
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    logout();
-    await new Promise((r) => setTimeout(r, 400));
-    window.location.assign(buildPublicAppUrl("/auth/signin"));
+    await Promise.resolve(logout());
+    window.location.assign(
+      buildPublicAppUrl("/auth/signout?next=/auth/signin"),
+    );
   };
 
   return (
@@ -210,7 +211,10 @@ export function NavUser({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loggingOut}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleLogout}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleLogout();
+              }}
               disabled={loggingOut}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

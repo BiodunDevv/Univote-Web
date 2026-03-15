@@ -35,7 +35,8 @@ export function LandingOrganizationSwitcher({
   );
   const { token, admin, tenant, organizations } = useAuthStore();
   const { switchWorkspace, isSwitching } = useTenantWorkspaceSwitch();
-  const resolvedAdminRole = admin?.role || sharedAdminContext?.admin.role || null;
+  const resolvedAdminRole =
+    admin?.role || sharedAdminContext?.admin.role || null;
   const resolvedOrganizations =
     organizations.length > 0
       ? organizations
@@ -48,7 +49,9 @@ export function LandingOrganizationSwitcher({
   const [selectedSlug, setSelectedSlug] = useState(resolvedTenantSlug);
 
   useEffect(() => {
-    setSelectedSlug(resolvedTenantSlug);
+    setSelectedSlug((current) =>
+      current === resolvedTenantSlug ? current : resolvedTenantSlug,
+    );
   }, [resolvedTenantSlug]);
 
   if (
@@ -59,9 +62,12 @@ export function LandingOrganizationSwitcher({
   }
 
   const selectedOrganization =
-    resolvedOrganizations.find((organization) => organization.slug === selectedSlug) ||
-    resolvedOrganizations[0];
-  const canSwitchWithApi = Boolean(token && admin && admin.role !== "super_admin");
+    resolvedOrganizations.find(
+      (organization) => organization.slug === selectedSlug,
+    ) || resolvedOrganizations[0];
+  const canSwitchWithApi = Boolean(
+    token && admin && admin.role !== "super_admin",
+  );
 
   const handleOpenWorkspace = () => {
     if (!selectedOrganization) return;
@@ -79,8 +85,8 @@ export function LandingOrganizationSwitcher({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-sm backdrop-blur-xl",
-        compact ? "w-full max-w-[260px]" : "min-w-[290px]",
+        "flex items-center gap-2 rounded-2xl border border-border/60 bg-background/85 p-1 shadow-sm backdrop-blur-xl",
+        compact ? "w-full max-w-none" : "min-w-[290px]",
         className,
       )}
     >
@@ -88,18 +94,13 @@ export function LandingOrganizationSwitcher({
         <Building2 className="h-4 w-4" />
       </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="px-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          {resolvedOrganizations.length > 1
-            ? `${resolvedOrganizations.length} organisations`
-            : "Active organisation"}
-        </p>
+      <div className="min-w-0 flex-1 overflow-hidden">
         <Select
           value={selectedSlug}
           onValueChange={setSelectedSlug}
           disabled={isSwitching}
         >
-          <SelectTrigger className="h-8 border-0 bg-transparent px-2 shadow-none focus:ring-0">
+          <SelectTrigger className="h-8 w-full border-0 bg-transparent px-2 text-left shadow-none focus:ring-0">
             <SelectValue placeholder="Select organisation" />
           </SelectTrigger>
           <SelectContent>
@@ -114,7 +115,7 @@ export function LandingOrganizationSwitcher({
 
       <Button
         size="sm"
-        className={cn("h-9 rounded-xl px-3", compact && "px-2.5")}
+        className={cn("h-7 rounded-lg px-3", compact && "px-2.5")}
         disabled={!selectedOrganization || isSwitching}
         onClick={handleOpenWorkspace}
       >

@@ -33,7 +33,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const { token, hasHydrated, admin, tenant, membership, organizations, logout } =
+  const { token, hasHydrated, admin, tenant, membership, organizations } =
     useAuthStore();
 
   useEffect(() => {
@@ -52,7 +52,6 @@ export default function ResetPasswordPage() {
             "/dashboard",
             handoffSession,
           );
-          logout();
           window.location.replace(handoffUrl);
           return;
         }
@@ -66,7 +65,6 @@ export default function ResetPasswordPage() {
   }, [
     admin,
     hasHydrated,
-    logout,
     membership,
     organizations,
     router,
