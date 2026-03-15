@@ -1088,6 +1088,135 @@ export default function PlatformSettingsPage() {
                       </div>
                     </>
                   ) : null}
+
+                  {activeProvider === "aws_rekognition" ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-aws-region">Region</Label>
+                        <Input
+                          id="modal-aws-region"
+                          value={awsRegion}
+                          onChange={(event) => setAwsRegion(event.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-aws-access-key">Access key</Label>
+                        <Input
+                          id="modal-aws-access-key"
+                          value={awsAccessKeyId}
+                          onChange={(event) => setAwsAccessKeyId(event.target.value)}
+                          placeholder={
+                            awsRekognition?.access_key_id_masked ||
+                            "Paste AWS access key"
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-aws-secret">Secret key</Label>
+                        <Input
+                          id="modal-aws-secret"
+                          value={awsSecretAccessKey}
+                          onChange={(event) =>
+                            setAwsSecretAccessKey(event.target.value)
+                          }
+                          placeholder={
+                            awsRekognition?.secret_access_key_masked ||
+                            "Paste AWS secret key"
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-aws-threshold">
+                          Similarity threshold
+                        </Label>
+                        <Input
+                          id="modal-aws-threshold"
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={awsThreshold}
+                          onChange={(event) => setAwsThreshold(event.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeProvider === "azure_face" ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-azure-endpoint">Endpoint</Label>
+                        <Input
+                          id="modal-azure-endpoint"
+                          value={azureEndpoint}
+                          onChange={(event) => setAzureEndpoint(event.target.value)}
+                          placeholder={azureFace?.endpoint || "https://..."}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-azure-api-key">API key</Label>
+                        <Input
+                          id="modal-azure-api-key"
+                          value={azureApiKey}
+                          onChange={(event) => setAzureApiKey(event.target.value)}
+                          placeholder={
+                            azureFace?.api_key_masked || "Paste Azure API key"
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-azure-threshold">
+                          Confidence threshold
+                        </Label>
+                        <Input
+                          id="modal-azure-threshold"
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={azureThreshold}
+                          onChange={(event) => setAzureThreshold(event.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeProvider === "google_vision" ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-google-project-id">Project ID</Label>
+                        <Input
+                          id="modal-google-project-id"
+                          value={googleProjectId}
+                          onChange={(event) => setGoogleProjectId(event.target.value)}
+                          placeholder={googleVision?.project_id || "project-id"}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-google-api-key">API key</Label>
+                        <Input
+                          id="modal-google-api-key"
+                          value={googleApiKey}
+                          onChange={(event) => setGoogleApiKey(event.target.value)}
+                          placeholder={
+                            googleVision?.api_key_masked ||
+                            "Paste Google API key"
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="modal-google-threshold">
+                          Confidence threshold
+                        </Label>
+                        <Input
+                          id="modal-google-threshold"
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={googleThreshold}
+                          onChange={(event) => setGoogleThreshold(event.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
 
