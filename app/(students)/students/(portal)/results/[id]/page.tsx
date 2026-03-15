@@ -80,6 +80,39 @@ export default function StudentResultDetailPage() {
         </Alert>
       ) : null}
 
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Card className="border shadow-none">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Eligibility scope
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {session.eligibility_scope.summary}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-none">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Participation
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {session.has_voted ? "Your vote has been recorded" : "You did not vote in this session"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-none">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Tally type
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {isLive ? "Live tally in progress" : "Final published tally"}
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
       {isLive && liveData ? (
         <ResultGroups groups={liveData.results} />
       ) : null}

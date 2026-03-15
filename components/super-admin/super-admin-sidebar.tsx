@@ -13,6 +13,7 @@ import {
   Rocket,
   Settings2,
   Shield,
+  TicketPercent,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -87,6 +88,7 @@ const superAdminNavMain: NavItem[] = [
 const superAdminNavProjects = [
   { name: "Announcements", url: "/super-admin/announcements", icon: Megaphone },
   { name: "Testimonials", url: "/super-admin/testimonials", icon: Megaphone },
+  { name: "Coupons", url: "/super-admin/coupons", icon: TicketPercent },
   { name: "Onboarding", url: "/super-admin/onboarding", icon: Rocket },
   { name: "Audit Logs", url: "/super-admin/audit-logs", icon: FileText },
   { name: "Plans", url: "/super-admin/plans", icon: Layers3 },

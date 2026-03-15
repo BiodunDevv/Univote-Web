@@ -12,6 +12,7 @@ import {
   StudentFinalResultsResponse,
   StudentLiveResultsResponse,
   StudentPortalUser,
+  StudentSessionEligibilityScope,
   StudentSessionDetail,
   StudentVotingHistoryEntry,
 } from "@/types/student-portal";
@@ -31,6 +32,7 @@ export type StudentSessionListItem = {
   };
   is_off_campus_allowed: boolean;
   eligible_college?: string;
+  eligibility_scope?: StudentSessionEligibilityScope;
   has_voted: boolean;
   candidate_count: number;
   categories?: string[];

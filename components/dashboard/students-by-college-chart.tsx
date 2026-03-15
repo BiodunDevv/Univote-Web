@@ -1,7 +1,13 @@
 "use client";
 
-import { Pie, PieChart } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pie, PieChart, Cell } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -23,10 +29,21 @@ export function StudentsByCollegeChart({
   participantPluralLabel = "Participants",
   dimensionLabel = "College",
 }: StudentsByCollegeChartProps) {
+  const totalParticipants = data.reduce(
+    (sum, item) => sum + Number(item.students || 0),
+    0,
+  );
+
   return (
-    <Card className="border shadow-none lg:col-span-2">
+    <Card className="border shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">{participantPluralLabel} by {dimensionLabel}</CardTitle>
+        <CardTitle className="text-base">
+          {participantPluralLabel} by {dimensionLabel}
+        </CardTitle>
+        <CardDescription>
+          {totalParticipants.toLocaleString()} tracked across visible{" "}
+          {dimensionLabel.toLowerCase()} groups
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -39,27 +56,50 @@ export function StudentsByCollegeChart({
           <>
             <ChartContainer
               config={chartConfig}
-              className="mx-auto aspect-square max-h-[200px]"
+              className="mx-auto h-[200px] w-full"
             >
-              <PieChart>
+              <PieChart accessibilityLayer>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Pie data={data} dataKey="students" label nameKey="college" />
+                <Pie
+                  data={data}
+                  dataKey="students"
+                  nameKey="college"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  strokeWidth={2}
+                  stroke="var(--background)"
+                >
+                  {data.map((item, index) => (
+                    <Cell
+                      key={`${item.college}-${index}`}
+                      fill={item.fill || `var(--chart-${(index % 5) + 1})`}
+                    />
+                  ))}
+                </Pie>
               </PieChart>
             </ChartContainer>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-              {data.map((college) => (
-                <div key={college.college} className="flex items-center gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+              {data.map((college, index) => (
+                <div
+                  key={college.college}
+                  className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 px-3 py-2"
+                >
                   <div
-                    className="h-3 w-3 shrink-0 rounded-sm"
-                    style={{ backgroundColor: college.fill }}
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor:
+                        college.fill || `var(--chart-${(index % 5) + 1})`,
+                    }}
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{college.college}</p>
-                    <p className="text-muted-foreground">
-                      {college.students} {participantPluralLabel.toLowerCase()}
-                    </p>
-                  </div>
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                    {college.college}
+                  </span>
+                  <span className="font-medium">
+                    {college.students.toLocaleString()}
+                  </span>
                 </div>
               ))}
             </div>

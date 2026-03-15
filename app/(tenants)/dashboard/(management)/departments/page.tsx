@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useDepartmentStore } from "@/lib/store/useDepartmentStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   TenantPageHeader,
   TenantSectionCard,
@@ -22,6 +23,8 @@ function DepartmentsPageContent() {
   const router = useRouter();
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
+  const departmentEnabled = isTenantParticipantFieldEnabled(tenant, "department");
+  const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
   const {
     departments,
     overview,
@@ -44,6 +47,8 @@ function DepartmentsPageContent() {
       "tenant.manage",
       "students.manage",
     ]);
+
+  const structureDisabled = !departmentEnabled;
 
   useEffect(() => {
     if (!hasHydrated || !token) return;
@@ -92,14 +97,47 @@ function DepartmentsPageContent() {
 
   const isFirstLoad = loading && departments.length === 0;
 
+  if (structureDisabled) {
+    return (
+      <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-2 overflow-x-hidden">
+        <div className="w-full min-w-0 space-y-3">
+          <TenantSectionCard
+            title="Sub-groups are disabled"
+            description={`This tenant is not currently using sub-group structure. Enable the department field in settings if you want to organize ${participantLabels.plural.toLowerCase()} below the main group level.`}
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/settings?tab=profile")}
+              >
+                Open settings
+              </Button>
+              <Button
+                onClick={() =>
+                  router.push(
+                    collegeEnabled
+                      ? "/dashboard/structure/colleges"
+                      : "/dashboard/participants",
+                  )
+                }
+              >
+                {collegeEnabled ? "View groups" : `View ${participantLabels.plural}`}
+              </Button>
+            </div>
+          </TenantSectionCard>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-2 overflow-x-hidden">
       <div className="w-full min-w-0 space-y-3">
         <TenantPageHeader
           eyebrow="Tenant structure"
           icon={<Building2 className="h-5 w-5" />}
-          title="Department Operations"
-          subtitle={`Track department health across colleges, review active structures, and jump directly into filtered ${participantLabels.singular.toLowerCase()} lists.`}
+          title="Sub-group operations"
+          subtitle={`Track sub-group health${collegeEnabled ? " across groups" : ""}, review active structure, and jump directly into filtered ${participantLabels.singular.toLowerCase()} lists.`}
           actions={
             canManageDepartments ? (
               <Button
@@ -115,7 +153,7 @@ function DepartmentsPageContent() {
           }
           stats={[
             {
-              label: "Departments",
+              label: "Sub-groups",
               value: overview?.totals.total_departments?.toLocaleString() || "0",
             },
             {
@@ -135,8 +173,8 @@ function DepartmentsPageContent() {
 
 
         <TenantSectionCard
-          title="Filter departments"
-          description="Search by department, narrow by college, and focus on only the active structures you need."
+          title="Filter sub-groups"
+          description={`Search by sub-group${collegeEnabled ? ", narrow by group," : ""} and focus on only the active structure entries you need.`}
         >
           <DepartmentFilters
             search={search}
@@ -170,8 +208,8 @@ function DepartmentsPageContent() {
         {isFirstLoad ? (
           <ChangingLoadingState
             messages={[
-              "Loading departments...",
-              "Building college mappings...",
+              "Loading sub-groups...",
+              "Building structure mappings...",
               `Preparing ${participantLabels.singular.toLowerCase()} management view...`,
             ]}
           />
@@ -180,7 +218,7 @@ function DepartmentsPageContent() {
             {loading && departments.length > 0 && (
               <ChangingLoadingState
                 messages={[
-                  "Refreshing departments...",
+                  "Refreshing sub-groups...",
                   "Applying active filters...",
                 ]}
                 className="min-h-[140px]"
@@ -188,8 +226,8 @@ function DepartmentsPageContent() {
             )}
 
             <TenantSectionCard
-              title="Department registry"
-              description={`Compact department cards for ${participantLabels.singular.toLowerCase()} counts, college mapping, active state, and quick drill-down actions.`}
+              title="Sub-group registry"
+              description={`Compact sub-group cards for ${participantLabels.singular.toLowerCase()} counts, ${collegeEnabled ? "group mapping, " : ""}active state, and quick drill-down actions.`}
               contentClassName="px-0 pb-0"
             >
               <div className="w-full min-w-0 px-3 pb-3">

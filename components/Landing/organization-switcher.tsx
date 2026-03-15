@@ -86,11 +86,16 @@ export function LandingOrganizationSwitcher({
     <div
       className={cn(
         "flex items-center gap-2 rounded-2xl border border-border/60 bg-background/85 p-1 shadow-sm backdrop-blur-xl",
-        compact ? "w-full max-w-none" : "min-w-[290px]",
+        compact ? "w-auto min-w-0 max-w-[152px]" : "min-w-[290px]",
         className,
       )}
     >
-      <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/40 text-muted-foreground sm:flex">
+      <div
+        className={cn(
+          "shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/40 text-muted-foreground",
+          compact ? "hidden" : "hidden h-9 w-9 sm:flex",
+        )}
+      >
         <Building2 className="h-4 w-4" />
       </div>
 
@@ -100,7 +105,12 @@ export function LandingOrganizationSwitcher({
           onValueChange={setSelectedSlug}
           disabled={isSwitching}
         >
-          <SelectTrigger className="h-8 w-full border-0 bg-transparent px-2 text-left shadow-none focus:ring-0">
+          <SelectTrigger
+            className={cn(
+              "w-full border-0 bg-transparent text-left shadow-none focus:ring-0",
+              compact ? "h-7 px-1.5 text-xs" : "h-8 px-2",
+            )}
+          >
             <SelectValue placeholder="Select organisation" />
           </SelectTrigger>
           <SelectContent>
@@ -115,7 +125,10 @@ export function LandingOrganizationSwitcher({
 
       <Button
         size="sm"
-        className={cn("h-7 rounded-lg px-3", compact && "px-2.5")}
+        className={cn(
+          "rounded-lg",
+          compact ? "h-7 px-2 text-xs" : "h-7 px-3",
+        )}
         disabled={!selectedOrganization || isSwitching}
         onClick={handleOpenWorkspace}
       >

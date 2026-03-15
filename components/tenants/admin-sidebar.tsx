@@ -201,12 +201,38 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
   const structureEnabled =
     isTenantParticipantFieldEnabled(tenant, "college") ||
     isTenantParticipantFieldEnabled(tenant, "department");
+  const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
+  const departmentEnabled = isTenantParticipantFieldEnabled(tenant, "department");
   const canViewStructure =
     structureEnabled && (canManageStudents || canManageSessions || canManageAdmins);
 
   const navMain = React.useMemo(
     () =>
       adminNavMain
+        .map((item) =>
+          item.title === "Colleges"
+            ? {
+                ...item,
+                title: "Structure",
+                url: collegeEnabled
+                  ? "/dashboard/structure/colleges"
+                  : "/dashboard/structure/departments",
+                items: [
+                  ...(collegeEnabled
+                    ? [{ title: "All Groups", url: "/dashboard/structure/colleges" }]
+                    : []),
+                  ...(departmentEnabled
+                    ? [
+                        {
+                          title: collegeEnabled ? "Sub-groups" : "All Groups",
+                          url: "/dashboard/structure/departments",
+                        },
+                      ]
+                    : []),
+                ],
+              }
+            : item,
+        )
         .map((item) =>
           item.title === "Sessions" && !advancedAnalyticsEnabled
             ? {
@@ -225,6 +251,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
           case "Candidates":
             return canManageSessions;
           case "Colleges":
+          case "Structure":
             return canViewStructure;
           case "Admin Users":
             return canManageAdmins;
@@ -239,11 +266,13 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
     [
       advancedAnalyticsEnabled,
       advancedReportsEnabled,
+      collegeEnabled,
       canManageAdmins,
       canManageSessions,
       canManageStudents,
       canViewAnalytics,
       canViewStructure,
+      departmentEnabled,
     ],
   );
 

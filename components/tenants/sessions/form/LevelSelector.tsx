@@ -3,26 +3,30 @@ import { Label } from "@/components/ui/label";
 interface LevelSelectorProps {
   availableLevels: string[];
   selectedLevels: string[];
-  selectedDepartmentsCount: number;
+  selectionCount: number;
+  selectionRequiredLabel: string;
+  emptySelectionMessage: string;
   onLevelChange: (level: string) => void;
 }
 
 export default function LevelSelector({
   availableLevels,
   selectedLevels,
-  selectedDepartmentsCount,
+  selectionCount,
+  selectionRequiredLabel,
+  emptySelectionMessage,
   onLevelChange,
 }: LevelSelectorProps) {
   return (
     <div
       className={`space-y-2 transition-opacity ${
-        selectedDepartmentsCount === 0 ? "opacity-50 pointer-events-none" : ""
+        selectionCount === 0 ? "opacity-50 pointer-events-none" : ""
       }`}
     >
       <div className="flex items-center gap-2 flex-wrap">
         <div
           className={`flex items-center justify-center w-6 h-6 sm:w-5 sm:h-5 rounded-full text-xs font-bold ${
-            selectedDepartmentsCount > 0
+            selectionCount > 0
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground"
           }`}
@@ -36,16 +40,16 @@ export default function LevelSelector({
           ({selectedLevels.length} selected)
         </span>
       </div>
-      {selectedDepartmentsCount === 0 ? (
+      {selectionCount === 0 ? (
         <div className="p-4 border-2 border-dashed rounded-lg text-center bg-muted/20">
           <p className="text-xs text-muted-foreground">
-            👆 Please select departments first
+            {emptySelectionMessage}
           </p>
         </div>
       ) : availableLevels.length === 0 ? (
         <div className="p-4 border-2 border-dashed rounded-lg text-center bg-muted/20">
           <p className="text-xs text-muted-foreground">
-            No levels available for selected departments
+            No levels available for the selected {selectionRequiredLabel.toLowerCase()}
           </p>
         </div>
       ) : (

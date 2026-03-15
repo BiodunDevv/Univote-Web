@@ -1,6 +1,14 @@
 import type { LandingTestimonial } from "@/types/landing";
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/magicui/marquee";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useSubmitTestimonialMutation } from "@/lib/queries/public";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type ReviewItem = {
   id: string;
@@ -70,6 +78,14 @@ export function TestimonialsSection({
 }: {
   testimonials: LandingTestimonial[];
 }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    author_name: "",
+    author_role: "",
+    institution_name: "",
+    quote: "",
+  });
+  const submitMutation = useSubmitTestimonialMutation();
   const reviews: ReviewItem[] = testimonials.map((testimonial) => ({
     id: testimonial.id,
     name: testimonial.author_name,
@@ -88,6 +104,83 @@ export function TestimonialsSection({
           <h2 className="text-balance text-3xl font-semibold lg:text-5xl">
             What People Are Saying
           </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground">
+            Published stories are moderated by the platform team. You can submit your own review for consideration.
+          </p>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="mt-5">
+                Submit a testimonial
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Submit a testimonial</DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  try {
+                    await submitMutation.mutateAsync(form);
+                    toast.success("Testimonial submitted for review");
+                    setOpen(false);
+                    setForm({
+                      author_name: "",
+                      author_role: "",
+                      institution_name: "",
+                      quote: "",
+                    });
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Failed to submit testimonial");
+                  }
+                }}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Name</Label>
+                    <Input
+                      value={form.author_name}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, author_name: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Input
+                      value={form.author_role}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, author_role: event.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Organization</Label>
+                  <Input
+                    value={form.institution_name}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, institution_name: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Review</Label>
+                  <Textarea
+                    rows={5}
+                    value={form.quote}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, quote: event.target.value }))
+                    }
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={submitMutation.isPending}>
+                  {submitMutation.isPending ? "Submitting..." : "Submit for review"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

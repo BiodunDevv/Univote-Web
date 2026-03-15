@@ -129,7 +129,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
               </p>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2.5">
+            <div className="mt-6 hidden sm:flex flex-wrap gap-2.5 ">
               <div className="rounded-2xl border border-border/70 bg-background/85 px-3 py-2 shadow-sm backdrop-blur">
                 <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                   Built for

@@ -9,35 +9,43 @@ interface College {
 
 interface CollegeQuickSelectProps {
   colleges: College[];
+  selectedCollegeId?: string | null;
   selectedDepartmentIds: string[];
   onCollegeClick: (collegeId: string) => void;
+  departmentMode?: boolean;
+  participantPluralLabel?: string;
 }
 
 export default function CollegeQuickSelect({
   colleges,
+  selectedCollegeId = null,
   selectedDepartmentIds,
   onCollegeClick,
+  departmentMode = true,
+  participantPluralLabel = "Participants",
 }: CollegeQuickSelectProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium text-muted-foreground">
-          Quick Select by College
+          {departmentMode ? "Quick Select by College" : `Choose one ${participantPluralLabel.toLowerCase()} group`}
         </Label>
         <span className="text-[10px] text-muted-foreground hidden sm:inline">
-          Tap to select all departments
+          {departmentMode ? "Tap to select all departments" : `Choose the one group of ${participantPluralLabel.toLowerCase()} that should access this session`}
         </span>
       </div>
       <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
         {colleges.map((college) => {
           const collegeDeptIds = college.departments?.map((d) => d._id) || [];
-          const isCollegeSelected =
-            collegeDeptIds.length > 0 &&
-            collegeDeptIds.every((dId) => selectedDepartmentIds.includes(dId));
-          const partiallySelected =
-            collegeDeptIds.length > 0 &&
-            collegeDeptIds.some((dId) => selectedDepartmentIds.includes(dId)) &&
-            !isCollegeSelected;
+          const isCollegeSelected = departmentMode
+            ? collegeDeptIds.length > 0 &&
+              collegeDeptIds.every((dId) => selectedDepartmentIds.includes(dId))
+            : selectedCollegeId === college._id;
+          const partiallySelected = departmentMode
+            ? collegeDeptIds.length > 0 &&
+              collegeDeptIds.some((dId) => selectedDepartmentIds.includes(dId)) &&
+              !isCollegeSelected
+            : false;
 
           return (
             <button
@@ -61,9 +69,15 @@ export default function CollegeQuickSelect({
           );
         })}
       </div>
-      <p className="text-[10px] sm:text-xs text-muted-foreground">
-        💡 Blue = All selected, Light blue = Some selected
-      </p>
+      {departmentMode ? (
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
+          Blue = All selected, Light blue = Some selected
+        </p>
+      ) : (
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
+          Choose the one group of {participantPluralLabel.toLowerCase()} that should access this session.
+        </p>
+      )}
     </div>
   );
 }

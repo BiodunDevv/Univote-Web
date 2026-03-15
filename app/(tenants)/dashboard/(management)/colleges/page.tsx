@@ -24,6 +24,7 @@ import { CollegeDirectoryTable } from "@/components/tenants/colleges/college-dir
 import { CollegeOverviewChart } from "@/components/tenants/colleges/college-overview-chart";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   TenantPageHeader,
   TenantSectionCard,
@@ -34,6 +35,8 @@ export default function CollegesPage() {
   const router = useRouter();
   const { token, admin, membership, tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
+  const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
+  const departmentEnabled = isTenantParticipantFieldEnabled(tenant, "department");
   const {
     colleges,
     statistics,
@@ -72,6 +75,8 @@ export default function CollegesPage() {
       "tenant.manage",
       "students.manage",
     ]);
+
+  const structureDisabled = !collegeEnabled && !departmentEnabled;
 
   useEffect(() => {
     const loadData = async () => {
@@ -196,14 +201,39 @@ export default function CollegesPage() {
     }
   };
 
+  if (structureDisabled) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-2">
+          <TenantSectionCard
+            title="Structure is disabled"
+            description={`This tenant is currently operating without grouped ${participantLabels.plural.toLowerCase()}. Enable structure fields in settings if you want to manage groups or sub-groups.`}
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/settings?tab=profile")}
+              >
+                Open settings
+              </Button>
+              <Button onClick={() => router.push("/dashboard/participants")}>
+                View {participantLabels.plural}
+              </Button>
+            </div>
+          </TenantSectionCard>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-2">
         <TenantPageHeader
           eyebrow="Tenant structure"
           icon={<Building2 className="h-5 w-5" />}
-          title="Colleges & Departments"
-          subtitle="Manage the institution structure, review student coverage, and move into deeper department or student operations from one registry."
+          title={departmentEnabled ? "Groups & sub-groups" : "Groups"}
+          subtitle={`Manage visible ${collegeEnabled ? "group" : "structure"} records, review ${participantLabels.singular.toLowerCase()} coverage, and move into deeper operational views from one registry.`}
           actions={
             canManageColleges ? (
               <Button
@@ -215,19 +245,23 @@ export default function CollegesPage() {
                 className="h-10"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create College
+                {collegeEnabled ? "Create group" : "Create structure"}
               </Button>
             ) : undefined
           }
           stats={[
             {
-              label: "Colleges",
+              label: collegeEnabled ? "Groups" : "Records",
               value: statistics?.total_colleges?.toLocaleString() || "0",
             },
-            {
-              label: "Departments",
-              value: statistics?.total_departments?.toLocaleString() || "0",
-            },
+            ...(departmentEnabled
+              ? [
+                  {
+                    label: "Sub-groups",
+                    value: statistics?.total_departments?.toLocaleString() || "0",
+                  },
+                ]
+              : []),
             {
               label: participantLabels.plural,
               value: statistics?.total_students?.toLocaleString() || "0",
@@ -243,13 +277,13 @@ export default function CollegesPage() {
         {/* Filters */}
         <TenantSectionCard
           title="Filter the structure"
-          description="Search by college name or code and switch between active and inactive structures without leaving the registry."
+          description={`Search by ${collegeEnabled ? "group" : "record"} name or code and switch between active and inactive structure entries without leaving the registry.`}
         >
           <div className="flex flex-col gap-3 md:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search colleges by name or code..."
+                placeholder={`Search ${collegeEnabled ? "groups" : "records"} by name or code...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-10 bg-background pl-9 text-sm"
@@ -301,16 +335,16 @@ export default function CollegesPage() {
           <ChangingLoadingState
             messages={[
               "Loading colleges...",
-              "Fetching college statistics...",
-              "Preparing college directory...",
+              "Fetching structure statistics...",
+              "Preparing structure directory...",
             ]}
           />
         )}
 
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <TenantSectionCard
-            title="College distribution"
-            description={`Compare ${participantLabels.singular.toLowerCase()} population and department count across the currently visible colleges.`}
+            title={collegeEnabled ? "Group distribution" : "Structure distribution"}
+            description={`Compare ${participantLabels.singular.toLowerCase()} population${departmentEnabled ? " and sub-group count" : ""} across the currently visible ${collegeEnabled ? "groups" : "records"}.`}
             action={
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
                 <BarChart3 className="h-3.5 w-3.5" />
@@ -326,24 +360,24 @@ export default function CollegesPage() {
 
           <TenantSectionCard
             title="Operational notes"
-            description={`Use the registry below for detailed actions, then move into college-specific ${participantLabels.singular.toLowerCase()} and department flows.`}
+            description={`Use the registry below for detailed actions, then move into ${collegeEnabled ? "group-specific" : "structure-specific"} ${participantLabels.singular.toLowerCase()} views${departmentEnabled ? " and sub-group flows" : ""}.`}
             contentClassName="space-y-3"
           >
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
               Search and status filters apply to both the chart and the college cards below.
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-              View opens the college detail workspace, while edit and delete stay permission-aware.
+              View opens the detail workspace, while edit and delete stay permission-aware.
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-              Creating a college keeps the same stepped experience already used in the updated tenant flows.
+              Creating a new record keeps the same stepped experience already used in the updated tenant flows.
             </div>
           </TenantSectionCard>
         </div>
 
         <TenantSectionCard
-          title="College registry"
-          description={`Review every college in compact operational cards, then drill into detail pages for departments and ${participantLabels.plural.toLowerCase()}.`}
+          title={collegeEnabled ? "Group registry" : "Structure registry"}
+          description={`Review every visible ${collegeEnabled ? "group" : "record"} in compact operational cards, then drill into detail pages${departmentEnabled ? " for sub-groups" : ""} and ${participantLabels.plural.toLowerCase()}.`}
           action={
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
@@ -371,12 +405,12 @@ export default function CollegesPage() {
                 <div className="text-center">
                   <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                    No colleges found
+                    No structure records found
                   </h3>
                   <p className="text-xs text-muted-foreground mb-3">
                     {searchQuery || statusFilter !== "all"
                       ? "Try adjusting your filters"
-                      : "Get started by creating your first college"}
+                      : `Get started by creating your first ${collegeEnabled ? "group" : "record"}`}
                   </p>
                   {canManageColleges && !searchQuery && statusFilter === "all" && (
                     <Button
@@ -387,7 +421,7 @@ export default function CollegesPage() {
                       className="h-9"
                     >
                       <Plus className="w-3.5 h-3.5 mr-2" />
-                      Create College
+                      {collegeEnabled ? "Create group" : "Create record"}
                     </Button>
                   )}
                 </div>

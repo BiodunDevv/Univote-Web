@@ -77,6 +77,10 @@ export function StudentsPage() {
     "department",
   );
   const showLevelField = isTenantParticipantFieldEnabled(tenant, "level");
+  const showPhotoField = isTenantParticipantFieldEnabled(tenant, "photo_url");
+  const showFaceField =
+    showPhotoField &&
+    isTenantParticipantFieldEnabled(tenant, "face_verification");
   const isAuthorized = hasHydrated && Boolean(token);
   const initialSearch = searchParams.get("search") || "";
   const initialCollegeId = searchParams.get("college_id") || "all";
@@ -132,7 +136,13 @@ export function StudentsPage() {
       is_active:
         status === "all" ? undefined : status === "active" ? true : false,
       has_facial_data:
-        facial === "all" ? undefined : facial === "registered" ? true : false,
+        showFaceField
+          ? facial === "all"
+            ? undefined
+            : facial === "registered"
+              ? true
+              : false
+          : undefined,
       search: debouncedSearch || undefined,
     }),
     [
@@ -415,10 +425,15 @@ export function StudentsPage() {
               label: "Inactive",
               value: overview?.totals.inactive_students?.toLocaleString() || "0",
             },
-            {
-              label: "Face ready",
-              value: overview?.totals.with_facial_data?.toLocaleString() || "0",
-            },
+            ...(showFaceField
+              ? [
+                  {
+                    label: "Face ready",
+                    value:
+                      overview?.totals.with_facial_data?.toLocaleString() || "0",
+                  },
+                ]
+              : []),
           ]}
           actions={
             canManageStudents ? (
@@ -534,8 +549,8 @@ export function StudentsPage() {
           title="Filter and act"
           description={
             showCollegeField || showDepartmentField || showLevelField
-              ? "Refine the registry by available structure fields, status, or facial verification state. Bulk actions stay scoped to the selected rows."
-              : "Refine the registry by identity search, status, or facial verification state. Bulk actions stay scoped to the selected rows."
+              ? `Refine the registry by available structure fields, status${showFaceField ? ", or facial verification state" : ""}. Bulk actions stay scoped to the selected rows.`
+              : `Refine the registry by identity search and status${showFaceField ? ", with optional facial verification state" : ""}. Bulk actions stay scoped to the selected rows.`
           }
           action={
             selectedIds.length > 0 ? (
@@ -596,6 +611,7 @@ export function StudentsPage() {
             showCollegeFilter={showCollegeField}
             showDepartmentFilter={showDepartmentField}
             showLevelFilter={showLevelField}
+            showFaceFilter={showFaceField}
           />
         </TenantSectionCard>
 
@@ -718,9 +734,12 @@ export function StudentsPage() {
                   selectedIds={selectedIds}
                   canManageStudents={canManageStudents}
                   participantSingularLabel={participantLabels.singular}
+                  participantPluralLabel={participantLabels.plural}
                   showCollegeField={showCollegeField}
                   showDepartmentField={showDepartmentField}
                   showLevelField={showLevelField}
+                  showFaceField={showFaceField}
+                  showPhotoField={showPhotoField}
                   onToggleAll={toggleSelectAll}
                   allVisibleSelected={allVisibleSelected}
                 onToggleOne={(studentId: string, checked: boolean) => {

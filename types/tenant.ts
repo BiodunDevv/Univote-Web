@@ -105,6 +105,10 @@ export interface TenantOrganization {
   name: string;
   slug: string;
   role: string;
+  linked?: boolean;
+  linked_admin_id?: string;
+  link_id?: string;
+  label?: string | null;
   primary_domain?: string | null;
   status?: string;
   subscription_status?: string;

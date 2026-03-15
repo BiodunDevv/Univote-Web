@@ -7,6 +7,8 @@ type MetricsGridProps = {
   participantPluralLabel?: string;
   showCollegeMetric?: boolean;
   showDepartmentMetric?: boolean;
+  collegeLabel?: string;
+  departmentLabel?: string;
 };
 
 export function MetricsGrid({
@@ -14,6 +16,8 @@ export function MetricsGrid({
   participantPluralLabel = "Participants",
   showCollegeMetric = true,
   showDepartmentMetric = true,
+  collegeLabel = "Colleges",
+  departmentLabel = "Departments",
 }: MetricsGridProps) {
   return (
     <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
@@ -29,14 +33,14 @@ export function MetricsGrid({
       />
       {showCollegeMetric ? (
         <MetricCard
-          label="Colleges"
+          label={collegeLabel}
           value={overview?.total_colleges ?? 0}
           icon={Building2}
         />
       ) : null}
       {showDepartmentMetric ? (
         <MetricCard
-          label="Departments"
+          label={departmentLabel}
           value={overview?.total_departments ?? 0}
           icon={GraduationCap}
         />

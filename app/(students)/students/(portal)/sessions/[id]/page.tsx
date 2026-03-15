@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, CalendarDays, MapPin, Vote } from "lucide-react";
+import { AlertCircle, CalendarDays, Layers3, MapPin, Vote } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   PortalEmptyState,
@@ -115,6 +115,17 @@ export default function StudentSessionDetailPage() {
         </Card>
         <Card className="border shadow-none">
           <CardContent className="flex items-center gap-3 p-3">
+            <Layers3 className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">Access scope</p>
+              <p className="text-sm font-medium text-foreground">
+                {session.eligibility_scope.summary}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-none">
+          <CardContent className="flex items-center gap-3 p-3">
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Voting location</p>
@@ -127,6 +138,41 @@ export default function StudentSessionDetailPage() {
           </CardContent>
         </Card>
       </section>
+
+      {!session.eligibility_scope.tenant_wide ? (
+        <section className="grid gap-3 sm:grid-cols-3">
+          {session.eligibility_scope.college ? (
+            <Card className="border shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Eligible college</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {session.eligibility_scope.college}
+              </CardContent>
+            </Card>
+          ) : null}
+          {session.eligibility_scope.departments.length > 0 ? (
+            <Card className="border shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Eligible departments</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {session.eligibility_scope.departments.join(", ")}
+              </CardContent>
+            </Card>
+          ) : null}
+          {session.eligibility_scope.levels.length > 0 ? (
+            <Card className="border shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Eligible levels</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {session.eligibility_scope.levels.join(", ")}
+              </CardContent>
+            </Card>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="space-y-3">
         <PortalSectionHeader

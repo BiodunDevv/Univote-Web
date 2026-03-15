@@ -38,7 +38,7 @@ export function AdminChatOverviewCard({
 
   if (overviewQuery.isLoading || ticketsQuery.isLoading) {
     return (
-      <Card className="border-border/70 shadow-none">
+      <Card className="h-full border-border/70 shadow-none">
         <CardContent className="p-2">
           <ChangingLoadingState
             message="Loading support overview..."
@@ -50,7 +50,7 @@ export function AdminChatOverviewCard({
   }
 
   return (
-    <Card className="border-border/70 shadow-none">
+    <Card className="h-full border-border/70 shadow-none">
       <CardContent className="space-y-3 p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">

@@ -4,6 +4,10 @@ export const queryKeys = {
     testimonials: () => ["public", "testimonials"] as const,
     organizations: (search: string) => ["public", "organizations", search] as const,
     organization: (slug: string) => ["public", "organization", slug] as const,
+    applicationStatus: (reference: string, email: string) =>
+      ["public", "application-status", reference, email] as const,
+    coupon: (code: string, planCode: string, email: string) =>
+      ["public", "coupon", code, planCode, email] as const,
   },
   announcements: {
     list: () => ["announcements", "list"] as const,
@@ -23,6 +27,7 @@ export const queryKeys = {
     databaseStats: () => ["platform", "database-stats"] as const,
     testimonials: (filters: Record<string, unknown>) =>
       ["platform", "testimonials", filters] as const,
+    coupons: (filters: Record<string, unknown>) => ["platform", "coupons", filters] as const,
   },
   billing: {
     summary: () => ["billing", "summary"] as const,

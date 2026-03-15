@@ -132,6 +132,9 @@ function adaptSessionStats(data: AdminSessionStatsResponse): SessionStats {
 type SessionDetailsLoadedProps = {
   sessionId: string;
   participantPluralLabel: string;
+  collegeEligibilityEnabled: boolean;
+  departmentEligibilityEnabled: boolean;
+  levelEligibilityEnabled: boolean;
   currentSession: VotingSession;
   sessionStats: SessionStats;
   displayedCandidates: SessionCandidate[];
@@ -374,6 +377,9 @@ export default function SessionDetailsPage() {
     <SessionDetailsLoaded
       sessionId={sessionId}
       participantPluralLabel={participantLabels.plural}
+      collegeEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "college")}
+      departmentEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "department")}
+      levelEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "level")}
       currentSession={session}
       sessionStats={stats}
       displayedCandidates={displayedCandidates}
@@ -402,6 +408,9 @@ export default function SessionDetailsPage() {
 function SessionDetailsLoaded({
   sessionId,
   participantPluralLabel,
+  collegeEligibilityEnabled,
+  departmentEligibilityEnabled,
+  levelEligibilityEnabled,
   currentSession,
   sessionStats,
   displayedCandidates,
@@ -417,6 +426,27 @@ function SessionDetailsLoaded({
   setCandidates,
   handleCandidateSheetStateChange,
 }: SessionDetailsLoadedProps) {
+  const hasDepartmentRestrictions = (currentSession.eligible_departments || []).length > 0;
+  const hasLevelRestrictions = (currentSession.eligible_levels || []).length > 0;
+  const hasCollegeRestriction = Boolean(currentSession.eligible_college);
+  const isTenantWide =
+    !hasCollegeRestriction &&
+    !hasDepartmentRestrictions &&
+    !hasLevelRestrictions;
+  const eligibilitySummary = isTenantWide
+    ? `Tenant-wide access for all ${participantPluralLabel.toLowerCase()}`
+    : [
+        collegeEligibilityEnabled && hasCollegeRestriction ? "College-scoped" : null,
+        departmentEligibilityEnabled && hasDepartmentRestrictions
+          ? `${(currentSession.eligible_departments || []).length} department(s)`
+          : null,
+        levelEligibilityEnabled && hasLevelRestrictions
+          ? `${(currentSession.eligible_levels || []).length} level(s)`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" • ");
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-0 py-1">
       <div className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/20 p-5 shadow-none sm:p-6">
@@ -631,18 +661,35 @@ function SessionDetailsLoaded({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="rounded-xl border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Access scope
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  {eligibilitySummary}
+                </p>
+              </div>
+
+              {levelEligibilityEnabled ? (
               <div>
                 <p className="text-xs font-medium text-muted-foreground">
                   Eligible Levels
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(currentSession.eligible_levels || []).map((level) => (
-                    <Badge key={level} variant="outline">
-                      Level {level}
-                    </Badge>
-                  ))}
+                  {hasLevelRestrictions ? (
+                    (currentSession.eligible_levels || []).map((level) => (
+                      <Badge key={level} variant="outline">
+                        Level {level}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No level restrictions configured.
+                    </p>
+                  )}
                 </div>
               </div>
+              ) : null}
 
               <div>
                 <p className="text-xs font-medium text-muted-foreground">
@@ -655,37 +702,50 @@ function SessionDetailsLoaded({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Eligible Departments
-                </p>
-                {eligibleDepartmentsByCollege.length > 0 ? (
-                  eligibleDepartmentsByCollege.map((entry) => (
-                    <div
-                      key={entry?.collegeId}
-                      className="rounded-xl border bg-muted/20 p-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-foreground">
-                          {entry?.collegeName}
-                        </p>
-                        <Badge variant="outline">{entry?.collegeCode}</Badge>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {entry?.departments.map((department) => (
-                          <Badge key={department._id} variant="outline">
-                            {department.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No department restrictions configured.
+              {departmentEligibilityEnabled ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Eligible Departments
                   </p>
-                )}
-              </div>
+                  {eligibleDepartmentsByCollege.length > 0 ? (
+                    eligibleDepartmentsByCollege.map((entry) => (
+                      <div
+                        key={entry?.collegeId}
+                        className="rounded-xl border bg-muted/20 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {entry?.collegeName}
+                          </p>
+                          <Badge variant="outline">{entry?.collegeCode}</Badge>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {entry?.departments.map((department) => (
+                            <Badge key={department._id} variant="outline">
+                              {department.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No department restrictions configured.
+                    </p>
+                  )}
+                </div>
+              ) : collegeEligibilityEnabled ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Eligible College
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentSession.eligible_college
+                      ? "This session is restricted to one college scope."
+                      : "No college restriction configured."}
+                  </p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 

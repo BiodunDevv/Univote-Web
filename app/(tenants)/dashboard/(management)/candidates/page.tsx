@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Trophy, Users, Vote } from "lucide-react";
+import { Search, Trophy, Users, Vote } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import {
   useAdminCandidatesQuery,
@@ -30,14 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 const chartConfig = {
   candidates: {
@@ -52,16 +44,30 @@ export default function CandidatesPage() {
   const [sessionId, setSessionId] = useState("all");
   const sessionsQuery = useAdminSessionsQuery({ page: 1, limit: 100 });
   const candidatesQuery = useAdminCandidatesQuery({
-    search: search || undefined,
-    status: status !== "all" ? status : undefined,
-    session_id: sessionId !== "all" ? sessionId : undefined,
     page: 1,
-    limit: 80,
+    limit: 500,
   });
 
   const candidates = useMemo(
-    () => candidatesQuery.data?.candidates ?? [],
-    [candidatesQuery.data?.candidates],
+    () => {
+      const source = candidatesQuery.data?.candidates ?? [];
+      const normalizedSearch = search.trim().toLowerCase();
+
+      return source.filter((candidate) => {
+        const matchesSearch =
+          !normalizedSearch ||
+          candidate.name.toLowerCase().includes(normalizedSearch) ||
+          candidate.position.toLowerCase().includes(normalizedSearch) ||
+          candidate.session_id.title.toLowerCase().includes(normalizedSearch);
+        const matchesStatus =
+          status === "all" || candidate.session_id.status === status;
+        const matchesSession =
+          sessionId === "all" || candidate.session_id._id === sessionId;
+
+        return matchesSearch && matchesStatus && matchesSession;
+      });
+    },
+    [candidatesQuery.data?.candidates, search, sessionId, status],
   );
   const chartData = useMemo(
     () =>
@@ -131,14 +137,18 @@ export default function CandidatesPage() {
 
       <TenantSectionCard
         title="Refine the directory"
-        description="Search by candidate name, narrow by session lifecycle, or focus on a single ballot."
+        description="Search instantly by candidate, position, or session name, then narrow the live directory without refetching."
       >
         <div className="grid gap-3 md:grid-cols-3">
-          <Input
-            placeholder="Search candidates"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search candidates, positions, or sessions"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by session status" />
@@ -254,129 +264,67 @@ export default function CandidatesPage() {
 
       <TenantSectionCard
         title="Candidate registry"
-        description="A structured shadcn table for reviewing session, lifecycle, vote totals, and candidate metadata."
-        contentClassName="px-0 pb-0"
+        description="Card-first ballot registry with live filtering for session, lifecycle, vote totals, and candidate metadata."
       >
         {candidates.length > 0 ? (
-          <div className="px-3 pb-3">
-            <div className="grid gap-2 xl:hidden">
-              {candidates.map((candidate) => (
-                <div
-                  key={candidate._id}
-                  className="rounded-xl border border-border/70 bg-background p-3 shadow-none"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {candidate.name}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {candidate.position}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{candidate.session_id.status}</Badge>
+          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            {candidates.map((candidate) => (
+              <div
+                key={candidate._id}
+                className="rounded-2xl border border-border/70 bg-background p-4 shadow-none"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {candidate.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {candidate.position}
+                    </p>
                   </div>
+                  <Badge variant="outline">{candidate.session_id.status}</Badge>
+                </div>
 
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    {candidate.bio || "No profile summary added yet."}
-                  </p>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                  {candidate.bio || "No profile summary added yet."}
+                </p>
 
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Session
-                      </p>
-                      <p className="mt-1 text-sm font-medium">
-                        {candidate.session_id.title}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {new Date(candidate.session_id.start_time).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Votes
-                      </p>
-                      <p className="mt-1 text-sm font-semibold">
-                        {candidate.vote_count.toLocaleString()}
-                      </p>
-                    </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                      Session
+                    </p>
+                    <p className="mt-1 text-sm font-medium">{candidate.session_id.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(candidate.session_id.start_time).toLocaleDateString()}
+                    </p>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {candidate.session_id.categories.map((category) => (
-                      <Badge key={category} variant="secondary">
-                        {category}
-                      </Badge>
-                    ))}
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                      Votes
+                    </p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {candidate.vote_count.toLocaleString()}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            <div className="hidden overflow-x-auto xl:block">
-              <Table className="min-w-[920px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Candidate</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Votes</TableHead>
-                    <TableHead>Categories</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {candidates.map((candidate) => (
-                    <TableRow key={candidate._id}>
-                      <TableCell className="min-w-[220px] align-top">
-                        <div className="space-y-1">
-                          <p className="font-medium text-foreground">{candidate.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {candidate.bio || "No profile summary added yet."}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-top">{candidate.position}</TableCell>
-                      <TableCell className="align-top">
-                        <div className="space-y-1">
-                          <p className="font-medium text-foreground">
-                            {candidate.session_id.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(candidate.session_id.start_time).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <Badge variant="outline">{candidate.session_id.status}</Badge>
-                      </TableCell>
-                      <TableCell className="align-top font-medium">
-                        {candidate.vote_count.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <div className="flex flex-wrap gap-1">
-                          {candidate.session_id.categories.map((category) => (
-                            <Badge key={category} variant="secondary">
-                              {category}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {candidate.session_id.categories.map((category) => (
+                    <Badge key={category} variant="secondary">
+                      {category}
+                    </Badge>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="px-6 pb-6">
-            <TenantEmptyState
-              icon={Vote}
-              title="No candidates matched this view"
-              description="Adjust the session or status filters, or add candidates from an upcoming session editor."
-            />
-          </div>
+          <TenantEmptyState
+            icon={Vote}
+            title="No candidates matched this view"
+            description="Adjust the live filters, or add candidates from an upcoming session editor."
+          />
         )}
       </TenantSectionCard>
     </div>

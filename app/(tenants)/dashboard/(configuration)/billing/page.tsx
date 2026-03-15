@@ -5,7 +5,17 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { format } from "date-fns";
 import { useSearchParams } from "next/navigation";
-import { ArrowDownCircle, ArrowUpCircle, CalendarClock, CreditCard, Receipt } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  Receipt,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   useAdminBillingInvoicesQuery,
@@ -29,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TenantPageHeader, TenantSectionCard } from "@/components/tenants/shared";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -41,6 +52,11 @@ function formatMoney(value: number) {
 function formatDate(value?: string | null) {
   if (!value) return "Not set";
   return format(new Date(value), "PPP");
+}
+
+function toTitleCase(value?: string | null) {
+  if (!value) return "Not available";
+  return value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 const entitlementLabels: Array<{
@@ -86,6 +102,7 @@ export default function BillingPage() {
   const participantLabels = getTenantParticipantLabels(authTenant);
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("plans");
+  const [planActionCode, setPlanActionCode] = useState<string | null>(null);
   const summaryQuery = useAdminBillingSummaryQuery();
   const invoicesQuery = useAdminBillingInvoicesQuery({ page: 1, limit: 20 });
   const checkoutMutation = useBillingCheckoutMutation();
@@ -102,9 +119,35 @@ export default function BillingPage() {
       (invoice) =>
         invoice.status === "pending" && Boolean(invoice.provider_checkout_url),
     ) || null;
+  const failedInvoice =
+    invoices.find(
+      (invoice) =>
+        invoice.status === "failed" && Boolean(invoice.provider_checkout_url),
+    ) || null;
   const restrictionReason = searchParams.get("reason");
+  const checkoutProvider = searchParams.get("checkout");
+  const checkoutReference =
+    searchParams.get("reference") || searchParams.get("trxref");
+  const checkoutState = useState(() => {
+    if (!checkoutProvider) return null;
+
+    if (pendingInvoice && checkoutReference === pendingInvoice.payment_reference) {
+      return "pending" as const;
+    }
+
+    if (failedInvoice && checkoutReference === failedInvoice.payment_reference) {
+      return "failed" as const;
+    }
+
+    if (checkoutReference && invoices.some((invoice) => invoice.payment_reference === checkoutReference && invoice.status === "paid")) {
+      return "paid" as const;
+    }
+
+    return "processing" as const;
+  })[0];
 
   const handlePlanChange = async (planCode: string) => {
+    setPlanActionCode(planCode);
     try {
       const result = await checkoutMutation.mutateAsync(planCode);
       if (result.checkout_url) {
@@ -116,6 +159,8 @@ export default function BillingPage() {
       setActiveTab("overview");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to change plan");
+    } finally {
+      setPlanActionCode((current) => (current === planCode ? null : current));
     }
   };
 
@@ -178,6 +223,52 @@ export default function BillingPage() {
           <CardContent className="py-4 text-sm text-muted-foreground">
             Tenant access is currently restricted by subscription status. Billing and support
             remain available while the tenant is in a restricted state.
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {checkoutState ? (
+        <Card
+          className={
+            checkoutState === "paid"
+              ? "border-emerald-300/60 bg-emerald-50/70 shadow-none dark:bg-emerald-950/20"
+              : checkoutState === "failed"
+                ? "border-destructive/40 bg-destructive/5 shadow-none"
+                : "border-primary/30 bg-primary/5 shadow-none"
+          }
+        >
+          <CardContent className="flex flex-col gap-3 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              {checkoutState === "paid" ? (
+                <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
+              ) : checkoutState === "failed" ? (
+                <XCircle className="mt-0.5 size-4 text-destructive" />
+              ) : checkoutState === "pending" ? (
+                <Clock3 className="mt-0.5 size-4 text-primary" />
+              ) : (
+                <AlertTriangle className="mt-0.5 size-4 text-primary" />
+              )}
+              <div>
+                <p className="font-medium text-foreground">
+                  {checkoutState === "paid"
+                    ? "Payment confirmed"
+                    : checkoutState === "failed"
+                      ? "Payment failed"
+                      : checkoutState === "pending"
+                        ? "Payment still pending"
+                        : "Verifying checkout status"}
+                </p>
+                <p>
+                  {checkoutState === "paid"
+                    ? "Your billing change has been confirmed and the active plan is now up to date."
+                    : checkoutState === "failed"
+                      ? "The last checkout attempt did not complete successfully. You can retry from the invoice state below."
+                      : checkoutState === "pending"
+                        ? "The provider has not confirmed the payment yet. You can continue the same checkout if needed."
+                        : "Refresh after a moment or continue with the latest invoice action below."}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : null}
@@ -277,22 +368,32 @@ export default function BillingPage() {
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
         </TabsList>
 
-        {pendingInvoice ? (
+        {pendingInvoice || failedInvoice ? (
           <Card className="border-border/70 bg-amber-50/60 dark:bg-amber-950/20">
             <CardHeader className="pb-3">
-              <CardDescription>Pending payment</CardDescription>
+              <CardDescription>
+                {failedInvoice ? "Payment needs attention" : "Pending payment"}
+              </CardDescription>
               <CardTitle className="text-xl">
-                Complete checkout for {pendingInvoice.invoice_number}
+                {failedInvoice
+                  ? `Retry checkout for ${failedInvoice.invoice_number}`
+                  : `Complete checkout for ${pendingInvoice?.invoice_number}`}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
               <div>
-                Finish payment to apply the latest billing change and sync the tenant plan.
+                {failedInvoice
+                  ? "The last payment attempt did not complete. Reopen checkout to finish the billing change and sync the tenant plan."
+                  : "Finish payment to apply the latest billing change and sync the tenant plan."}
               </div>
-              {pendingInvoice.provider_checkout_url ? (
+              {(failedInvoice?.provider_checkout_url || pendingInvoice?.provider_checkout_url) ? (
                 <Button asChild>
-                  <a href={pendingInvoice.provider_checkout_url} target="_self" rel="noreferrer">
-                    Continue payment
+                  <a
+                    href={failedInvoice?.provider_checkout_url || pendingInvoice?.provider_checkout_url || "#"}
+                    target="_self"
+                    rel="noreferrer"
+                  >
+                    {failedInvoice ? "Retry payment" : "Continue payment"}
                   </a>
                 </Button>
               ) : null}
@@ -394,11 +495,17 @@ export default function BillingPage() {
                       disabled={isCurrent || checkoutMutation.isPending}
                       onClick={() => handlePlanChange(plan.code)}
                     >
-                      {isCurrent
-                        ? "Current plan"
-                        : isUpgrade
-                          ? "Upgrade now"
-                          : "Downgrade at period end"}
+                      {isCurrent ? (
+                        "Current plan"
+                      ) : checkoutMutation.isPending && planActionCode === plan.code ? (
+                        <LoadingButtonContent
+                          label={isUpgrade ? "Starting checkout..." : "Scheduling downgrade..."}
+                        />
+                      ) : isUpgrade ? (
+                        "Upgrade now"
+                      ) : (
+                        "Downgrade at period end"
+                      )}
                     </Button>
                   </CardContent>
                 </Card>
@@ -529,7 +636,79 @@ export default function BillingPage() {
         </TabsContent>
 
         <TabsContent value="invoices">
-          <Card className="border-border/70">
+          <div className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Card className="border-border/70">
+                <CardHeader className="pb-3">
+                  <CardDescription>Latest invoice</CardDescription>
+                  <CardTitle className="text-2xl">
+                    {invoices[0]?.invoice_number || "None"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>Status</span>
+                    <Badge variant={invoices[0]?.status === "paid" ? "secondary" : "outline"}>
+                      {toTitleCase(invoices[0]?.status)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Amount</span>
+                    <span className="font-medium text-foreground">
+                      {invoices[0] ? formatMoney(invoices[0].amount_ngn) : "--"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70">
+                <CardHeader className="pb-3">
+                  <CardDescription>Pending actions</CardDescription>
+                  <CardTitle className="text-2xl">
+                    {pendingInvoice || failedInvoice ? "Action required" : "Clear"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>Pending invoice</span>
+                    <span className="font-medium text-foreground">
+                      {pendingInvoice?.invoice_number || failedInvoice?.invoice_number || "None"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Retry available</span>
+                    <span className="font-medium text-foreground">
+                      {pendingInvoice?.provider_checkout_url || failedInvoice?.provider_checkout_url ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70">
+                <CardHeader className="pb-3">
+                  <CardDescription>Billing model</CardDescription>
+                  <CardTitle className="text-2xl">
+                    {billing?.scheduled_change ? "Change scheduled" : "Current plan stable"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>Current plan</span>
+                    <span className="font-medium text-foreground">
+                      {billing?.current_plan.name || "--"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Next change</span>
+                    <span className="font-medium text-foreground">
+                      {billing?.scheduled_change?.name || "None"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border-border/70">
             <CardHeader className="gap-2">
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="size-5" />
@@ -549,6 +728,7 @@ export default function BillingPage() {
                     <TableHead>Period</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Reference</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -569,18 +749,30 @@ export default function BillingPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={invoice.status === "paid" ? "secondary" : "outline"}>
-                          {invoice.status}
+                          {toTitleCase(invoice.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">
                         {invoice.payment_reference || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {invoice.provider_checkout_url &&
+                        ["pending", "failed"].includes(invoice.status) ? (
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={invoice.provider_checkout_url} target="_self" rel="noreferrer">
+                              {invoice.status === "failed" ? "Retry" : "Continue"}
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No action</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {invoices.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
                         No invoices recorded yet.
@@ -591,6 +783,7 @@ export default function BillingPage() {
               </Table>
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

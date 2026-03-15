@@ -6,6 +6,7 @@ type ReviewSubmitStepProps = {
   formData: SessionCreationFormData;
   participantPluralLabel: string;
   eligibleCollegesCount: number;
+  collegeEligibilityEnabled: boolean;
   departmentEligibilityEnabled: boolean;
   levelEligibilityEnabled: boolean;
   validationIssues: string[];
@@ -15,6 +16,7 @@ export function ReviewSubmitStep({
   formData,
   participantPluralLabel,
   eligibleCollegesCount,
+  collegeEligibilityEnabled,
   departmentEligibilityEnabled,
   levelEligibilityEnabled,
   validationIssues,
@@ -71,9 +73,15 @@ export function ReviewSubmitStep({
             <div>
               <p className="text-xs text-muted-foreground">Eligibility</p>
               <p className="text-sm font-semibold text-foreground">
-                {!departmentEligibilityEnabled && !levelEligibilityEnabled
-                  ? `All ${participantPluralLabel.toLowerCase()}`
-                  : `${formData.eligible_departments.length} depts / ${formData.eligible_levels.length} lvls`}
+                {!collegeEligibilityEnabled &&
+                !departmentEligibilityEnabled &&
+                !levelEligibilityEnabled
+                  ? `All ${participantPluralLabel.toLowerCase()} eligible automatically`
+                  : departmentEligibilityEnabled
+                    ? `${formData.eligible_departments.length} depts / ${formData.eligible_levels.length} lvls`
+                    : collegeEligibilityEnabled
+                      ? `${eligibleCollegesCount} college / ${formData.eligible_levels.length} lvls`
+                      : `${formData.eligible_levels.length} lvls`}
               </p>
             </div>
           </CardContent>
@@ -93,10 +101,16 @@ export function ReviewSubmitStep({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Voting Scope</p>
-            <p className="font-medium text-foreground">
-              {!departmentEligibilityEnabled && !levelEligibilityEnabled
-                ? `Tenant-wide access for all ${participantPluralLabel.toLowerCase()}`
-                : `${eligibleCollegesCount} college(s), ${formData.eligible_departments.length} department(s), ${formData.eligible_levels.length} level(s)`}
+              <p className="font-medium text-foreground">
+              {!collegeEligibilityEnabled &&
+              !departmentEligibilityEnabled &&
+              !levelEligibilityEnabled
+                ? `Tenant-wide access for all ${participantPluralLabel.toLowerCase()} with no extra structure selection required`
+                : departmentEligibilityEnabled
+                  ? `${eligibleCollegesCount} college(s), ${formData.eligible_departments.length} department(s), ${formData.eligible_levels.length} level(s)`
+                  : collegeEligibilityEnabled
+                    ? `${eligibleCollegesCount} college(s), ${formData.eligible_levels.length} level(s)`
+                    : `${formData.eligible_levels.length} level(s)`}
             </p>
           </div>
           <div>

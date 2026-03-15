@@ -22,6 +22,7 @@ export default function CreateSessionPage() {
   const router = useRouter();
   const { token, hasHydrated, tenant } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
+  const tenantReady = hasHydrated && Boolean(tenant);
   const needsStructureData =
     isTenantEligibilityDimensionEnabled(tenant, "college") ||
     isTenantEligibilityDimensionEnabled(tenant, "department") ||
@@ -43,7 +44,7 @@ export default function CreateSessionPage() {
     }
   }, [hasHydrated, router, token]);
 
-  if (!hasHydrated || (needsStructureData && collegesQuery.isLoading)) {
+  if (!hasHydrated || !tenantReady || (needsStructureData && collegesQuery.isLoading)) {
     return (
       <ChangingLoadingState
         messages={[
@@ -84,7 +85,11 @@ export default function CreateSessionPage() {
       key="create-session"
       mode="create"
       title="Create Session Wizard"
-      description="Build a complete voting session in guided steps based on this tenant's participant structure."
+      description={
+        needsStructureData
+          ? "Build a complete voting session in guided steps based on this tenant's participant structure."
+          : "Build a complete voting session in guided steps. This tenant uses tenant-wide eligibility, so all eligible members will be included automatically."
+      }
       colleges={colleges}
       initialData={initialData}
       isSubmitting={createSession.isPending}

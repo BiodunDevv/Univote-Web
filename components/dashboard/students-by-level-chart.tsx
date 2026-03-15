@@ -34,19 +34,25 @@ export function StudentsByLevelChart({
   participantPluralLabel = "Participants",
   dimensionLabel = "Level",
 }: StudentsByLevelChartProps) {
+  const normalizedDimensionLabel =
+    dimensionLabel && dimensionLabel.trim() ? dimensionLabel : "Level";
+
   return (
     <Card className="border shadow-none lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-base">{participantPluralLabel} by {dimensionLabel}</CardTitle>
+        <CardTitle className="text-base">
+          {participantPluralLabel} by {normalizedDimensionLabel}
+        </CardTitle>
         <CardDescription>
-          {participantPluralLabel} distribution across configured {dimensionLabel.toLowerCase()} groupings
+          {participantPluralLabel} distribution across configured{" "}
+          {normalizedDimensionLabel.toLowerCase()} groupings
         </CardDescription>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
           <div className="flex h-[280px] items-center justify-center rounded-md border border-dashed">
             <p className="text-sm text-muted-foreground">
-              No {dimensionLabel.toLowerCase()} data available
+              No {normalizedDimensionLabel.toLowerCase()} data available
             </p>
           </div>
         ) : (
@@ -73,7 +79,9 @@ export function StudentsByLevelChart({
                 content={
                   <ChartTooltipContent
                     indicator="line"
-                    labelFormatter={(label) => `${dimensionLabel} ${label}`}
+                    labelFormatter={(label) =>
+                      `${normalizedDimensionLabel} ${label}`
+                    }
                     formatter={(value) =>
                       `${Number(value).toLocaleString()} ${participantPluralLabel.toLowerCase()}`
                     }

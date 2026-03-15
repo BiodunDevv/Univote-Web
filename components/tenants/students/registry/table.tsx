@@ -37,9 +37,12 @@ export function StudentsRegistryTable({
   selectedIds,
   canManageStudents,
   participantSingularLabel = "Participant",
+  participantPluralLabel = "Participants",
   showCollegeField = true,
   showDepartmentField = true,
   showLevelField = true,
+  showFaceField = true,
+  showPhotoField = true,
   onToggleAll,
   allVisibleSelected,
   onToggleOne,
@@ -54,7 +57,7 @@ export function StudentsRegistryTable({
     <div className="flex w-full min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{students.length} visible students</span>
+          <span>{students.length} visible {participantPluralLabel.toLowerCase()}</span>
           <span className="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 font-medium text-foreground">
             {selectedIds.length} selected
           </span>
@@ -100,18 +103,18 @@ export function StudentsRegistryTable({
 
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     <button
-                    type="button"
-                    onClick={() => {
-                      if (!student.photo_url) return;
-                      onPreviewImage({
-                        url: student.photo_url,
-                        fullName: student.full_name,
-                        identifier: getStudentIdentifier(student),
-                      });
-                    }}
+                      type="button"
+                      onClick={() => {
+                        if (!student.photo_url || !showPhotoField) return;
+                        onPreviewImage({
+                          url: student.photo_url,
+                          fullName: student.full_name,
+                          identifier: getStudentIdentifier(student),
+                        });
+                      }}
                       className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-0.5"
                     >
-                      {student.photo_url ? (
+                      {showPhotoField && student.photo_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={student.photo_url}
@@ -183,16 +186,18 @@ export function StudentsRegistryTable({
                   {showLevelField ? (
                     <Badge variant="secondary">Level {student.level || "Not set"}</Badge>
                   ) : null}
-                  <Badge variant={student.has_facial_data ? "default" : "outline"}>
-                    {student.has_facial_data ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3" />
-                        Face ready
-                      </>
-                    ) : (
-                      "Face pending"
-                    )}
-                  </Badge>
+                  {showFaceField ? (
+                    <Badge variant={student.has_facial_data ? "default" : "outline"}>
+                      {student.has_facial_data ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3" />
+                          Face ready
+                        </>
+                      ) : (
+                        "Face pending"
+                      )}
+                    </Badge>
+                  ) : null}
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -200,7 +205,7 @@ export function StudentsRegistryTable({
                     <IconEye className="mr-2 h-4 w-4" />
                     View
                   </Button>
-                  {student.photo_url ? (
+                  {showPhotoField && student.photo_url ? (
                     <Button
                       variant="outline"
                       size="sm"

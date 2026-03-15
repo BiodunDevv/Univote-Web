@@ -28,6 +28,14 @@ export default function StudentProfilePage() {
   const { data, isLoading, error } = useStudentProfileQuery();
   const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("student");
   const participantLabels = getTenantParticipantLabels(tenant);
+  const showPhotoField = shouldShowTenantParticipantFieldInProfile(
+    tenant,
+    "photo_url",
+  );
+  const showFaceField = shouldShowTenantParticipantFieldInProfile(
+    tenant,
+    "face_verification",
+  );
 
   if (isLoading) {
     return (
@@ -82,7 +90,10 @@ export default function StudentProfilePage() {
         title={
           <div className="flex items-center gap-3">
             <Avatar size="lg">
-              <AvatarImage src={data.photo_url || undefined} alt={data.full_name} />
+              <AvatarImage
+                src={showPhotoField ? data.photo_url || undefined : undefined}
+                alt={data.full_name}
+              />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
@@ -118,14 +129,16 @@ export default function StudentProfilePage() {
               <span>{profileMeta.join(" • ")}</span>
             </div>
           ) : null}
-          <div className="flex items-center gap-3 text-sm">
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {data.has_facial_data
-                ? "Face verification ready"
-                : "Face data not registered"}
-            </span>
-          </div>
+          {showFaceField ? (
+            <div className="flex items-center gap-3 text-sm">
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              <span>
+                {data.has_facial_data
+                  ? "Face verification ready"
+                  : "Face data not registered"}
+              </span>
+            </div>
+          ) : null}
         </PortalStackCard>
 
         <Card className="border shadow-none">
@@ -134,7 +147,9 @@ export default function StudentProfilePage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p className="text-sm text-muted-foreground">
-              Keep your email and profile photo up to date so voting verification and alerts continue to work cleanly.
+              {showPhotoField
+                ? "Keep your email and profile photo up to date so verification and alerts continue to work cleanly."
+                : "Keep your account details up to date so alerts and access recovery continue to work cleanly."}
             </p>
             <div className="grid gap-2">
               <Button variant="outline" className="justify-start" onClick={() => router.push("/students/support")}>

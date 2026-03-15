@@ -101,6 +101,14 @@ export interface StudentSessionCandidate {
   vote_count?: number;
 }
 
+export interface StudentSessionEligibilityScope {
+  tenant_wide: boolean;
+  college?: string | null;
+  departments: string[];
+  levels: string[];
+  summary: string;
+}
+
 export interface StudentSessionDetail {
   id: string;
   title: string;
@@ -117,6 +125,7 @@ export interface StudentSessionDetail {
   is_off_campus_allowed: boolean;
   eligible: boolean;
   eligibility_reason?: string | null;
+  eligibility_scope: StudentSessionEligibilityScope;
   has_voted: boolean;
   candidates_by_position: Record<string, StudentSessionCandidate[]>;
 }

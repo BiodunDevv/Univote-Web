@@ -100,38 +100,59 @@ export function SessionBuilder({
   );
 
   const availableLevels = useMemo(
-    () => deriveAvailableLevels(formData.eligible_departments, colleges),
-    [colleges, formData.eligible_departments],
+    () =>
+      deriveAvailableLevels(
+        formData.eligible_departments,
+        colleges,
+        formData.eligible_college,
+      ),
+    [colleges, formData.eligible_college, formData.eligible_departments],
   );
 
   const eligibleCollegeIds = useMemo(
-    () => deriveEligibleColleges(formData.eligible_departments, colleges),
-    [colleges, formData.eligible_departments],
+    () =>
+      formData.eligible_college
+        ? [formData.eligible_college]
+        : deriveEligibleColleges(formData.eligible_departments, colleges),
+    [colleges, formData.eligible_college, formData.eligible_departments],
   );
 
   const normalizedFormData = useMemo(
     () => ({
       ...formData,
+      eligible_college: collegeEligibilityEnabled ? formData.eligible_college : null,
       eligible_departments: departmentEligibilityEnabled
         ? formData.eligible_departments
         : [],
       eligible_levels:
-        departmentEligibilityEnabled && levelEligibilityEnabled
+        levelEligibilityEnabled
           ? formData.eligible_levels.filter((level) =>
               availableLevels.includes(level),
             )
           : [],
     }),
-    [availableLevels, departmentEligibilityEnabled, formData, levelEligibilityEnabled],
+    [
+      availableLevels,
+      collegeEligibilityEnabled,
+      departmentEligibilityEnabled,
+      formData,
+      levelEligibilityEnabled,
+    ],
   );
 
   const fullValidationIssues = useMemo(
     () =>
       validateFullSessionCreationWithOptions(normalizedFormData, {
         departmentEligibilityEnabled,
+        collegeEligibilityEnabled,
         levelEligibilityEnabled,
       }),
-    [departmentEligibilityEnabled, levelEligibilityEnabled, normalizedFormData],
+    [
+      collegeEligibilityEnabled,
+      departmentEligibilityEnabled,
+      levelEligibilityEnabled,
+      normalizedFormData,
+    ],
   );
 
   const updateFormData = (updater: (current: SessionCreationFormData) => SessionCreationFormData) => {
@@ -179,6 +200,14 @@ export function SessionBuilder({
   };
 
   const handleCollegeCodeClick = (collegeId: string) => {
+    if (!departmentEligibilityEnabled) {
+      updateFormData((prev) => ({
+        ...prev,
+        eligible_college: prev.eligible_college === collegeId ? null : collegeId,
+      }));
+      return;
+    }
+
     const college = colleges.find((item) => item._id === collegeId);
     if (!college) return;
 
@@ -189,6 +218,7 @@ export function SessionBuilder({
 
     updateFormData((prev) => ({
       ...prev,
+      eligible_college: null,
       eligible_departments: allSelected
         ? prev.eligible_departments.filter(
             (departmentId) => !collegeDepartmentIds.includes(departmentId),
@@ -202,6 +232,7 @@ export function SessionBuilder({
   const handleDepartmentChange = (departmentId: string) => {
     updateFormData((prev) => ({
       ...prev,
+      eligible_college: null,
       eligible_departments: prev.eligible_departments.includes(departmentId)
         ? prev.eligible_departments.filter((id) => id !== departmentId)
         : [...prev.eligible_departments, departmentId],
@@ -214,6 +245,7 @@ export function SessionBuilder({
 
     updateFormData((prev) => ({
       ...prev,
+      eligible_college: null,
       eligible_departments: everyDepartmentSelected
         ? []
         : allDepartments.map((department) => department._id),
@@ -233,6 +265,7 @@ export function SessionBuilder({
   const goToNextStep = () => {
     const issues = validateSessionStep(currentStep, normalizedFormData, {
       departmentEligibilityEnabled,
+      collegeEligibilityEnabled,
       levelEligibilityEnabled,
     });
     if (issues.length > 0) {
@@ -257,6 +290,7 @@ export function SessionBuilder({
     const validationIssues = validateFullSessionCreationWithOptions(
       normalizedFormData,
       {
+        collegeEligibilityEnabled,
         departmentEligibilityEnabled,
         levelEligibilityEnabled,
       },
@@ -273,6 +307,7 @@ export function SessionBuilder({
         (step) =>
           validateSessionStep(step.id, normalizedFormData, {
             departmentEligibilityEnabled,
+            collegeEligibilityEnabled,
             levelEligibilityEnabled,
           }).length > 0,
       );
@@ -327,6 +362,7 @@ export function SessionBuilder({
           availableLevels={availableLevels}
           formData={normalizedFormData}
           participantPluralLabel={participantLabels.plural}
+          selectedCollegeId={normalizedFormData.eligible_college}
           collegeEligibilityEnabled={collegeEligibilityEnabled}
           departmentEligibilityEnabled={departmentEligibilityEnabled}
           levelEligibilityEnabled={levelEligibilityEnabled}
@@ -364,11 +400,12 @@ export function SessionBuilder({
     return (
       <ReviewSubmitStep
         formData={normalizedFormData}
-        participantPluralLabel={participantLabels.plural}
-        eligibleCollegesCount={eligibleCollegeIds.length}
-        departmentEligibilityEnabled={departmentEligibilityEnabled}
-        levelEligibilityEnabled={levelEligibilityEnabled}
-        validationIssues={fullValidationIssues}
+          participantPluralLabel={participantLabels.plural}
+          eligibleCollegesCount={eligibleCollegeIds.length}
+          collegeEligibilityEnabled={collegeEligibilityEnabled}
+          departmentEligibilityEnabled={departmentEligibilityEnabled}
+          levelEligibilityEnabled={levelEligibilityEnabled}
+          validationIssues={fullValidationIssues}
       />
     );
   };

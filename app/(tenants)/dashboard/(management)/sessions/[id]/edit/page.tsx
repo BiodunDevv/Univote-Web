@@ -30,6 +30,7 @@ export default function EditSessionPage() {
 
   const { token, hasHydrated, tenant } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
+  const tenantReady = hasHydrated && Boolean(tenant);
   const needsStructureData =
     isTenantEligibilityDimensionEnabled(tenant, "college") ||
     isTenantEligibilityDimensionEnabled(tenant, "department") ||
@@ -69,6 +70,7 @@ export default function EditSessionPage() {
 
   if (
     !hasHydrated ||
+    !tenantReady ||
     sessionDetailQuery.isLoading ||
     (needsStructureData && collegesQuery.isLoading)
   ) {
@@ -131,7 +133,11 @@ export default function EditSessionPage() {
       key={sessionId}
       mode="edit"
       title="Edit Session Wizard"
-      description="Update this session using the same structure-aware workflow as session creation."
+      description={
+        needsStructureData
+          ? "Update this session using the same structure-aware workflow as session creation."
+          : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
+      }
       colleges={colleges}
       initialData={initialData}
       isSubmitting={updateSession.isPending}

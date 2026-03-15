@@ -120,6 +120,12 @@ export const HeroHeader = () => {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-3">
+              {!isCheckingSession && isTenantAuthenticated ? (
+                <div className="md:hidden">
+                  <LandingOrganizationSwitcher compact />
+                </div>
+              ) : null}
+
               {isCheckingSession ? (
                 <>
                   <Button
@@ -269,12 +275,6 @@ export const HeroHeader = () => {
               </Sheet>
             </div>
           </div>
-
-          {!isCheckingSession && isTenantAuthenticated ? (
-            <div className="mt-2 border-t border-border/40 pt-2 md:hidden">
-              <LandingOrganizationSwitcher compact className="max-w-none" />
-            </div>
-          ) : null}
         </div>
       </div>
     </header>

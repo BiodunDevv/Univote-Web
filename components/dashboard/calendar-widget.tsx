@@ -69,7 +69,7 @@ export function CalendarWidget({
     .slice(0, 3);
 
   return (
-    <Card className="border shadow-none">
+    <Card className="h-full border shadow-none">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base">Calendar</CardTitle>
         <CalendarIcon className="h-4 w-4 text-muted-foreground" />

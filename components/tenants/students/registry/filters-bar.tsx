@@ -34,6 +34,7 @@ type StudentsRegistryFiltersProps = {
   showCollegeFilter?: boolean;
   showDepartmentFilter?: boolean;
   showLevelFilter?: boolean;
+  showFaceFilter?: boolean;
 };
 
 export function StudentsRegistryFilters({
@@ -59,6 +60,7 @@ export function StudentsRegistryFilters({
   showCollegeFilter = true,
   showDepartmentFilter = true,
   showLevelFilter = true,
+  showFaceFilter = true,
 }: StudentsRegistryFiltersProps) {
   const collegeOptions = overview?.colleges || [];
   const departmentOptions =
@@ -152,16 +154,18 @@ export function StudentsRegistryFilters({
             </SelectContent>
           </Select>
 
-          <Select value={facial} onValueChange={onFacialChange}>
-            <SelectTrigger className="h-9 min-w-0 text-sm [&>span]:truncate">
-              <SelectValue placeholder="Facial Data" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Facial Status</SelectItem>
-              <SelectItem value="registered">Registered</SelectItem>
-              <SelectItem value="not-registered">Not Registered</SelectItem>
-            </SelectContent>
-          </Select>
+          {showFaceFilter ? (
+            <Select value={facial} onValueChange={onFacialChange}>
+              <SelectTrigger className="h-9 min-w-0 text-sm [&>span]:truncate">
+                <SelectValue placeholder="Facial Data" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Facial Status</SelectItem>
+                <SelectItem value="registered">Registered</SelectItem>
+                <SelectItem value="not-registered">Not Registered</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : null}
         </div>
 
         {canManageStudents && (

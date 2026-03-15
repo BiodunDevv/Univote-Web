@@ -5,6 +5,7 @@ import {
 } from "@/components/tenants/sessions/create/types";
 
 type SessionEligibilityValidationOptions = {
+  collegeEligibilityEnabled?: boolean;
   departmentEligibilityEnabled?: boolean;
   levelEligibilityEnabled?: boolean;
 };
@@ -36,8 +37,26 @@ export function deriveAllDepartments(colleges: SessionCreationCollege[]) {
 export function deriveAvailableLevels(
   departmentIds: string[],
   colleges: SessionCreationCollege[],
+  selectedCollegeId?: string | null,
 ) {
   const levels = new Set<string>();
+
+  if (selectedCollegeId && departmentIds.length === 0) {
+    const college = colleges.find((item) => item._id === selectedCollegeId);
+    college?.departments?.forEach((department) => {
+      department.available_levels?.forEach((level) => levels.add(level));
+    });
+    return Array.from(levels).sort((a, b) => Number(a) - Number(b));
+  }
+
+  if (departmentIds.length === 0) {
+    colleges.forEach((college) => {
+      college.departments?.forEach((department) => {
+        department.available_levels?.forEach((level) => levels.add(level));
+      });
+    });
+    return Array.from(levels).sort((a, b) => Number(a) - Number(b));
+  }
 
   departmentIds.forEach((departmentId) => {
     colleges.forEach((college) => {
@@ -78,10 +97,12 @@ export function validateSessionStep(
   options: SessionEligibilityValidationOptions = {},
 ) {
   const errors: string[] = [];
+  const collegeEligibilityEnabled =
+    options.collegeEligibilityEnabled !== false;
   const departmentEligibilityEnabled =
     options.departmentEligibilityEnabled !== false;
   const levelEligibilityEnabled = Boolean(
-    departmentEligibilityEnabled && options.levelEligibilityEnabled,
+    options.levelEligibilityEnabled,
   );
 
   if (step === "basic") {
@@ -123,6 +144,13 @@ export function validateSessionStep(
   }
 
   if (step === "eligibility") {
+    if (
+      collegeEligibilityEnabled &&
+      !departmentEligibilityEnabled &&
+      !formData.eligible_college
+    ) {
+      errors.push("Select one college.");
+    }
     if (
       departmentEligibilityEnabled &&
       formData.eligible_departments.length === 0

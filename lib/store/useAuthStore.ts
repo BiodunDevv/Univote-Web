@@ -78,6 +78,13 @@ interface AuthState {
     tenantSlug: string,
     persistSession?: boolean,
   ) => Promise<AuthSessionData>;
+  linkOrganization: (
+    tenantSlug: string,
+    email: string,
+    password: string,
+    label?: string,
+  ) => Promise<TenantOrganization[]>;
+  unlinkOrganization: (tenantSlug: string) => Promise<TenantOrganization[]>;
   logout: () => void;
   updateAdmin: (updatedAdmin: Partial<AuthAdmin>) => void;
   forgotPassword: (email: string, tenantSlug?: string | null) => Promise<void>;
@@ -255,6 +262,104 @@ export const useAuthStore = create<AuthState>()(
               error instanceof Error
                 ? error.message
                 : "Failed to switch organization",
+          });
+          throw error;
+        }
+      },
+      linkOrganization: async (
+        tenantSlug: string,
+        email: string,
+        password: string,
+        label?: string,
+      ) => {
+        set({ isLoading: true, error: null });
+        try {
+          const data = await apiRequest<{ message: string; organizations: TenantOrganization[] }>(
+            "/api/auth/link-organization",
+            {
+              method: "POST",
+              auth: "admin",
+              data: {
+                tenant_slug: normalizeTenantSlug(tenantSlug),
+                email,
+                password,
+                label,
+              },
+              redirectOnAuthError: false,
+            },
+          );
+
+          set((state) => {
+            if (state.token && state.admin) {
+              syncSharedAdminContext({
+                token: state.token,
+                admin: state.admin,
+                tenant: state.tenant,
+                organizations: data.organizations || [],
+                membership: state.membership,
+              });
+            }
+
+            return {
+              organizations: data.organizations || [],
+              isLoading: false,
+              error: null,
+            };
+          });
+
+          return data.organizations || [];
+        } catch (error: unknown) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to link organization",
+          });
+          throw error;
+        }
+      },
+      unlinkOrganization: async (tenantSlug: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const data = await apiRequest<{ message: string; organizations: TenantOrganization[] }>(
+            "/api/auth/unlink-organization",
+            {
+              method: "POST",
+              auth: "admin",
+              data: {
+                tenant_slug: normalizeTenantSlug(tenantSlug),
+              },
+              redirectOnAuthError: false,
+            },
+          );
+
+          set((state) => {
+            if (state.token && state.admin) {
+              syncSharedAdminContext({
+                token: state.token,
+                admin: state.admin,
+                tenant: state.tenant,
+                organizations: data.organizations || [],
+                membership: state.membership,
+              });
+            }
+
+            return {
+              organizations: data.organizations || [],
+              isLoading: false,
+              error: null,
+            };
+          });
+
+          return data.organizations || [];
+        } catch (error: unknown) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to unlink organization",
           });
           throw error;
         }

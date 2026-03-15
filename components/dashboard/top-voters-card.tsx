@@ -50,7 +50,7 @@ export function TopVotersCard({
             ))
           ) : (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              No votes recorded yet
+              No participation records yet
             </p>
           )}
         </div>

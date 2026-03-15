@@ -41,9 +41,12 @@ export type StudentsRegistryTableProps = {
   selectedIds: string[];
   canManageStudents: boolean;
   participantSingularLabel?: string;
+  participantPluralLabel?: string;
   showCollegeField?: boolean;
   showDepartmentField?: boolean;
   showLevelField?: boolean;
+  showFaceField?: boolean;
+  showPhotoField?: boolean;
   onToggleAll: () => void;
   allVisibleSelected: boolean;
   onToggleOne: (studentId: string, checked: boolean) => void;

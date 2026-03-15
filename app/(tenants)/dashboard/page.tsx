@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { BarChart3, LayoutDashboard, ShieldCheck, Vote } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  LayoutDashboard,
+  ShieldCheck,
+  Vote,
+} from "lucide-react";
 import { ChartConfig } from "@/components/ui/chart";
 import { StudentsByLevelChart } from "@/components/dashboard/students-by-level-chart";
 import { CalendarWidget } from "@/components/dashboard/calendar-widget";
@@ -15,6 +21,7 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 import { AdminChatOverviewCard } from "@/components/support/admin-chat-overview-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { MetricsGrid } from "@/components/dashboard/metrics-grid";
 import {
   TenantPageHeader,
   TenantSectionCard,
@@ -35,7 +42,7 @@ import {
 
 export default function DashboardWelcomePage() {
   const router = useRouter();
-  const { admin, token, hasHydrated } = useAuthStore();
+  const { admin, token, hasHydrated, tenant: activeTenant } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
   const dashboardQuery = useAdminDashboardQuery({ enabled: isAuthorized });
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -91,9 +98,8 @@ export default function DashboardWelcomePage() {
   }
 
   const dashboardData = dashboardQuery.data;
-  const participantLabels = getTenantParticipantLabels(
-    dashboardData?.tenant || null,
-  );
+  const tenantContext = activeTenant || dashboardData?.tenant || null;
+  const participantLabels = getTenantParticipantLabels(tenantContext);
   const overview = dashboardData?.overview as DashboardOverview | undefined;
   const distributions = dashboardData?.distributions;
   const recentSessions =
@@ -102,17 +108,20 @@ export default function DashboardWelcomePage() {
   const recentActivities =
     (dashboardData?.recent_activities as DashboardRecentActivity[]) || [];
   const showCollegeStructure = isTenantParticipantFieldEnabled(
-    dashboardData?.tenant || null,
+    tenantContext,
     "college",
   );
   const showDepartmentStructure = isTenantParticipantFieldEnabled(
-    dashboardData?.tenant || null,
+    tenantContext,
     "department",
   );
   const showLevelStructure = isTenantParticipantFieldEnabled(
-    dashboardData?.tenant || null,
+    tenantContext,
     "level",
   );
+  const structureDimensionLabel = "Group";
+  const departmentDimensionLabel = "Sub-groups";
+  const levelDimensionLabel = "Access level";
 
   // Prepare chart data
   const studentsByLevelData: StudentsByLevelItem[] =
@@ -132,13 +141,13 @@ export default function DashboardWelcomePage() {
     students: {
       label: participantLabels.plural,
     },
-    college1: { label: "College 1", color: "var(--chart-1)" },
-    college2: { label: "College 2", color: "var(--chart-2)" },
-    college3: { label: "College 3", color: "var(--chart-3)" },
-    college4: { label: "College 4", color: "var(--chart-4)" },
-    college5: { label: "College 5", color: "var(--chart-5)" },
-    college6: { label: "College 6", color: "var(--chart-1)" },
-    college7: { label: "College 7", color: "var(--chart-2)" },
+    college1: { label: "Group 1", color: "var(--chart-1)" },
+    college2: { label: "Group 2", color: "var(--chart-2)" },
+    college3: { label: "Group 3", color: "var(--chart-3)" },
+    college4: { label: "Group 4", color: "var(--chart-4)" },
+    college5: { label: "Group 5", color: "var(--chart-5)" },
+    college6: { label: "Group 6", color: "var(--chart-1)" },
+    college7: { label: "Group 7", color: "var(--chart-2)" },
   } satisfies ChartConfig;
 
   const openSession = (sessionId: string) => {
@@ -206,14 +215,12 @@ export default function DashboardWelcomePage() {
           />
         ) : null}
 
-       
-
-        <div className="grid gap-3 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="grid gap-3 xl:grid-cols-[1.12fr_0.88fr]">
           <TenantSectionCard
             title="Participation landscape"
             description={
               showLevelStructure
-                ? `Readiness by level and a quick view into the current ${participantLabels.singular.toLowerCase()} session schedule.`
+                ? `Readiness by ${levelDimensionLabel.toLowerCase()} and a quick view into the current ${participantLabels.singular.toLowerCase()} session schedule.`
                 : `Current ${participantLabels.singular.toLowerCase()} readiness and a quick view into the session schedule.`
             }
             action={
@@ -223,31 +230,49 @@ export default function DashboardWelcomePage() {
               </div>
             }
           >
-            <div className="grid gap-3 lg:grid-rows-[1.2fr_0.8fr]">
-              {showLevelStructure ? (
-                <StudentsByLevelChart
-                  data={studentsByLevelData}
-                  participantPluralLabel={participantLabels.plural}
-                  dimensionLabel="Level"
-                />
-              ) : null}
-              <CalendarWidget
-                currentMonth={currentMonth}
-                onPreviousMonth={handlePreviousMonth}
-                onNextMonth={handleNextMonth}
-                recentSessions={recentSessions}
-                onOpenSession={openSession}
+            {showLevelStructure ? (
+              <StudentsByLevelChart
+                data={studentsByLevelData}
+                participantPluralLabel={participantLabels.plural}
+                dimensionLabel={levelDimensionLabel}
               />
-            </div>
+            ) : (
+              <Card className="border shadow-none">
+                <CardContent className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 p-6 text-center">
+                  <div className="rounded-2xl border border-border/70 bg-muted/30 p-3 text-muted-foreground">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">
+                      Structure insights are streamlined
+                    </p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      This workspace is not grouping {participantLabels.plural.toLowerCase()} by
+                      level, so the operational focus stays on sessions, turnout, and recent
+                      activity.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TenantSectionCard>
-          <AdminChatOverviewCard supportPath="/dashboard/support" />
+          <div className="grid auto-rows-fr gap-3">
+            <CalendarWidget
+              currentMonth={currentMonth}
+              onPreviousMonth={handlePreviousMonth}
+              onNextMonth={handleNextMonth}
+              recentSessions={recentSessions}
+              onOpenSession={openSession}
+            />
+            <AdminChatOverviewCard supportPath="/dashboard/support" />
+          </div>
         </div>
 
         <TenantSectionCard
           title="Coverage and engagement"
           description={
             showCollegeStructure
-              ? `See where ${participantLabels.singular.toLowerCase()} density lives and who is consistently participating across sessions.`
+              ? `See where ${participantLabels.singular.toLowerCase()} density lives across visible groups and who is consistently participating across sessions.`
               : `Track participation consistency and engagement across recent sessions.`
           }
         >
@@ -257,13 +282,13 @@ export default function DashboardWelcomePage() {
                 data={studentsByCollegeData}
                 chartConfig={collegeChartConfig}
                 participantPluralLabel={participantLabels.plural}
-                dimensionLabel="College"
+                dimensionLabel={structureDimensionLabel}
               />
             ) : null}
             <TopVotersCard
               topVoters={topVoters}
               participantPluralLabel={participantLabels.plural}
-              tenant={dashboardData?.tenant || null}
+              tenant={tenantContext}
             />
           </div>
         </TenantSectionCard>
@@ -320,7 +345,7 @@ export default function DashboardWelcomePage() {
                 </div>
                 <div>
                   <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                    Colleges
+                    {structureDimensionLabel}s
                   </p>
                   <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                     {overview?.total_colleges?.toLocaleString() || 0}

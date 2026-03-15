@@ -19,6 +19,7 @@ type EligibilityStepProps = {
   availableLevels: string[];
   formData: SessionCreationFormData;
   participantPluralLabel: string;
+  selectedCollegeId: string | null;
   collegeEligibilityEnabled: boolean;
   departmentEligibilityEnabled: boolean;
   levelEligibilityEnabled: boolean;
@@ -35,6 +36,7 @@ export function EligibilityStep({
   availableLevels,
   formData,
   participantPluralLabel,
+  selectedCollegeId,
   collegeEligibilityEnabled,
   departmentEligibilityEnabled,
   levelEligibilityEnabled,
@@ -59,11 +61,11 @@ export function EligibilityStep({
           !levelEligibilityEnabled ? (
             <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
               <p className="text-sm font-medium text-foreground">
-                Tenant-wide eligibility
+                Tenant-wide eligibility is already applied
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                This tenant does not use structure-based eligibility. Every eligible{" "}
-                {participantPluralLabel.toLowerCase()} can access the session.
+                This workspace does not use structure-based access rules. Every eligible{" "}
+                {participantPluralLabel.toLowerCase()} will be able to access this session automatically.
               </p>
             </div>
           ) : null}
@@ -71,8 +73,11 @@ export function EligibilityStep({
           {collegeEligibilityEnabled || departmentEligibilityEnabled ? (
             <CollegeQuickSelect
               colleges={colleges}
+              selectedCollegeId={selectedCollegeId}
               selectedDepartmentIds={formData.eligible_departments}
               onCollegeClick={onCollegeClick}
+              departmentMode={departmentEligibilityEnabled}
+              participantPluralLabel={participantPluralLabel}
             />
           ) : null}
 
@@ -87,11 +92,31 @@ export function EligibilityStep({
             />
           ) : null}
 
-          {departmentEligibilityEnabled && levelEligibilityEnabled ? (
+          {levelEligibilityEnabled ? (
             <LevelSelector
               availableLevels={availableLevels}
               selectedLevels={formData.eligible_levels}
-              selectedDepartmentsCount={formData.eligible_departments.length}
+              selectionCount={
+                departmentEligibilityEnabled
+                  ? formData.eligible_departments.length
+                  : collegeEligibilityEnabled
+                    ? (selectedCollegeId ? 1 : 0)
+                    : 1
+              }
+              selectionRequiredLabel={
+                departmentEligibilityEnabled
+                  ? "departments"
+                  : collegeEligibilityEnabled
+                    ? "college"
+                    : "scope"
+              }
+              emptySelectionMessage={
+                departmentEligibilityEnabled
+                  ? "Select at least one department first"
+                  : collegeEligibilityEnabled
+                    ? "Select one college first"
+                    : "Select the session scope first"
+              }
               onLevelChange={onLevelChange}
             />
           ) : null}

@@ -62,6 +62,12 @@ export function StudentSessionCard({
             <Vote className="h-4 w-4" />
             <span>{session.candidate_count} candidates on this ballot</span>
           </div>
+          {session.eligibility_scope ? (
+            <div className="flex items-center gap-2">
+              <Vote className="h-4 w-4" />
+              <span>{session.eligibility_scope.summary}</span>
+            </div>
+          ) : null}
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
             <span>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2, ChevronDown, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Building2, ChevronDown, Link2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -114,7 +115,7 @@ export function TenantHeaderSwitcher({
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
+        <DropdownMenuContent
         align="end"
         className={cn(
           "max-w-[calc(100vw-1rem)] rounded-2xl border-border/70 p-1",
@@ -149,6 +150,7 @@ export function TenantHeaderSwitcher({
                 <div className="text-xs text-muted-foreground">
                   {formatRole(organization.role)} •{" "}
                   {formatPlan(organization.plan_code)}
+                  {organization.linked ? " • linked" : ""}
                 </div>
               </div>
               {isActive ? (
@@ -157,6 +159,13 @@ export function TenantHeaderSwitcher({
             </DropdownMenuItem>
           );
         })}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
+          <Link href="/auth/link-organization">
+            <Link2 className="mr-2 h-4 w-4" />
+            Add another organization
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

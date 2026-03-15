@@ -85,8 +85,42 @@ export interface TenantApplicationPayload {
   institution_type: "university" | "college" | "polytechnic" | "faculty" | "organization";
   student_count_estimate?: number;
   admin_count_estimate?: number;
+  participant_structure?: {
+    uses_college?: boolean;
+    uses_department?: boolean;
+    uses_level?: boolean;
+    requires_photo?: boolean;
+    requires_face_verification?: boolean;
+  } | null;
+  identity_preferences?: {
+    primary_identifier?: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+    recovery_identifiers?: Array<
+      "matric_no" | "email" | "member_id" | "employee_id" | "username"
+    >;
+  } | null;
+  coupon_code?: string;
   notes?: string;
   demo_requested: boolean;
+}
+
+export interface CouponValidationResult {
+  code: string;
+  name: string;
+  description?: string | null;
+  discount_type: "percentage" | "fixed_amount";
+  discount_value: number;
+  discount_amount_ngn: number;
+  original_amount_ngn: number;
+  final_amount_ngn: number;
+  plan_code: string;
+  applied_at: string;
+}
+
+export interface TenantApplicationStatusTimelineItem {
+  status: string;
+  label?: string | null;
+  note?: string | null;
+  at: string;
 }
 
 export interface TenantApplicationResponse {
@@ -114,12 +148,56 @@ export interface TenantApplicationResponse {
   next_steps: string[];
   application: {
     id: string;
+    reference?: string | null;
     name: string;
     slug: string;
     status: string;
     plan_code: string;
     subscription_status: string;
+    payment_required?: boolean;
+    payment_status?: string;
     contact_email?: string | null;
+    coupon_code?: string | null;
+    coupon_snapshot?: CouponValidationResult | null;
+    billing_snapshot?: {
+      original_amount_ngn: number;
+      payable_amount_ngn: number;
+    } | null;
+    structure_preferences?: TenantApplicationPayload["participant_structure"];
+    identity_preferences?: TenantApplicationPayload["identity_preferences"];
+    status_timeline?: TenantApplicationStatusTimelineItem[];
     application_submitted_at: string;
+    application_last_updated_at?: string;
+    approved_at?: string | null;
+    rejected_at?: string | null;
+    rejection_reason?: string | null;
   };
+}
+
+export interface TenantApplicationStatusResponse {
+  application: TenantApplicationResponse["application"];
+  invoice?: TenantApplicationResponse["invoice"] | null;
+  next_actions: Array<{
+    key: string;
+    label: string;
+    href?: string | null;
+  }>;
+}
+
+export interface CheckoutResolution {
+  reference: string;
+  source: string;
+  status: string;
+  application_reference?: string | null;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+    primary_domain?: string | null;
+    status: string;
+    plan_code: string;
+    subscription_status: string;
+  } | null;
+  invoice: NonNullable<TenantApplicationResponse["invoice"]>;
+  retry_checkout_url?: string | null;
 }

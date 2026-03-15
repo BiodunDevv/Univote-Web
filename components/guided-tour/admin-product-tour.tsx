@@ -22,6 +22,46 @@ export function AdminProductTour({ scope }: AdminProductTourProps) {
     }
 
     const steps = [
+      ...(scope === "tenant"
+        ? [
+            {
+              element: "[data-tour='tenant-guide-settings']",
+              popover: {
+                title: "Start with settings",
+                description:
+                  "Review participant labels, identity rules, structure, and workspace defaults here before inviting more people in.",
+                side: "bottom" as const,
+              },
+            },
+            {
+              element: "[data-tour='tenant-guide-billing']",
+              popover: {
+                title: "Confirm your plan",
+                description:
+                  "Open billing to confirm your active plan, limits, and any pending payment or upgrade work.",
+                side: "bottom" as const,
+              },
+            },
+            {
+              element: "[data-tour='tenant-guide-sessions']",
+              popover: {
+                title: "Create your first session",
+                description:
+                  "When your workspace settings are ready, move here to create the first election or ballot session.",
+                side: "bottom" as const,
+              },
+            },
+            {
+              element: "[data-tour='tenant-guide-structure']",
+              popover: {
+                title: "Structure is optional",
+                description:
+                  "If your organization uses colleges or departments, configure them here. Flat organizations can skip this completely.",
+                side: "bottom" as const,
+              },
+            },
+          ]
+        : []),
       {
         element: "[data-tour='admin-sidebar']",
         popover: {

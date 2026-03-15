@@ -20,8 +20,13 @@ export type PlatformOverviewResponse = {
 export type PlatformTenantListResponse = {
   tenants: Array<
     TenantContext & {
+      application_reference?: string | null;
       primary_domain?: string | null;
       is_active: boolean;
+      billing?: {
+        current_plan?: BillingPlan | null;
+        invoices?: BillingInvoice[];
+      };
       onboarding?: {
         contact_name?: string | null;
         contact_email?: string | null;
@@ -31,9 +36,23 @@ export type PlatformTenantListResponse = {
         admin_count_estimate?: number | null;
         notes?: string | null;
         demo_requested?: boolean;
+        payment_required?: boolean;
+        coupon_code?: string | null;
+        rejection_reason?: string | null;
         application_submitted_at?: string | null;
         activated_at?: string | null;
         approved_at?: string | null;
+        rejected_at?: string | null;
+        billing_snapshot?: {
+          original_amount_ngn?: number;
+          payable_amount_ngn?: number;
+        } | null;
+        status_timeline?: Array<{
+          status: string;
+          label: string;
+          note?: string | null;
+          at: string;
+        }>;
       };
       createdAt: string;
       updatedAt: string;
@@ -46,6 +65,7 @@ export type PlatformTenantListResponse = {
 
 export type PlatformTenantDetailResponse = {
   tenant: TenantContext & {
+    application_reference?: string | null;
     primary_domain?: string | null;
     is_active: boolean;
     createdAt: string;
@@ -53,8 +73,28 @@ export type PlatformTenantDetailResponse = {
     onboarding?: {
       contact_name?: string | null;
       contact_email?: string | null;
+      institution_type?: string | null;
+      student_count_estimate?: number | null;
+      admin_count_estimate?: number | null;
+      notes?: string | null;
+      demo_requested?: boolean;
+      payment_required?: boolean;
+      rejection_reason?: string | null;
+      billing_snapshot?: {
+        original_amount_ngn?: number;
+        payable_amount_ngn?: number;
+      } | null;
       activated_at?: string | null;
       approved_at?: string | null;
+      application_submitted_at?: string | null;
+      coupon_code?: string | null;
+      rejected_at?: string | null;
+      status_timeline?: Array<{
+        status: string;
+        label: string;
+        note?: string | null;
+        at: string;
+      }>;
     };
   };
   stats: {
@@ -161,6 +201,26 @@ export type PlatformBillingOverviewResponse = {
   invoices: BillingInvoice[];
 };
 
+export type PlatformCoupon = {
+  _id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  discount_type: "percentage" | "fixed_amount";
+  discount_value: number;
+  plan_scope: "all" | "selected";
+  plan_codes: string[];
+  minimum_amount_ngn: number;
+  usage_limit?: number | null;
+  per_applicant_limit: number;
+  usage_count: number;
+  active_from?: string | null;
+  active_until?: string | null;
+  is_active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PlatformTenantBillingResponse = {
   tenant: {
     id: string;
@@ -242,6 +302,9 @@ export type PlatformBiometricsResponse = {
       {
         label: string;
         implemented: boolean;
+        rollout_visible?: boolean;
+        description?: string;
+        requirements?: string[];
       }
     >;
     providers: {
@@ -249,6 +312,8 @@ export type PlatformBiometricsResponse = {
         enabled: boolean;
         implemented: boolean;
         configured: boolean;
+        api_key_value?: string | null;
+        api_secret_value?: string | null;
         api_key_masked?: string | null;
         api_secret_masked?: string | null;
         base_url: string;
@@ -258,6 +323,8 @@ export type PlatformBiometricsResponse = {
         enabled: boolean;
         implemented: boolean;
         configured: boolean;
+        access_key_id_value?: string | null;
+        secret_access_key_value?: string | null;
         access_key_id_masked?: string | null;
         secret_access_key_masked?: string | null;
         region: string;
@@ -268,6 +335,7 @@ export type PlatformBiometricsResponse = {
         implemented: boolean;
         configured: boolean;
         endpoint?: string | null;
+        api_key_value?: string | null;
         api_key_masked?: string | null;
         confidence_threshold: number;
       };
@@ -276,6 +344,7 @@ export type PlatformBiometricsResponse = {
         implemented: boolean;
         configured: boolean;
         project_id?: string | null;
+        api_key_value?: string | null;
         api_key_masked?: string | null;
         confidence_threshold: number;
       };
@@ -350,12 +419,59 @@ export function useUpdatePlatformSettingsMutation() {
   });
 }
 
+export function useCreatePlatformBiometricProviderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      provider_key: string;
+      config?: Record<string, unknown>;
+      set_active?: boolean;
+    }) =>
+      apiRequest<PlatformBiometricsResponse>("/api/platform/settings/biometrics/providers", {
+        method: "POST",
+        auth: "admin",
+        data: payload,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["platform", "settings"] });
+    },
+  });
+}
+
+export function useDeletePlatformBiometricProviderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (providerKey: string) =>
+      apiRequest<PlatformBiometricsResponse>(
+        `/api/platform/settings/biometrics/providers/${providerKey}`,
+        {
+          method: "DELETE",
+          auth: "admin",
+        },
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["platform", "settings"] });
+    },
+  });
+}
+
 export function useTestPlatformBiometricsMutation() {
   return useMutation({
-    mutationFn: (imageUrl: string) =>
+    mutationFn: ({
+      imageUrl,
+      providerKey,
+    }: {
+      imageUrl: string;
+      providerKey?: string;
+    }) =>
       apiRequest<{
         message: string;
         provider: string;
+        provider_status?: Record<string, unknown>;
+        summary?: {
+          detection: string;
+          image_checked: string;
+        };
         result: {
           face_token?: string | null;
           face_rectangle?: {
@@ -366,10 +482,11 @@ export function useTestPlatformBiometricsMutation() {
           } | null;
           image_id?: string | null;
         };
+        provider_response?: Record<string, unknown>;
       }>("/api/platform/settings/biometrics/test", {
         method: "POST",
         auth: "admin",
-        data: { image_url: imageUrl },
+        data: { image_url: imageUrl, provider_key: providerKey },
       }),
   });
 }
@@ -393,6 +510,53 @@ export function usePlatformPlansQuery() {
         auth: "admin",
         signal,
       }),
+  });
+}
+
+export function usePlatformCouponsQuery(filters: { search?: string } = {}) {
+  return useQuery({
+    queryKey: queryKeys.platform.coupons(filters),
+    queryFn: ({ signal }) =>
+      apiRequest<{ coupons: PlatformCoupon[] }>("/api/platform/coupons", {
+        auth: "admin",
+        params: filters,
+        signal,
+      }),
+  });
+}
+
+export function useCreatePlatformCouponMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Partial<PlatformCoupon>) =>
+      apiRequest<{ message: string; coupon: PlatformCoupon }>("/api/platform/coupons", {
+        method: "POST",
+        auth: "admin",
+        data: payload,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["platform", "coupons"] });
+    },
+  });
+}
+
+export function useUpdatePlatformCouponMutation(couponId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Partial<PlatformCoupon>) =>
+      apiRequest<{ message: string; coupon: PlatformCoupon }>(
+        `/api/platform/coupons/${couponId}`,
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["platform", "coupons"] });
+    },
   });
 }
 
@@ -548,10 +712,17 @@ export function useUpdatePlatformTenantMutation(tenantId: string) {
       contact_name?: string;
       contact_email?: string;
       support_email?: string;
+      institution_type?: string;
+      student_count_estimate?: number | null;
+      admin_count_estimate?: number | null;
+      notes?: string;
+      demo_requested?: boolean;
+      payment_required?: boolean;
       plan_code?: "pro" | "pro_plus" | "enterprise";
       status?: "draft" | "pending_payment" | "pending_approval" | "active" | "suspended";
       subscription_status?: "trial" | "active" | "grace" | "expired" | "suspended";
       is_active?: boolean;
+      rejection_reason?: string;
     }) =>
       apiRequest<{ tenant: PlatformTenantDetailResponse["tenant"] }>(
         `/api/platform/tenants/${tenantId}`,

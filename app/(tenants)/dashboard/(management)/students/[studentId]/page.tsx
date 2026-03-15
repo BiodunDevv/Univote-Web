@@ -20,6 +20,7 @@ import { useAdminStudentDetailQuery } from "@/lib/queries/admin";
 import {
   formatParticipantIdentifier,
   getTenantParticipantLabels,
+  isTenantParticipantFieldEnabled,
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
 import {
@@ -40,6 +41,7 @@ export default function StudentDetailPage() {
 
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
+  const photoEnabled = isTenantParticipantFieldEnabled(tenant, "photo_url");
   const isAuthorized = hasHydrated && Boolean(token);
   const canManageStudent =
     admin?.role === "super_admin" ||
@@ -63,10 +65,9 @@ export default function StudentDetailPage() {
 
   if (!hasHydrated || studentDetailQuery.isLoading) {
     return (
-      <ChangingLoadingState
+        <ChangingLoadingState
         fullHeight
         messages={[
-          "Loading student workspace...",
           `Loading ${participantLabels.singular.toLowerCase()} workspace...`,
           "Fetching voting history...",
           "Preparing the profile view...",
@@ -176,12 +177,14 @@ export default function StudentDetailPage() {
           hint={`Sessions this ${participantLabels.singular.toLowerCase()} has participated in so far.`}
           icon={<Shield className="h-4 w-4" />}
         />
-        <TenantMetricCard
-          label="Face verification"
-          value={currentStudent.has_facial_data ? "Ready" : "Pending"}
-          hint="Whether a facial verification record is attached."
-          icon={<User className="h-4 w-4" />}
-        />
+        {photoEnabled ? (
+          <TenantMetricCard
+            label="Face verification"
+            value={currentStudent.has_facial_data ? "Ready" : "Pending"}
+            hint="Whether a facial verification record is attached."
+            icon={<User className="h-4 w-4" />}
+          />
+        ) : null}
       </TenantMetricGrid>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_minmax(0,1fr)]">
@@ -227,15 +230,17 @@ export default function StudentDetailPage() {
               value={currentStudent.is_active ? "Active" : "Inactive"}
               icon={<Shield className="h-4 w-4" />}
             />
-            <ProfileField
-              label="Verification"
-              value={
-                currentStudent.has_facial_data
-                  ? "Facial data registered"
-                  : "No facial data"
-              }
-              icon={<User className="h-4 w-4" />}
-            />
+            {photoEnabled ? (
+              <ProfileField
+                label="Verification"
+                value={
+                  currentStudent.has_facial_data
+                    ? "Facial data registered"
+                    : "No facial data"
+                }
+                icon={<User className="h-4 w-4" />}
+              />
+            ) : null}
           </div>
         </TenantSectionCard>
 

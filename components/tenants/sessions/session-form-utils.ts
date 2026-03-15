@@ -32,6 +32,7 @@ export function createEmptySessionFormData(): SessionCreationFormData {
     start_time: "",
     end_time: "",
     location: { ...DEFAULT_LOCATION },
+    eligible_college: null,
     eligible_departments: [],
     eligible_levels: [],
     categories: [],
@@ -54,6 +55,7 @@ export function normalizeSessionForForm(
       radius_meters:
         session.location?.radius_meters ?? DEFAULT_LOCATION.radius_meters,
     },
+    eligible_college: session.eligible_college || null,
     eligible_departments: session.eligible_departments || [],
     eligible_levels: session.eligible_levels || [],
     categories: session.categories || [],
@@ -87,7 +89,8 @@ export function buildSessionPayload(
     },
     categories: formData.categories,
     eligible_college:
-      eligibleCollegeIds.length === 1 ? eligibleCollegeIds[0] : null,
+      formData.eligible_college ||
+      (eligibleCollegeIds.length === 1 ? eligibleCollegeIds[0] : null),
     eligible_departments: formData.eligible_departments,
     eligible_levels: formData.eligible_levels,
     is_off_campus_allowed: formData.is_off_campus_allowed,

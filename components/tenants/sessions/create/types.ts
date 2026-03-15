@@ -12,6 +12,7 @@ export interface SessionCreationFormData {
     lng: number;
     radius_meters: number;
   };
+  eligible_college: string | null;
   eligible_departments: string[];
   eligible_levels: string[];
   categories: string[];
@@ -63,7 +64,7 @@ export const SESSION_CREATION_STEPS: Array<{
   {
     id: "eligibility",
     title: "Eligibility",
-    description: "Departments and levels",
+    description: "Scope and access",
   },
   {
     id: "candidates",
