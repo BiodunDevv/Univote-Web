@@ -58,14 +58,24 @@ export interface PublicOrganization {
     participant_plural: string;
   };
   identity?: {
-    primary_identifier: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+    primary_identifier:
+      | "matric_no"
+      | "email"
+      | "member_id"
+      | "employee_id"
+      | "username";
     allowed_identifiers?: Array<
       "matric_no" | "email" | "member_id" | "employee_id" | "username"
     >;
     recovery_identifiers?: Array<
       "matric_no" | "email" | "member_id" | "employee_id" | "username"
     >;
-    display_identifier?: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+    display_identifier?:
+      | "matric_no"
+      | "email"
+      | "member_id"
+      | "employee_id"
+      | "username";
     login?: {
       key: "matric_no" | "email" | "member_id" | "employee_id" | "username";
       label: string;
@@ -82,7 +92,12 @@ export interface TenantApplicationPayload {
   contact_name: string;
   contact_email: string;
   contact_phone?: string;
-  institution_type: "university" | "college" | "polytechnic" | "faculty" | "organization";
+  institution_type:
+    | "university"
+    | "college"
+    | "polytechnic"
+    | "faculty"
+    | "organization";
   student_count_estimate?: number;
   admin_count_estimate?: number;
   participant_structure?: {
@@ -93,7 +108,12 @@ export interface TenantApplicationPayload {
     requires_face_verification?: boolean;
   } | null;
   identity_preferences?: {
-    primary_identifier?: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+    primary_identifier?:
+      | "matric_no"
+      | "email"
+      | "member_id"
+      | "employee_id"
+      | "username";
     recovery_identifiers?: Array<
       "matric_no" | "email" | "member_id" | "employee_id" | "username"
     >;
@@ -188,6 +208,7 @@ export interface CheckoutResolution {
   reference: string;
   source: string;
   status: string;
+  contact_email?: string | null;
   application_reference?: string | null;
   tenant?: {
     id: string;

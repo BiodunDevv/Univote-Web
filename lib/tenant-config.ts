@@ -1,9 +1,9 @@
 import type { TenantContext } from "@/types/tenant";
 
 const DEFAULT_LOGIN = {
-  key: "matric_no",
-  label: "Matric Number",
-  placeholder: "BU22CSC1001",
+  key: "email",
+  label: "Email Address",
+  placeholder: "name@organization.org",
 } as const;
 
 export function getTenantParticipantLabels(tenant?: TenantContext | null) {
@@ -14,15 +14,20 @@ export function getTenantParticipantLabels(tenant?: TenantContext | null) {
 }
 
 export function getTenantLoginIdentifier(tenant?: TenantContext | null) {
-  return tenant?.identity?.login || DEFAULT_LOGIN;
+  return {
+    ...DEFAULT_LOGIN,
+    key: "email",
+  };
 }
 
 export function getTenantDisplayIdentifierKey(tenant?: TenantContext | null) {
   return tenant?.identity?.display_identifier || "matric_no";
 }
 
-export function getTenantRecoveryIdentifierLabels(tenant?: TenantContext | null) {
-  return (tenant?.identity?.recovery || []).map((item) => item.label);
+export function getTenantRecoveryIdentifierLabels(
+  tenant?: TenantContext | null,
+) {
+  return ["Email Address"];
 }
 
 export function getTenantParticipantFields(tenant?: TenantContext | null) {

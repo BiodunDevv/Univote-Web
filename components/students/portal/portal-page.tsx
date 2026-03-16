@@ -30,13 +30,15 @@ export function PortalHero({
   return (
     <section
       className={cn(
-        "rounded-[1.5rem] border bg-linear-to-br from-card via-card to-muted/30 p-3 shadow-none",
+        "rounded-3xl border bg-linear-to-br from-card via-card to-muted/30 p-3 shadow-none",
         className,
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-1.5">
-          {eyebrow ? <div className={compactUi.typography.eyebrow}>{eyebrow}</div> : null}
+          {eyebrow ? (
+            <div className={compactUi.typography.eyebrow}>{eyebrow}</div>
+          ) : null}
           <h1 className={compactUi.typography.pageTitle}>{title}</h1>
           {description ? (
             <p className="max-w-2xl text-sm leading-5 text-muted-foreground">
@@ -44,7 +46,9 @@ export function PortalHero({
             </p>
           ) : null}
         </div>
-        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+        {actions ? (
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        ) : null}
       </div>
     </section>
   );
@@ -64,7 +68,9 @@ export function PortalSectionHeader({
       <div className="min-w-0 space-y-1">
         <h2 className={compactUi.typography.sectionTitle}>{title}</h2>
         {description ? (
-          <p className="text-xs leading-5 text-muted-foreground">{description}</p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            {description}
+          </p>
         ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
@@ -80,7 +86,9 @@ export function PortalStatsGrid({
   className?: string;
 }) {
   return (
-    <div className={cn("grid gap-3 sm:grid-cols-2 xl:grid-cols-3", className)}>{children}</div>
+    <div className={cn("grid gap-3 sm:grid-cols-2 xl:grid-cols-3", className)}>
+      {children}
+    </div>
   );
 }
 
@@ -92,7 +100,9 @@ export function PortalStackCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-[1.25rem] border bg-card p-3 shadow-none", className)}>
+    <div
+      className={cn("rounded-2xl border bg-card p-3 shadow-none", className)}
+    >
       {children}
     </div>
   );

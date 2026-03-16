@@ -8,12 +8,22 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Search, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import { usePublicOrganizationQuery, usePublicOrganizationsQuery } from "@/lib/queries/public";
+import {
+  usePublicOrganizationQuery,
+  usePublicOrganizationsQuery,
+} from "@/lib/queries/public";
 import {
   getTenantLoginIdentifier,
   getTenantParticipantLabels,
@@ -28,7 +38,8 @@ export default function StudentLoginPage() {
     typeof window === "undefined" ? "" : window.location.search,
   );
   const hostTenantSlug = useMemo(() => deriveTenantSlugFromHostname(), []);
-  const orgParam = searchParams.get("organization") || searchParams.get("org") || "";
+  const orgParam =
+    searchParams.get("organization") || searchParams.get("org") || "";
   const ref = searchParams.get("ref") || "/students/home";
   const restrictionReason = searchParams.get("reason");
 
@@ -36,8 +47,10 @@ export default function StudentLoginPage() {
     useStudentAuthStore();
 
   const [search, setSearch] = useState("");
-  const [selectedOrgSlug, setSelectedOrgSlug] = useState(hostTenantSlug || orgParam);
-  const [identifier, setIdentifier] = useState("");
+  const [selectedOrgSlug, setSelectedOrgSlug] = useState(
+    hostTenantSlug || orgParam,
+  );
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const organizationsQuery = usePublicOrganizationsQuery(search);
@@ -49,7 +62,8 @@ export default function StudentLoginPage() {
   const selectedOrganization =
     selectedOrganizationQuery.data?.organization ||
     organizationsQuery.data?.organizations.find(
-      (organization) => organization.slug === (hostTenantSlug || selectedOrgSlug),
+      (organization) =>
+        organization.slug === (hostTenantSlug || selectedOrgSlug),
     ) ||
     null;
 
@@ -65,12 +79,14 @@ export default function StudentLoginPage() {
           labels: selectedOrganization.labels,
           identity: selectedOrganization.identity
             ? {
-                primary_identifier: selectedOrganization.identity.primary_identifier,
-                allowed_identifiers:
-                  selectedOrganization.identity.allowed_identifiers ||
-                  [selectedOrganization.identity.primary_identifier],
-                recovery_identifiers:
-                  selectedOrganization.identity.recovery_identifiers || ["email"],
+                primary_identifier:
+                  selectedOrganization.identity.primary_identifier,
+                allowed_identifiers: selectedOrganization.identity
+                  .allowed_identifiers || [
+                  selectedOrganization.identity.primary_identifier,
+                ],
+                recovery_identifiers: selectedOrganization.identity
+                  .recovery_identifiers || ["email"],
                 display_identifier:
                   selectedOrganization.identity.display_identifier ||
                   selectedOrganization.identity.primary_identifier,
@@ -109,10 +125,11 @@ export default function StudentLoginPage() {
     const targetTenantSlug = hostTenantSlug || selectedOrgSlug || null;
 
     try {
-      const result = await login(identifier, password, targetTenantSlug);
+      const result = await login(email, password, targetTenantSlug);
       if (result.newDevice) {
         toast.info("New device detected", {
-          description: "A security email has been sent to your registered address.",
+          description:
+            "A security email has been sent to your registered address.",
         });
       }
       if (result.requiresPasswordChange) {
@@ -140,11 +157,11 @@ export default function StudentLoginPage() {
   return (
     <div className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-8 shadow-none sm:p-10">
+        <div className="hidden rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-8 shadow-none lg:block lg:p-10">
           <div className="inline-flex rounded-full border border-border/70 bg-muted/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
             {selectedOrganization ? labels.singular : "Organization"} access
           </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="mt-6 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
             {selectedOrganization
               ? `Sign in to access your ${labels.singular.toLowerCase()} portal, active sessions, and results.`
               : "Select your organization first, then continue into your portal."}
@@ -166,7 +183,9 @@ export default function StudentLoginPage() {
                   </div>
                   <div>
                     <CardTitle>Select Organization</CardTitle>
-                    <CardDescription>Choose the workspace you belong to before signing in.</CardDescription>
+                    <CardDescription>
+                      Choose the workspace you belong to before signing in.
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -181,26 +200,45 @@ export default function StudentLoginPage() {
                   />
                 </div>
 
+                {organizationsQuery.isFetching ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled
+                  >
+                    <LoadingButtonContent label="Fetching organizations..." />
+                  </Button>
+                ) : null}
+
                 <div className="max-h-80 space-y-2 overflow-y-auto">
-                  {(organizationsQuery.data?.organizations || []).map((organization) => (
-                    <button
-                      key={organization.id}
-                      type="button"
-                      onClick={() => setSelectedOrgSlug(organization.slug)}
-                      className="flex w-full items-start justify-between rounded-2xl border border-border/70 bg-card/50 p-3 text-left transition-colors hover:bg-muted/30"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">{organization.name}</p>
-                        <p className="text-xs text-muted-foreground">{organization.slug}</p>
-                      </div>
-                      <ArrowRight className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    </button>
-                  ))}
+                  {(organizationsQuery.data?.organizations || []).map(
+                    (organization) => (
+                      <button
+                        key={organization.id}
+                        type="button"
+                        onClick={() => setSelectedOrgSlug(organization.slug)}
+                        className="flex w-full items-start justify-between rounded-2xl border border-border/70 bg-card/50 p-3 text-left transition-colors hover:bg-muted/30"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">
+                            {organization.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {organization.slug}
+                          </p>
+                        </div>
+                        <ArrowRight className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                      </button>
+                    ),
+                  )}
                 </div>
 
                 {organizationsQuery.data?.organizations.length === 0 ? (
                   <Alert>
-                    <AlertDescription>No organizations matched your search.</AlertDescription>
+                    <AlertDescription>
+                      No organizations matched your search.
+                    </AlertDescription>
                   </Alert>
                 ) : null}
               </CardContent>
@@ -228,8 +266,12 @@ export default function StudentLoginPage() {
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                       Organization
                     </p>
-                    <p className="mt-1 text-sm font-semibold">{selectedOrganization.name}</p>
-                    <p className="text-xs text-muted-foreground">{selectedOrganization.slug}</p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {selectedOrganization.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedOrganization.slug}
+                    </p>
                     {!hostTenantSlug ? (
                       <button
                         type="button"
@@ -244,13 +286,15 @@ export default function StudentLoginPage() {
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
                   <div className="space-y-1.5">
-                    <Label htmlFor="identifier">{loginField.label}</Label>
+                    <Label htmlFor="email">{loginField.label}</Label>
                     <Input
-                      id="identifier"
+                      id="email"
+                      type="email"
                       autoCapitalize="none"
+                      autoComplete="email"
                       placeholder={loginField.placeholder}
-                      value={identifier}
-                      onChange={(event) => setIdentifier(event.target.value)}
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
                       required
                     />
                   </div>
@@ -269,8 +313,8 @@ export default function StudentLoginPage() {
                     <Link
                       href={
                         selectedOrganization
-                          ? `/students/forgot-password?organization=${selectedOrganization.slug}`
-                          : "/students/forgot-password"
+                          ? `/students/forgot-password?organization=${selectedOrganization.slug}${email.trim() ? `&email=${encodeURIComponent(email.trim())}` : ""}`
+                          : `/students/forgot-password${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ""}`
                       }
                       className="text-sm font-medium text-foreground underline underline-offset-4"
                     >
@@ -291,7 +335,9 @@ export default function StudentLoginPage() {
                   ) : null}
 
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : `Continue to ${labels.singular.toLowerCase()} portal`}
+                    {isLoading
+                      ? "Signing in..."
+                      : `Continue to ${labels.singular.toLowerCase()} portal`}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </form>
@@ -306,7 +352,10 @@ export default function StudentLoginPage() {
                   </p>
                   <p className="mt-2">
                     Admin access lives in the management portal.{" "}
-                    <Link href="/auth/signin" className="font-medium text-foreground underline underline-offset-4">
+                    <Link
+                      href="/auth/signin"
+                      className="font-medium text-foreground underline underline-offset-4"
+                    >
                       Sign in as an administrator
                     </Link>
                     .

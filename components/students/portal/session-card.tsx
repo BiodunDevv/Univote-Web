@@ -29,7 +29,9 @@ export function StudentSessionCard({
 }: StudentSessionCardProps) {
   return (
     <Card className="overflow-hidden rounded-[1.5rem] border shadow-none">
-      <CardContent className={cn("space-y-3 p-3", compact ? "sm:p-3" : "sm:p-4")}>
+      <CardContent
+        className={cn("space-y-3 p-3", compact ? "sm:p-3" : "sm:p-4")}
+      >
         <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="outline"
@@ -42,11 +44,17 @@ export function StudentSessionCard({
           </Badge>
         </div>
         <div className="space-y-1.5">
-          <h3 className={cn("text-sm font-semibold text-foreground", !compact && "sm:text-base")}>
+          <h3
+            className={cn(
+              "text-sm font-semibold text-foreground",
+              !compact && "sm:text-base",
+            )}
+          >
             {session.title}
           </h3>
           <p className="text-sm leading-5 text-muted-foreground">
-            {session.description || "No additional session description provided."}
+            {session.description ||
+              "No additional session description provided."}
           </p>
         </div>
         <div className="grid gap-2 text-sm text-muted-foreground">

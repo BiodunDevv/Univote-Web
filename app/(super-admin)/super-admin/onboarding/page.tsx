@@ -14,11 +14,27 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { usePlatformTenantsQuery, useUpdatePlatformTenantMutation } from "@/lib/queries/platform";
+import {
+  usePlatformTenantsQuery,
+  useUpdatePlatformTenantMutation,
+} from "@/lib/queries/platform";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,18 +51,21 @@ import {
 const tabConfig = {
   pending_payment: {
     label: "Pending Payment",
-    description: "Applications waiting on billing activation before platform review can continue.",
+    description:
+      "Applications waiting on billing activation before platform review can continue.",
     icon: CreditCard,
   },
   pending_approval: {
     label: "Pending Approval",
-    description: "Paid tenants ready for provisioning review, approval, and activation.",
+    description:
+      "Paid tenants ready for provisioning review, approval, and activation.",
     icon: BadgeCheck,
   },
 } as const;
 
 export default function PlatformOnboardingPage() {
-  const [status, setStatus] = useState<keyof typeof tabConfig>("pending_payment");
+  const [status, setStatus] =
+    useState<keyof typeof tabConfig>("pending_payment");
   const pendingPaymentQuery = usePlatformTenantsQuery({
     status: "pending_payment",
     limit: 1,
@@ -70,12 +89,15 @@ export default function PlatformOnboardingPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/40 p-6 shadow-none">
+      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/40 p-6 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Tenant Onboarding</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Tenant Onboarding
+            </h1>
             <p className="text-sm text-muted-foreground">
-              Track organization applications from billing activation through platform approval.
+              Track organization applications from billing activation through
+              platform approval.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
@@ -100,10 +122,17 @@ export default function PlatformOnboardingPage() {
               <CardDescription>{tabConfig[status].description}</CardDescription>
             </div>
           </div>
-          <Tabs value={status} onValueChange={(value) => setStatus(value as keyof typeof tabConfig)}>
+          <Tabs
+            value={status}
+            onValueChange={(value) =>
+              setStatus(value as keyof typeof tabConfig)
+            }
+          >
             <TabsList className="grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="pending_payment">Pending payment</TabsTrigger>
-              <TabsTrigger value="pending_approval">Pending approval</TabsTrigger>
+              <TabsTrigger value="pending_approval">
+                Pending approval
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -121,7 +150,7 @@ export default function PlatformOnboardingPage() {
               No tenant applications are currently in this stage.
             </div>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="space-y-4">
               {tenants.map((tenant) => (
                 <OnboardingTenantCard key={tenant.id} tenant={tenant} />
               ))}
@@ -136,7 +165,9 @@ export default function PlatformOnboardingPage() {
 function OnboardingTenantCard({
   tenant,
 }: {
-  tenant: NonNullable<ReturnType<typeof usePlatformTenantsQuery>["data"]>["tenants"][number];
+  tenant: NonNullable<
+    ReturnType<typeof usePlatformTenantsQuery>["data"]
+  >["tenants"][number];
 }) {
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
   const latestInvoice = tenant.billing?.invoices?.[0] ?? null;
@@ -154,27 +185,40 @@ function OnboardingTenantCard({
           : "Awaiting payment";
 
   return (
-    <Card className="border-border/60">
+    <Card className="overflow-hidden border-border/60 shadow-none">
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">{tenant.name}</CardTitle>
-            <CardDescription>{tenant.slug}</CardDescription>
+          <div className="min-w-0 space-y-1">
+            <CardTitle
+              className="line-clamp-2 wrap-break-word text-xl"
+              title={tenant.name}
+            >
+              {tenant.name}
+            </CardTitle>
+            <CardDescription className="truncate" title={tenant.slug}>
+              {tenant.slug}
+            </CardDescription>
           </div>
-          <Badge variant={tenant.status === "pending_approval" ? "default" : "secondary"}>
+          <Badge
+            variant={
+              tenant.status === "pending_approval" ? "default" : "secondary"
+            }
+            className="shrink-0"
+          >
             {tenant.status?.replace("_", " ")}
           </Badge>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs">
+        <div
+          className="flex flex-wrap gap-2 text-xs"
+          title={tenant.application_reference || undefined}
+        >
           <Badge variant="outline" className="uppercase">
             {tenant.plan_code || "pro"}
           </Badge>
           <Badge variant="outline">
             {tenant.onboarding?.institution_type || "organization"}
           </Badge>
-          <Badge variant="outline">
-            {paymentStateLabel}
-          </Badge>
+          <Badge variant="outline">{paymentStateLabel}</Badge>
           <Badge variant="outline">
             {tenant.onboarding?.student_count_estimate || 0} participants
           </Badge>
@@ -182,9 +226,7 @@ function OnboardingTenantCard({
             {tenant.onboarding?.admin_count_estimate || 0} admins
           </Badge>
           {tenant.application_reference ? (
-            <Badge variant="outline">
-              Ref {tenant.application_reference}
-            </Badge>
+            <Badge variant="outline">Ref {tenant.application_reference}</Badge>
           ) : null}
           {tenant.onboarding?.coupon_code ? (
             <Badge variant="outline">
@@ -194,39 +236,60 @@ function OnboardingTenantCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 text-sm md:grid-cols-3">
-          <div className="rounded-xl bg-muted/50 p-3">
+        <div className="grid gap-3 text-sm lg:grid-cols-3">
+          <div className="min-w-0 rounded-xl bg-muted/50 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Contact
             </p>
-            <p className="mt-1 font-medium">
+            <p
+              className="mt-1 wrap-break-word font-medium"
+              title={tenant.onboarding?.contact_name || undefined}
+            >
               {tenant.onboarding?.contact_name || "Not provided"}
             </p>
             <div className="mt-2 flex items-center gap-2 text-muted-foreground">
               <Mail className="size-3.5" />
-              <span>{tenant.onboarding?.contact_email || "No email"}</span>
+              <span
+                className="min-w-0 break-all"
+                title={tenant.onboarding?.contact_email || undefined}
+              >
+                {tenant.onboarding?.contact_email || "No email"}
+              </span>
             </div>
             {tenant.onboarding?.contact_phone ? (
               <div className="mt-1 flex items-center gap-2 text-muted-foreground">
                 <PhoneCall className="size-3.5" />
-                <span>{tenant.onboarding.contact_phone}</span>
+                <span
+                  className="break-all"
+                  title={tenant.onboarding.contact_phone}
+                >
+                  {tenant.onboarding.contact_phone}
+                </span>
               </div>
             ) : null}
           </div>
-          <div className="rounded-xl bg-muted/50 p-3">
+          <div className="min-w-0 rounded-xl bg-muted/50 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Timing
             </p>
             <p className="mt-1 font-medium">
-              Applied {tenant.onboarding?.application_submitted_at
-                ? new Date(tenant.onboarding.application_submitted_at).toLocaleDateString()
+              Applied{" "}
+              {tenant.onboarding?.application_submitted_at
+                ? new Date(
+                    tenant.onboarding.application_submitted_at,
+                  ).toLocaleDateString()
                 : "recently"}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              {tenant.primary_domain || "Subdomain-only deployment for now"}
+              <span
+                className="break-all"
+                title={tenant.primary_domain || undefined}
+              >
+                {tenant.primary_domain || "Subdomain-only deployment for now"}
+              </span>
             </p>
           </div>
-          <div className="rounded-xl bg-muted/50 p-3">
+          <div className="min-w-0 rounded-xl bg-muted/50 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Billing
             </p>
@@ -240,7 +303,12 @@ function OnboardingTenantCard({
             {latestInvoice?.payment_reference ? (
               <div className="mt-1 flex items-center gap-2 text-muted-foreground">
                 <Receipt className="size-3.5" />
-                <span className="truncate">{latestInvoice.payment_reference}</span>
+                <span
+                  className="min-w-0 truncate"
+                  title={latestInvoice.payment_reference}
+                >
+                  {latestInvoice.payment_reference}
+                </span>
               </div>
             ) : null}
             {tenant.onboarding?.coupon_code ? (
@@ -254,14 +322,24 @@ function OnboardingTenantCard({
 
         {tenant.onboarding?.notes ? (
           <div className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
-            {tenant.onboarding.notes}
+            <p
+              className="line-clamp-4 wrap-break-word"
+              title={tenant.onboarding.notes}
+            >
+              {tenant.onboarding.notes}
+            </p>
           </div>
         ) : null}
 
         {tenant.onboarding?.rejection_reason ? (
           <div className="rounded-xl border border-amber-300/40 bg-amber-500/5 p-3 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Rejection note:</span>{" "}
-            {tenant.onboarding.rejection_reason}
+            <span
+              className="wrap-break-word"
+              title={tenant.onboarding.rejection_reason}
+            >
+              {tenant.onboarding.rejection_reason}
+            </span>
           </div>
         ) : null}
 
@@ -281,7 +359,11 @@ function OnboardingTenantCard({
                     });
                     toast.success("Tenant approved successfully");
                   } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Failed to approve tenant");
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to approve tenant",
+                    );
                   }
                 }}
                 disabled={updateMutation.isPending}
@@ -289,7 +371,8 @@ function OnboardingTenantCard({
                 Approve application
               </Button>
             ) : null}
-            {tenant.status === "pending_approval" || tenant.status === "pending_payment" ? (
+            {tenant.status === "pending_approval" ||
+            tenant.status === "pending_payment" ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -300,7 +383,11 @@ function OnboardingTenantCard({
                     });
                     toast.success("Application moved back to draft");
                   } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Failed to update application");
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to update application",
+                    );
                   }
                 }}
                 disabled={updateMutation.isPending}
@@ -325,7 +412,9 @@ function OnboardingTenantCard({
 function ApplicationReviewDialog({
   tenant,
 }: {
-  tenant: NonNullable<ReturnType<typeof usePlatformTenantsQuery>["data"]>["tenants"][number];
+  tenant: NonNullable<
+    ReturnType<typeof usePlatformTenantsQuery>["data"]
+  >["tenants"][number];
 }) {
   const [open, setOpen] = useState(false);
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
@@ -394,8 +483,18 @@ function ApplicationReviewDialog({
       demo_requested: form.demo_requested,
       payment_required: form.payment_required,
       rejection_reason: form.rejection_reason,
-      status: form.status as "draft" | "pending_payment" | "pending_approval" | "active" | "suspended",
-      subscription_status: form.subscription_status as "trial" | "active" | "grace" | "expired" | "suspended",
+      status: form.status as
+        | "draft"
+        | "pending_payment"
+        | "pending_approval"
+        | "active"
+        | "suspended",
+      subscription_status: form.subscription_status as
+        | "trial"
+        | "active"
+        | "grace"
+        | "expired"
+        | "suspended",
       plan_code: form.plan_code as "pro" | "pro_plus" | "enterprise",
     });
   };
@@ -412,7 +511,8 @@ function ApplicationReviewDialog({
         <DialogHeader>
           <DialogTitle>Review {tenant.name}</DialogTitle>
           <DialogDescription>
-            Save moderation changes directly from the onboarding queue. These values persist and reload from the platform record.
+            Save moderation changes directly from the onboarding queue. These
+            values persist and reload from the platform record.
           </DialogDescription>
         </DialogHeader>
 
@@ -420,17 +520,30 @@ function ApplicationReviewDialog({
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Reference</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">{tenant.application_reference || "Not assigned"}</p>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Invoice status</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">{latestInvoice?.status || tenant.status}</p>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Payable amount</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  Reference
+                </p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  NGN {tenant.onboarding?.billing_snapshot?.payable_amount_ngn?.toLocaleString?.() ?? latestInvoice?.amount_ngn?.toLocaleString?.() ?? 0}
+                  {tenant.application_reference || "Not assigned"}
+                </p>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  Invoice status
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {latestInvoice?.status || tenant.status}
+                </p>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  Payable amount
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  NGN{" "}
+                  {tenant.onboarding?.billing_snapshot?.payable_amount_ngn?.toLocaleString?.() ??
+                    latestInvoice?.amount_ngn?.toLocaleString?.() ??
+                    0}
                 </p>
               </div>
             </div>
@@ -439,19 +552,46 @@ function ApplicationReviewDialog({
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Contact name</Label>
-                  <Input value={form.contact_name} onChange={(event) => setForm((current) => ({ ...current, contact_name: event.target.value }))} />
+                  <Input
+                    value={form.contact_name}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        contact_name: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Contact email</Label>
-                  <Input type="email" value={form.contact_email} onChange={(event) => setForm((current) => ({ ...current, contact_email: event.target.value }))} />
+                  <Input
+                    type="email"
+                    value={form.contact_email}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        contact_email: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Organization type</Label>
-                  <Select value={form.institution_type} onValueChange={(value) => setForm((current) => ({ ...current, institution_type: value }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.institution_type}
+                    onValueChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        institution_type: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="organization">Organization</SelectItem>
                       <SelectItem value="university">University</SelectItem>
@@ -463,19 +603,46 @@ function ApplicationReviewDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Participant estimate</Label>
-                  <Input type="number" min="0" value={form.student_count_estimate} onChange={(event) => setForm((current) => ({ ...current, student_count_estimate: event.target.value }))} />
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.student_count_estimate}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        student_count_estimate: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Admin estimate</Label>
-                  <Input type="number" min="0" value={form.admin_count_estimate} onChange={(event) => setForm((current) => ({ ...current, admin_count_estimate: event.target.value }))} />
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.admin_count_estimate}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        admin_count_estimate: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Plan</Label>
-                  <Select value={form.plan_code} onValueChange={(value) => setForm((current) => ({ ...current, plan_code: value }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.plan_code}
+                    onValueChange={(value) =>
+                      setForm((current) => ({ ...current, plan_code: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pro">Pro</SelectItem>
                       <SelectItem value="pro_plus">Pro Plus</SelectItem>
@@ -485,12 +652,23 @@ function ApplicationReviewDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Application status</Label>
-                  <Select value={form.status} onValueChange={(value) => setForm((current) => ({ ...current, status: value }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      setForm((current) => ({ ...current, status: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending_payment">Pending payment</SelectItem>
-                      <SelectItem value="pending_approval">Pending approval</SelectItem>
+                      <SelectItem value="pending_payment">
+                        Pending payment
+                      </SelectItem>
+                      <SelectItem value="pending_approval">
+                        Pending approval
+                      </SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
                     </SelectContent>
@@ -498,8 +676,18 @@ function ApplicationReviewDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Subscription</Label>
-                  <Select value={form.subscription_status} onValueChange={(value) => setForm((current) => ({ ...current, subscription_status: value }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.subscription_status}
+                    onValueChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        subscription_status: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="trial">Trial</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
@@ -515,69 +703,134 @@ function ApplicationReviewDialog({
                 <label className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
                   <div className="space-y-1">
                     <span className="font-medium">Demo requested</span>
-                    <p className="text-xs text-muted-foreground">Track whether the applicant asked for a guided walkthrough.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Track whether the applicant asked for a guided
+                      walkthrough.
+                    </p>
                   </div>
-                  <Switch checked={form.demo_requested} onCheckedChange={(checked) => setForm((current) => ({ ...current, demo_requested: checked }))} />
+                  <Switch
+                    checked={form.demo_requested}
+                    onCheckedChange={(checked) =>
+                      setForm((current) => ({
+                        ...current,
+                        demo_requested: checked,
+                      }))
+                    }
+                  />
                 </label>
                 <label className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
                   <div className="space-y-1">
                     <span className="font-medium">Payment required</span>
-                    <p className="text-xs text-muted-foreground">Disable only when the application should bypass billing.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Disable only when the application should bypass billing.
+                    </p>
                   </div>
-                  <Switch checked={form.payment_required} onCheckedChange={(checked) => setForm((current) => ({ ...current, payment_required: checked }))} />
+                  <Switch
+                    checked={form.payment_required}
+                    onCheckedChange={(checked) =>
+                      setForm((current) => ({
+                        ...current,
+                        payment_required: checked,
+                      }))
+                    }
+                  />
                 </label>
               </div>
 
               <div className="space-y-2">
                 <Label>Application notes</Label>
-                <Textarea rows={5} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} />
+                <Textarea
+                  rows={5}
+                  value={form.notes}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      notes: event.target.value,
+                    }))
+                  }
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Review note / rejection reason</Label>
-                <Input value={form.rejection_reason} onChange={(event) => setForm((current) => ({ ...current, rejection_reason: event.target.value }))} />
+                <Input
+                  value={form.rejection_reason}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      rejection_reason: event.target.value,
+                    }))
+                  }
+                />
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="rounded-2xl border p-4">
-              <p className="text-sm font-medium text-foreground">Payment context</p>
+              <p className="text-sm font-medium text-foreground">
+                Payment context
+              </p>
               <dl className="mt-3 space-y-2 text-sm text-muted-foreground">
                 <div className="flex justify-between gap-3">
                   <dt>Latest invoice</dt>
-                  <dd className="font-medium text-foreground">{latestInvoice?.invoice_number || "Not issued"}</dd>
+                  <dd className="font-medium text-foreground">
+                    {latestInvoice?.invoice_number || "Not issued"}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt>Reference</dt>
-                  <dd className="max-w-[14rem] truncate font-medium text-foreground">{latestInvoice?.payment_reference || "Not available"}</dd>
+                  <dd className="max-w-56 truncate font-medium text-foreground">
+                    {latestInvoice?.payment_reference || "Not available"}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt>Coupon</dt>
-                  <dd className="font-medium text-foreground">{tenant.onboarding?.coupon_code || "None"}</dd>
+                  <dd className="font-medium text-foreground">
+                    {tenant.onboarding?.coupon_code || "None"}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt>Submitted</dt>
-                  <dd className="font-medium text-foreground">{tenant.onboarding?.application_submitted_at ? new Date(tenant.onboarding.application_submitted_at).toLocaleDateString() : "Not set"}</dd>
+                  <dd className="font-medium text-foreground">
+                    {tenant.onboarding?.application_submitted_at
+                      ? new Date(
+                          tenant.onboarding.application_submitted_at,
+                        ).toLocaleDateString()
+                      : "Not set"}
+                  </dd>
                 </div>
               </dl>
             </div>
 
             <div className="rounded-2xl border p-4">
-              <p className="text-sm font-medium text-foreground">Status timeline</p>
+              <p className="text-sm font-medium text-foreground">
+                Status timeline
+              </p>
               <div className="mt-4 space-y-3">
-                {statusTimeline.length > 0 ? statusTimeline.map((item) => (
-                  <div key={`${item.status}-${item.at}`} className="rounded-xl border bg-muted/20 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge variant="outline">{item.status}</Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(item.at).toLocaleDateString()}
-                      </span>
+                {statusTimeline.length > 0 ? (
+                  statusTimeline.map((item) => (
+                    <div
+                      key={`${item.status}-${item.at}`}
+                      className="rounded-xl border bg-muted/20 p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Badge variant="outline">{item.status}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(item.at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {item.label}
+                      </p>
+                      {item.note ? (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.note}
+                        </p>
+                      ) : null}
                     </div>
-                    <p className="mt-2 text-sm font-medium text-foreground">{item.label}</p>
-                    {item.note ? <p className="mt-1 text-sm text-muted-foreground">{item.note}</p> : null}
-                  </div>
-                )) : (
+                  ))
+                ) : (
                   <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
                     No status history recorded yet.
                   </div>
@@ -600,7 +853,11 @@ function ApplicationReviewDialog({
                 toast.success("Tenant approved successfully");
                 setOpen(false);
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Failed to approve tenant");
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to approve tenant",
+                );
               }
             }}
           >
@@ -613,12 +870,17 @@ function ApplicationReviewDialog({
               try {
                 await updateMutation.mutateAsync({
                   status: "draft",
-                  rejection_reason: form.rejection_reason || "Returned for revision",
+                  rejection_reason:
+                    form.rejection_reason || "Returned for revision",
                 });
                 toast.success("Application moved back to draft");
                 setOpen(false);
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Failed to update application");
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to update application",
+                );
               }
             }}
           >
@@ -632,7 +894,11 @@ function ApplicationReviewDialog({
                 toast.success("Application review updated");
                 setOpen(false);
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Failed to save review changes");
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to save review changes",
+                );
               }
             }}
           >

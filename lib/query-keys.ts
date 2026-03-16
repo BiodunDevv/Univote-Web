@@ -2,10 +2,11 @@ export const queryKeys = {
   public: {
     landing: () => ["public", "landing"] as const,
     testimonials: () => ["public", "testimonials"] as const,
-    organizations: (search: string) => ["public", "organizations", search] as const,
+    organizations: (search: string) =>
+      ["public", "organizations", search] as const,
     organization: (slug: string) => ["public", "organization", slug] as const,
-    applicationStatus: (reference: string, email: string) =>
-      ["public", "application-status", reference, email] as const,
+    applicationStatus: (email: string, reference?: string) =>
+      ["public", "application-status", email, reference || "any"] as const,
     coupon: (code: string, planCode: string, email: string) =>
       ["public", "coupon", code, planCode, email] as const,
   },
@@ -19,7 +20,8 @@ export const queryKeys = {
     tenant: (tenantId: string) => ["platform", "tenant", tenantId] as const,
     billing: () => ["platform", "billing"] as const,
     plans: () => ["platform", "plans"] as const,
-    tenantBilling: (tenantId: string) => ["platform", "tenant-billing", tenantId] as const,
+    tenantBilling: (tenantId: string) =>
+      ["platform", "tenant-billing", tenantId] as const,
     auditLogs: (filters: Record<string, unknown>) =>
       ["platform", "audit-logs", filters] as const,
     auditActions: () => ["platform", "audit-actions"] as const,
@@ -27,7 +29,8 @@ export const queryKeys = {
     databaseStats: () => ["platform", "database-stats"] as const,
     testimonials: (filters: Record<string, unknown>) =>
       ["platform", "testimonials", filters] as const,
-    coupons: (filters: Record<string, unknown>) => ["platform", "coupons", filters] as const,
+    coupons: (filters: Record<string, unknown>) =>
+      ["platform", "coupons", filters] as const,
   },
   billing: {
     summary: () => ["billing", "summary"] as const,
@@ -92,7 +95,8 @@ export const queryKeys = {
     overview: () => ["results", "overview"] as const,
   },
   support: {
-    overview: (scope: "student" | "admin") => ["support", scope, "overview"] as const,
+    overview: (scope: "student" | "admin") =>
+      ["support", scope, "overview"] as const,
     tickets: (scope: "student" | "admin", filters: Record<string, unknown>) =>
       ["support", scope, "tickets", filters] as const,
     detail: (scope: "student" | "admin", id: string) =>

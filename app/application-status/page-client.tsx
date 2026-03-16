@@ -5,12 +5,17 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
+  ArrowLeft,
+  Building2,
   CheckCircle2,
   Clock3,
   CreditCard,
+  Mail,
   Loader2,
+  Receipt,
   RefreshCcw,
   ShieldCheck,
+  Sparkles,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,13 +25,30 @@ import {
 } from "@/lib/queries/public";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 function toTitleCase(value?: string | null) {
   if (!value) return "Not available";
-  return value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+  return date.toLocaleString();
 }
 
 function getApplicationStatusTone(status?: string) {
@@ -43,7 +65,8 @@ function getApplicationStatusTone(status?: string) {
     return {
       icon: RefreshCcw,
       label: "Needs update",
-      description: "The application has been returned for changes before approval.",
+      description:
+        "The application has been returned for changes before approval.",
       className: "text-amber-600",
     };
   }
@@ -52,7 +75,8 @@ function getApplicationStatusTone(status?: string) {
     return {
       icon: CreditCard,
       label: "Awaiting payment",
-      description: "Billing must be completed before platform review can continue.",
+      description:
+        "Billing must be completed before platform review can continue.",
       className: "text-primary",
     };
   }
@@ -60,7 +84,8 @@ function getApplicationStatusTone(status?: string) {
   return {
     icon: Clock3,
     label: "In review",
-    description: "Payment is complete and the application is waiting for platform approval.",
+    description:
+      "Payment is complete and the application is waiting for platform approval.",
     className: "text-primary",
   };
 }
@@ -91,14 +116,37 @@ function getInvoiceTone(status?: string) {
 
 export default function ApplicationStatusClientPage() {
   const searchParams = useSearchParams();
-  const [reference, setReference] = useState(searchParams.get("reference") || "");
+  const [reference, setReference] = useState(
+    searchParams.get("reference") || "",
+  );
   const [email, setEmail] = useState(searchParams.get("email") || "");
-  const [submitted, setSubmitted] = useState(Boolean(reference && email));
-  const statusQuery = useTenantApplicationStatusQuery(reference, email, submitted);
-  const retryMutation = useRetryTenantApplicationCheckoutMutation(reference);
+  const [submitted, setSubmitted] = useState(Boolean(email));
+  const statusQuery = useTenantApplicationStatusQuery(
+    email,
+    reference,
+    submitted,
+  );
 
   const application = statusQuery.data?.application;
   const invoice = statusQuery.data?.invoice;
+  const effectiveReference = application?.reference || reference;
+  const retryMutation =
+    useRetryTenantApplicationCheckoutMutation(effectiveReference);
+
+  async function handlePayNow() {
+    try {
+      const response = await retryMutation.mutateAsync();
+      if (response.checkout_url) {
+        window.location.assign(response.checkout_url);
+        return;
+      }
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to initiate checkout",
+      );
+    }
+  }
   const statusTone = getApplicationStatusTone(application?.status);
   const invoiceTone = getInvoiceTone(invoice?.status);
   const timeline = useMemo(
@@ -107,45 +155,81 @@ export default function ApplicationStatusClientPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-20">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Application status</CardTitle>
-            <CardDescription>
-              Track onboarding progress, review payment state, and continue checkout if billing is
-              still pending.
-            </CardDescription>
+    <main className="relative min-h-screen overflow-hidden bg-background px-4 py-10 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/10 to-transparent" />
+
+      <div className="relative mx-auto w-full max-w-5xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/">
+              <ArrowLeft className="mr-2 size-4" />
+              Back to home
+            </Link>
+          </Button>
+          <Badge variant="outline" className="rounded-full px-3 py-1">
+            Tenant onboarding tracker
+          </Badge>
+        </div>
+
+        <Card className="border-border/70 shadow-none">
+          <CardHeader className="space-y-4">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+              <Sparkles className="size-3.5" />
+              Real-time status + payment continuation
+            </div>
+            <div>
+              <CardTitle className="text-2xl">Track your application</CardTitle>
+              <CardDescription className="mt-2 text-sm">
+                Use the same submitted work email to retrieve your application.
+                Reference is optional but helps if the same email has multiple
+                applications.
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <form
-              className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]"
+              className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
               onSubmit={(event) => {
                 event.preventDefault();
                 setSubmitted(true);
               }}
             >
               <div className="space-y-2">
-                <Label htmlFor="reference">Application reference</Label>
-                <Input
-                  id="reference"
-                  value={reference}
-                  onChange={(event) => setReference(event.target.value.toUpperCase())}
-                  placeholder="APP-20260315-AB12CD"
-                />
+                <Label htmlFor="email">Submitted work email</Label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) =>
+                      setEmail(event.target.value.toLowerCase())
+                    }
+                    placeholder="owner@organization.org"
+                    className="pl-9"
+                    required
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Contact email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="owner@organization.org"
-                />
+                <Label htmlFor="reference">
+                  Application reference (optional)
+                </Label>
+                <div className="relative">
+                  <Receipt className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="reference"
+                    value={reference}
+                    onChange={(event) =>
+                      setReference(event.target.value.toUpperCase())
+                    }
+                    placeholder="APP-20260315-AB12CD"
+                    className="pl-9"
+                  />
+                </div>
               </div>
               <div className="flex items-end">
-                <Button type="submit" className="w-full sm:w-auto">
+                <Button type="submit" className="w-full lg:w-auto">
                   Check status
                 </Button>
               </div>
@@ -169,132 +253,226 @@ export default function ApplicationStatusClientPage() {
           </Card>
         ) : application ? (
           <>
-            <Card className="shadow-none">
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle>{application.name}</CardTitle>
-                    <CardDescription>
-                      {application.reference} · {toTitleCase(application.plan_code)}
-                    </CardDescription>
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <Card className="shadow-none">
+                <CardHeader>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="size-5 text-primary" />
+                        {application.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {application.reference || "Reference pending"} ·{" "}
+                        {toTitleCase(application.plan_code)}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="outline" className="capitalize">
+                      {toTitleCase(application.status)}
+                    </Badge>
                   </div>
-                  <Badge variant="outline">{toTitleCase(application.status)}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4">
-                  <statusTone.icon className={`mt-0.5 size-5 ${statusTone.className}`} />
-                  <div className="space-y-1">
-                    <p className="font-medium">{statusTone.label}</p>
-                    <p className="text-sm text-muted-foreground">{statusTone.description}</p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4">
+                    <statusTone.icon
+                      className={`mt-0.5 size-5 ${statusTone.className}`}
+                    />
+                    <div className="space-y-1">
+                      <p className="font-medium">{statusTone.label}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {statusTone.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2 text-sm">
-                    <p><span className="text-muted-foreground">Plan:</span> {toTitleCase(application.plan_code)}</p>
-                    <p><span className="text-muted-foreground">Payment state:</span> {toTitleCase(application.payment_status)}</p>
-                    <p><span className="text-muted-foreground">Contact:</span> {application.contact_email}</p>
-                    <p><span className="text-muted-foreground">Coupon:</span> {application.coupon_code || "No coupon applied"}</p>
+
+                  {application.status === "pending_payment" ? (
+                    <Button
+                      size="lg"
+                      className="w-full gap-2"
+                      disabled={retryMutation.isPending || !effectiveReference}
+                      onClick={handlePayNow}
+                    >
+                      <CreditCard className="size-4" />
+                      {retryMutation.isPending
+                        ? "Preparing checkout…"
+                        : "Complete payment"}
+                    </Button>
+                  ) : null}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2 text-sm">
+                      <p>
+                        <span className="text-muted-foreground">Plan:</span>{" "}
+                        {toTitleCase(application.plan_code)}
+                      </p>
+                      <p>
+                        <span className="text-muted-foreground">
+                          Payment state:
+                        </span>{" "}
+                        {toTitleCase(application.payment_status)}
+                      </p>
+                      <p>
+                        <span className="text-muted-foreground">
+                          Submitted email:
+                        </span>{" "}
+                        {application.contact_email || "Not available"}
+                      </p>
+                      <p>
+                        <span className="text-muted-foreground">Coupon:</span>{" "}
+                        {application.coupon_code || "No coupon applied"}
+                      </p>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p>
+                        <span className="text-muted-foreground">
+                          Submitted:
+                        </span>{" "}
+                        {formatDate(application.application_submitted_at)}
+                      </p>
+                      <p>
+                        <span className="text-muted-foreground">
+                          Last update:
+                        </span>{" "}
+                        {formatDate(application.application_last_updated_at)}
+                      </p>
+                      {application.rejection_reason ? (
+                        <p>
+                          <span className="text-muted-foreground">
+                            Review note:
+                          </span>{" "}
+                          {application.rejection_reason}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <span className="text-muted-foreground">Submitted:</span>{" "}
-                      {new Date(application.application_submitted_at).toLocaleString()}
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Last update:</span>{" "}
-                      {application.application_last_updated_at
-                        ? new Date(application.application_last_updated_at).toLocaleString()
-                        : "Not available"}
-                    </p>
-                    {application.rejection_reason ? (
-                      <p><span className="text-muted-foreground">Review note:</span> {application.rejection_reason}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-none">
+                <CardHeader>
+                  <CardTitle>Payment snapshot</CardTitle>
+                  <CardDescription>
+                    Continue checkout if billing is still pending.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4">
+                    <invoiceTone.icon
+                      className={`mt-0.5 size-5 ${invoiceTone.className} ${invoice?.status === "pending" ? "animate-spin" : ""}`}
+                    />
+                    <div>
+                      <p className="font-medium">{invoiceTone.label}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {invoice
+                          ? `${invoice.invoice_number} · NGN ${invoice.amount_ngn.toLocaleString()}`
+                          : "No invoice has been generated yet."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {statusQuery.data?.next_actions
+                      ?.filter((action) => action.href)
+                      .map((action) => (
+                        <Button
+                          key={action.key}
+                          asChild
+                          className="w-full justify-start"
+                        >
+                          <a
+                            href={action.href || "#"}
+                            target="_self"
+                            rel="noreferrer"
+                          >
+                            {action.label}
+                          </a>
+                        </Button>
+                      ))}
+
+                    {invoice &&
+                    ["pending", "failed"].includes(invoice.status) ? (
+                      <Button
+                        variant="outline"
+                        disabled={retryMutation.isPending}
+                        className="w-full justify-start"
+                        onClick={async () => {
+                          try {
+                            const response = await retryMutation.mutateAsync();
+                            if (response.checkout_url) {
+                              window.location.assign(response.checkout_url);
+                              return;
+                            }
+                            toast.success(response.message);
+                          } catch (error) {
+                            toast.error(
+                              error instanceof Error
+                                ? error.message
+                                : "Failed to retry checkout",
+                            );
+                          }
+                        }}
+                      >
+                        {retryMutation.isPending
+                          ? "Preparing checkout..."
+                          : "Retry payment"}
+                      </Button>
                     ) : null}
                   </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <p className="text-muted-foreground">
-                    Use the same contact email from the application when returning here to track progress or retry payment.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
             <Card className="shadow-none">
               <CardHeader>
                 <CardTitle>Timeline</CardTitle>
+                <CardDescription>
+                  Latest milestones in your onboarding lifecycle.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {timeline.map((item, index) => (
-                  <div key={`${item.status}-${index}`} className="flex gap-3 text-sm">
-                    <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-                    <div>
-                      <p className="font-medium">{item.label || item.status}</p>
-                      <p className="text-muted-foreground">{new Date(item.at).toLocaleString()}</p>
-                      {item.note ? <p className="text-muted-foreground">{item.note}</p> : null}
-                    </div>
+              <CardContent>
+                {timeline.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No timeline events available yet.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {timeline.map((item, index) => (
+                      <div
+                        key={`${item.status}-${index}`}
+                        className="flex gap-3 text-sm"
+                      >
+                        <CheckCircle2 className="mt-0.5 size-4 text-primary" />
+                        <div className="space-y-1">
+                          <p className="font-medium">
+                            {item.label || toTitleCase(item.status)}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {formatDate(item.at)}
+                          </p>
+                          {item.note ? (
+                            <p className="text-muted-foreground">{item.note}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 
-            <Card className="shadow-none">
-              <CardHeader>
-                <CardTitle>Payment</CardTitle>
-                <CardDescription>
-                  Review the latest invoice and continue checkout if the application is still waiting on billing.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4">
-                  <invoiceTone.icon
-                    className={`mt-0.5 size-5 ${invoiceTone.className} ${invoice?.status === "pending" ? "animate-spin" : ""}`}
-                  />
-                  <div className="space-y-1">
-                    <p className="font-medium">{invoiceTone.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {invoice
-                        ? `${invoice.invoice_number} · NGN ${invoice.amount_ngn.toLocaleString()}`
-                        : "No invoice has been generated for this application yet."}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  {statusQuery.data?.next_actions
-                    ?.filter((action) => action.href)
-                    .map((action) => (
-                      <Button key={action.key} asChild>
-                        <a href={action.href || "#"} target="_self" rel="noreferrer">
-                          {action.label}
-                        </a>
-                      </Button>
-                    ))}
-                  {invoice && ["pending", "failed"].includes(invoice.status) ? (
-                    <Button
-                      variant="outline"
-                      disabled={retryMutation.isPending}
-                      onClick={async () => {
-                        try {
-                          const response = await retryMutation.mutateAsync();
-                          if (response.checkout_url) {
-                            window.location.assign(response.checkout_url);
-                            return;
-                          }
-                          toast.success(response.message);
-                        } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Failed to retry checkout");
-                        }
-                      }}
-                    >
-                      {retryMutation.isPending ? "Preparing checkout..." : "Retry payment"}
-                    </Button>
-                  ) : null}
-                  <Button variant="ghost" asChild>
-                    <Link href="/">Back to home</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button variant="outline" asChild>
+                <Link href="/">Back to home</Link>
+              </Button>
+              <Separator
+                orientation="vertical"
+                className="hidden h-6 sm:block"
+              />
+              <p className="text-xs text-muted-foreground">
+                Tip: You can check status any time using only the same submitted
+                email.
+              </p>
+            </div>
           </>
         ) : null}
       </div>

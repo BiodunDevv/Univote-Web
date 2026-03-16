@@ -23,7 +23,13 @@ import type {
 } from "@/types/landing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,15 +117,44 @@ function clearDraftState() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[] }) {
+function suggestDomain(slug: string): string {
+  if (typeof window === "undefined" || !slug) return "";
+  const { hostname, port } = window.location;
+  if (hostname === "localhost") {
+    return port ? `localhost:${port}` : "localhost:3000";
+  }
+  return `${slug}.${hostname}`;
+}
+
+function enforceEmailIdentityPreferences(
+  identity?: TenantApplicationPayload["identity_preferences"],
+): NonNullable<TenantApplicationPayload["identity_preferences"]> {
+  return {
+    ...(identity || {}),
+    primary_identifier: "email",
+    recovery_identifiers: ["email"],
+  };
+}
+
+export function TenantApplicationSection({
+  plans,
+}: {
+  plans: PublicBillingPlan[];
+}) {
   const createMutation = useSubmitTenantApplicationMutation();
   const [formData, setFormData] = useState(DEFAULT_FORM);
-  const [applicationReference, setApplicationReference] = useState<string | null>(null);
+  const [applicationReference, setApplicationReference] = useState<
+    string | null
+  >(null);
   const [step, setStep] = useState(0);
   const [couponLookupCode, setCouponLookupCode] = useState("");
-  const [submitted, setSubmitted] = useState<TenantApplicationResponse | null>(null);
+  const [submitted, setSubmitted] = useState<TenantApplicationResponse | null>(
+    null,
+  );
 
-  const updateMutation = useUpdateTenantApplicationMutation(applicationReference || "");
+  const updateMutation = useUpdateTenantApplicationMutation(
+    applicationReference || "",
+  );
   const couponQuery = useCouponValidationQuery(
     couponLookupCode,
     formData.plan_code,
@@ -131,7 +166,13 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
     const draft = readDraftState();
     if (!draft) return;
 
-    setFormData({ ...DEFAULT_FORM, ...draft.formData });
+    setFormData({
+      ...DEFAULT_FORM,
+      ...draft.formData,
+      identity_preferences: enforceEmailIdentityPreferences(
+        draft.formData.identity_preferences,
+      ),
+    });
     setApplicationReference(draft.reference || null);
   }, []);
 
@@ -168,6 +209,9 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
   async function persistApplication(submit = false) {
     const payload = {
       ...formData,
+      identity_preferences: enforceEmailIdentityPreferences(
+        formData.identity_preferences,
+      ),
       primary_domain: formData.primary_domain || undefined,
       contact_phone: formData.contact_phone || undefined,
       notes: formData.notes || undefined,
@@ -186,16 +230,8 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
     return response;
   }
 
-  async function handleNext() {
-    try {
-      const response = await persistApplication(false);
-      if (response.application.reference) {
-        setApplicationReference(response.application.reference);
-      }
-      setStep((current) => Math.min(current + 1, STEPS.length - 1));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save draft");
-    }
+  function handleNext() {
+    setStep((current) => Math.min(current + 1, STEPS.length - 1));
   }
 
   async function handleSubmit() {
@@ -205,7 +241,9 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
       clearDraftState();
       toast.success(response.message);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to submit application");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit application",
+      );
     }
   }
 
@@ -232,7 +270,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="institution-name"
               value={formData.institution_name}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, institution_name: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  institution_name: event.target.value,
+                }))
               }
               placeholder="Summit Institute"
               required
@@ -243,12 +284,23 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
             <Input
               id="tenant-slug"
               value={formData.slug}
-              onChange={(event) =>
-                setFormData((current) => ({
-                  ...current,
-                  slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-                }))
-              }
+              onChange={(event) => {
+                const newSlug = event.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, "-");
+                setFormData((current) => {
+                  const wasAutoFilled =
+                    !current.primary_domain ||
+                    current.primary_domain === suggestDomain(current.slug);
+                  return {
+                    ...current,
+                    slug: newSlug,
+                    primary_domain: wasAutoFilled
+                      ? suggestDomain(newSlug)
+                      : current.primary_domain,
+                  };
+                });
+              }}
               placeholder="summit-demo"
               required
             />
@@ -259,7 +311,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="primary-domain"
               value={formData.primary_domain}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, primary_domain: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  primary_domain: event.target.value,
+                }))
               }
               placeholder="votes.organization.org"
             />
@@ -271,7 +326,8 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               onValueChange={(value) =>
                 setFormData((current) => ({
                   ...current,
-                  institution_type: value as TenantApplicationPayload["institution_type"],
+                  institution_type:
+                    value as TenantApplicationPayload["institution_type"],
                 }))
               }
             >
@@ -293,7 +349,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="notes"
               value={formData.notes}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, notes: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  notes: event.target.value,
+                }))
               }
               placeholder="Tell us about rollout timing, special requirements, or target launch period."
               rows={4}
@@ -312,7 +371,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="contact-name"
               value={formData.contact_name}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, contact_name: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  contact_name: event.target.value,
+                }))
               }
               required
             />
@@ -324,7 +386,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               type="email"
               value={formData.contact_email}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, contact_email: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  contact_email: event.target.value,
+                }))
               }
               required
             />
@@ -335,7 +400,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="contact-phone"
               value={formData.contact_phone}
               onChange={(event) =>
-                setFormData((current) => ({ ...current, contact_phone: event.target.value }))
+                setFormData((current) => ({
+                  ...current,
+                  contact_phone: event.target.value,
+                }))
               }
             />
           </div>
@@ -344,11 +412,16 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               id="demo-requested"
               checked={formData.demo_requested}
               onCheckedChange={(checked) =>
-                setFormData((current) => ({ ...current, demo_requested: checked === true }))
+                setFormData((current) => ({
+                  ...current,
+                  demo_requested: checked === true,
+                }))
               }
             />
             <div className="space-y-1">
-              <Label htmlFor="demo-requested">Request a guided onboarding demo</Label>
+              <Label htmlFor="demo-requested">
+                Request a guided onboarding demo
+              </Label>
               <p className="text-xs text-muted-foreground">
                 We will schedule a live walkthrough before approval if needed.
               </p>
@@ -363,7 +436,9 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="participants-estimate">Expected participants</Label>
+              <Label htmlFor="participants-estimate">
+                Expected participants
+              </Label>
               <Input
                 id="participants-estimate"
                 type="number"
@@ -402,13 +477,22 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               ["requires_photo", "Collect participant photo"],
               ["requires_face_verification", "Require biometric verification"],
             ].map(([key, label]) => (
-              <div key={key} className="flex items-center gap-3 rounded-2xl border p-4">
+              <div
+                key={key}
+                className="flex items-center gap-3 rounded-2xl border p-4"
+              >
                 <Checkbox
                   id={key}
-                  checked={Boolean(formData.participant_structure?.[key as keyof typeof formData.participant_structure])}
+                  checked={Boolean(
+                    formData.participant_structure?.[
+                      key as keyof typeof formData.participant_structure
+                    ],
+                  )}
                   onCheckedChange={(checked) =>
                     updateStructureField(
-                      key as keyof NonNullable<TenantApplicationPayload["participant_structure"]>,
+                      key as keyof NonNullable<
+                        TenantApplicationPayload["participant_structure"]
+                      >,
                       checked === true,
                     )
                   }
@@ -421,35 +505,18 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Primary login identifier</Label>
-              <Select
-                value={formData.identity_preferences?.primary_identifier || "email"}
-                onValueChange={(value) =>
-                  setFormData((current) => ({
-                    ...current,
-                    identity_preferences: {
-                      ...current.identity_preferences,
-                      primary_identifier: value as NonNullable<
-                        TenantApplicationPayload["identity_preferences"]
-                      >["primary_identifier"],
-                    },
-                  }))
-                }
-              >
+              <Select value="email" disabled>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="member_id">Member ID</SelectItem>
-                  <SelectItem value="employee_id">Employee ID</SelectItem>
-                  <SelectItem value="username">Username</SelectItem>
-                  <SelectItem value="matric_no">Matric number</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-              These settings seed the initial tenant configuration and can still be refined later
-              from the admin settings workspace.
+              These settings seed the initial tenant configuration and can still
+              be refined later from the admin settings workspace.
             </div>
           </div>
         </div>
@@ -465,10 +532,17 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               <button
                 type="button"
                 key={plan.code}
-                className={`rounded-[1.5rem] border p-5 text-left transition ${
-                  active ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-card"
+                className={`rounded-3xl border p-5 text-left transition ${
+                  active
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border bg-card"
                 }`}
-                onClick={() => setFormData((current) => ({ ...current, plan_code: plan.code }))}
+                onClick={() =>
+                  setFormData((current) => ({
+                    ...current,
+                    plan_code: plan.code,
+                  }))
+                }
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -483,7 +557,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                   <p>{plan.support_sla} support SLA</p>
                   <p>{plan.limits.admins.toLocaleString()} admins</p>
                   <p>{plan.limits.students.toLocaleString()} participants</p>
-                  <p>{plan.limits.active_sessions.toLocaleString()} active sessions</p>
+                  <p>
+                    {plan.limits.active_sessions.toLocaleString()} active
+                    sessions
+                  </p>
                 </div>
               </button>
             );
@@ -523,13 +600,13 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border bg-muted/20 p-5">
+          <div className="rounded-3xl border bg-muted/20 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold">Billing summary</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {selectedPlan?.name || "Selected plan"} onboarding starts after payment and
-                  platform review.
+                  {selectedPlan?.name || "Selected plan"} onboarding starts
+                  after payment and platform review.
                 </p>
               </div>
               <CreditCard className="size-5 text-primary" />
@@ -548,7 +625,9 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
               </div>
               <div className="flex items-center justify-between border-t pt-3 text-base">
                 <span className="font-semibold">Payable now</span>
-                <span className="font-semibold">{formatMoney(payableAmount)}</span>
+                <span className="font-semibold">
+                  {formatMoney(payableAmount)}
+                </span>
               </div>
             </div>
           </div>
@@ -565,17 +644,20 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <p>
-                <span className="text-muted-foreground">Organization:</span> {formData.institution_name}
+                <span className="text-muted-foreground">Organization:</span>{" "}
+                {formData.institution_name}
               </p>
               <p>
-                <span className="text-muted-foreground">Workspace:</span> {formData.slug}
+                <span className="text-muted-foreground">Workspace:</span>{" "}
+                {formData.slug}
               </p>
               <p>
-                <span className="text-muted-foreground">Contact:</span> {formData.contact_name} ·{" "}
-                {formData.contact_email}
+                <span className="text-muted-foreground">Contact:</span>{" "}
+                {formData.contact_name} · {formData.contact_email}
               </p>
               <p>
-                <span className="text-muted-foreground">Plan:</span> {selectedPlan?.name}
+                <span className="text-muted-foreground">Plan:</span>{" "}
+                {selectedPlan?.name}
               </p>
             </CardContent>
           </Card>
@@ -590,14 +672,22 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                 {formData.participant_structure?.requires_photo ? "Yes" : "No"}
               </p>
               <p>
-                <span className="text-muted-foreground">Face verification:</span>{" "}
-                {formData.participant_structure?.requires_face_verification ? "Yes" : "No"}
+                <span className="text-muted-foreground">
+                  Face verification:
+                </span>{" "}
+                {formData.participant_structure?.requires_face_verification
+                  ? "Yes"
+                  : "No"}
               </p>
               <p>
                 <span className="text-muted-foreground">Hierarchy:</span>{" "}
                 {[
-                  formData.participant_structure?.uses_college ? "College" : null,
-                  formData.participant_structure?.uses_department ? "Department" : null,
+                  formData.participant_structure?.uses_college
+                    ? "College"
+                    : null,
+                  formData.participant_structure?.uses_department
+                    ? "Department"
+                    : null,
                   formData.participant_structure?.uses_level ? "Level" : null,
                 ]
                   .filter(Boolean)
@@ -611,9 +701,10 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
           </Card>
         </div>
 
-        <div className="rounded-[1.5rem] border border-dashed p-4 text-sm text-muted-foreground">
-          Once submitted, you will receive a reference, a payment link if required, and a public
-          status page where you can monitor approval and retry payment if needed.
+        <div className="rounded-3xl border border-dashed p-4 text-sm text-muted-foreground">
+          Once submitted, you will receive a reference, a payment link if
+          required, and a public status page where you can monitor approval and
+          retry payment if needed.
         </div>
       </div>
     );
@@ -623,15 +714,19 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
     <section id="apply" className="py-20">
       <div className="mx-auto max-w-5xl px-4 lg:px-0">
         <div className="mx-auto mb-10 max-w-2xl text-center">
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
+          <Badge
+            variant="outline"
+            className="rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
+          >
             Tenant onboarding
           </Badge>
           <h2 className="mt-4 text-balance text-xl font-semibold sm:text-2xl">
             Launch a workspace with a guided, billing-aware application flow.
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Save your draft, review structure and identity preferences, apply coupons, and track
-            approval from a dedicated status page after submission.
+            Save your draft, review structure and identity preferences, apply
+            coupons, and track approval from a dedicated status page after
+            submission.
           </p>
         </div>
 
@@ -646,7 +741,9 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                     : "A draft reference is generated automatically once you start."}
                 </CardDescription>
               </div>
-              <Badge variant="secondary">Step {step + 1} of {STEPS.length}</Badge>
+              <Badge variant="secondary">
+                Step {step + 1} of {STEPS.length}
+              </Badge>
             </div>
 
             <div className="grid gap-3 md:grid-cols-6">
@@ -674,24 +771,31 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
           <CardContent className="space-y-6">
             {submitted ? (
               <div className="space-y-6">
-                <div className="flex items-start gap-4 rounded-[1.5rem] border bg-primary/5 p-5">
+                <div className="flex items-start gap-4 rounded-3xl border bg-primary/5 p-5">
                   <div className="rounded-2xl bg-primary/10 p-3 text-primary">
                     <FileCheck2 className="size-5" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">{submitted.application.name} is now in the onboarding queue</h3>
+                    <h3 className="text-lg font-semibold">
+                      {submitted.application.name} is now in the onboarding
+                      queue
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       Reference: {submitted.application.reference || "Pending"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Status: {submitted.application.status.replaceAll("_", " ")}
+                      Status:{" "}
+                      {submitted.application.status.replaceAll("_", " ")}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-[1.5rem] border p-5">
+                <div className="space-y-3 rounded-3xl border p-5">
                   {submitted.next_steps.map((item) => (
-                    <div key={item} className="flex gap-3 text-sm text-muted-foreground">
+                    <div
+                      key={item}
+                      className="flex gap-3 text-sm text-muted-foreground"
+                    >
                       <CheckCircle2 className="mt-0.5 size-4 text-primary" />
                       <span>{item}</span>
                     </div>
@@ -701,7 +805,11 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                 <div className="flex flex-col gap-3 sm:flex-row">
                   {submitted.checkout_url ? (
                     <Button asChild>
-                      <a href={submitted.checkout_url} target="_self" rel="noreferrer">
+                      <a
+                        href={submitted.checkout_url}
+                        target="_self"
+                        rel="noreferrer"
+                      >
                         Continue payment
                       </a>
                     </Button>
@@ -713,6 +821,12 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                       )}&email=${encodeURIComponent(submitted.application.contact_email || "")}`}
                     >
                       Track application
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" asChild>
+                    <Link href="/">
+                      <ArrowLeft className="mr-2 size-4" />
+                      Back to home
                     </Link>
                   </Button>
                   <Button
@@ -739,28 +853,39 @@ export function TenantApplicationSection({ plans }: { plans: PublicBillingPlan[]
                       : "Your draft is saved as you continue through each step."}
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button variant="ghost" asChild>
+                      <Link
+                        href={
+                          formData.contact_email
+                            ? `/application-status?email=${encodeURIComponent(formData.contact_email)}`
+                            : "/application-status"
+                        }
+                      >
+                        Track existing application
+                      </Link>
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setStep((current) => Math.max(current - 1, 0))}
-                      disabled={step === 0 || isSavingDraft}
+                      onClick={() =>
+                        setStep((current) => Math.max(current - 1, 0))
+                      }
+                      disabled={step === 0}
                     >
                       <ArrowLeft className="mr-2 size-4" />
                       Back
                     </Button>
                     {step < STEPS.length - 1 ? (
-                      <Button type="button" onClick={handleNext} disabled={isSavingDraft}>
-                        {isSavingDraft ? (
-                          <LoadingButtonContent label="Saving draft" />
-                        ) : (
-                          <>
-                            Next
-                            <ArrowRight className="ml-2 size-4" />
-                          </>
-                        )}
+                      <Button type="button" onClick={handleNext}>
+                        Next
+                        <ArrowRight className="ml-2 size-4" />
                       </Button>
                     ) : (
-                      <Button type="button" onClick={handleSubmit} disabled={isSavingDraft}>
+                      <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSavingDraft}
+                      >
                         {isSavingDraft ? (
                           <LoadingButtonContent label="Submitting" />
                         ) : (

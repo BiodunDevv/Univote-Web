@@ -7,37 +7,37 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import {
-  getTenantParticipantLabels,
-  getTenantLoginIdentifier,
-  getTenantRecoveryIdentifierLabels,
-} from "@/lib/tenant-config";
+import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
 export default function StudentResetPasswordPage() {
   const router = useRouter();
   const searchParams = new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
   );
-  const { resetPassword, isLoading, error, clearError, tenant } = useStudentAuthStore();
-  const [identifier, setIdentifier] = useState(searchParams.get("identifier") || "");
+  const { resetPassword, isLoading, error, clearError, tenant } =
+    useStudentAuthStore();
+  const emailFromUrl =
+    searchParams.get("email") || searchParams.get("identifier") || "";
+  const [email, setEmail] = useState(emailFromUrl);
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const organization = searchParams.get("organization") || "";
+  const hideEmailInput = Boolean(searchParams.get("email"));
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const labels = getTenantParticipantLabels(tenant);
-  const loginIdentifier = getTenantLoginIdentifier(tenant);
-  const recoveryLabels = getTenantRecoveryIdentifierLabels(tenant);
-  const recoveryHint =
-    recoveryLabels.length > 0
-      ? recoveryLabels.join(" or ")
-      : "Recovery identifier";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -57,7 +57,7 @@ export default function StudentResetPasswordPage() {
 
     try {
       await resetPassword(
-        identifier.trim(),
+        email.trim(),
         resetCode.trim(),
         newPassword,
         organization || null,
@@ -102,7 +102,8 @@ export default function StudentResetPasswordPage() {
               <div>
                 <CardTitle>Enter your reset code</CardTitle>
                 <CardDescription>
-                  Use the six-digit code sent to your recovery channel and set a new portal password.
+                  Use the six-digit code sent to your recovery channel and set a
+                  new portal password.
                 </CardDescription>
               </div>
             </div>
@@ -112,7 +113,8 @@ export default function StudentResetPasswordPage() {
               <Alert className="border-green-500 bg-green-50 text-green-900">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
-                  Password reset successfully. Redirecting you back to the portal sign-in page for {labels.plural.toLowerCase()}.
+                  Password reset successfully. Redirecting you back to the
+                  portal sign-in page for {labels.plural.toLowerCase()}.
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -124,23 +126,34 @@ export default function StudentResetPasswordPage() {
             ) : null}
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-1.5">
-                <Label htmlFor="identifier">{recoveryHint}</Label>
-                <Input
-                  id="identifier"
-                  placeholder={`${loginIdentifier.placeholder} or your recovery email`}
-                  value={identifier}
-                  onChange={(event) => setIdentifier(event.target.value)}
-                  required
-                />
-              </div>
+              {hideEmailInput ? (
+                <div className="rounded-xl border bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
+                  Reset email:{" "}
+                  <span className="font-medium text-foreground">{email}</span>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="name@organization.org"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="reset-code">Reset code</Label>
                 <Input
                   id="reset-code"
                   value={resetCode}
                   onChange={(event) =>
-                    setResetCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                    setResetCode(
+                      event.target.value.replace(/\D/g, "").slice(0, 6),
+                    )
                   }
                   placeholder="123456"
                   required
@@ -167,7 +180,11 @@ export default function StudentResetPasswordPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || success}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || success}
+              >
                 {isLoading ? "Resetting password..." : "Reset password"}
               </Button>
             </form>

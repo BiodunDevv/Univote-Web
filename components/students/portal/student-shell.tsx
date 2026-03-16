@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
@@ -11,7 +11,6 @@ import {
   LifeBuoy,
   LogOut,
   Mail,
-  Search,
   ShieldCheck,
   UserRound,
   Vote,
@@ -22,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { cn } from "@/lib/utils";
+import { LogoIcon } from "@/components/logo";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import {
   formatParticipantIdentifier,
@@ -53,11 +53,16 @@ function titleFromPath(pathname: string) {
     return "Notifications";
   }
 
-  if (pathname === "/students/support" || pathname.startsWith("/students/support/")) {
+  if (
+    pathname === "/students/support" ||
+    pathname.startsWith("/students/support/")
+  ) {
     return "Support";
   }
 
-  const matched = navigationItems.find((item) => isActivePath(pathname, item.href));
+  const matched = navigationItems.find((item) =>
+    isActivePath(pathname, item.href),
+  );
   if (!matched) return "Portal";
   return matched.label;
 }
@@ -66,10 +71,21 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { student, tenant, logout } = useStudentAuthStore();
-  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("student");
+  const { data: unreadNotifications = 0 } =
+    useNotificationSummaryQuery("student");
   const participantLabels = getTenantParticipantLabels(tenant);
 
   const pageTitle = useMemo(() => titleFromPath(pathname), [pathname]);
+  const isSupportRoute =
+    pathname === "/students/support" ||
+    pathname.startsWith("/students/support/");
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const initials = student?.full_name
     ?.split(" ")
     .slice(0, 2)
@@ -88,7 +104,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh bg-muted/20">
-      <div className="mx-auto flex min-h-svh w-full max-w-6xl gap-4 px-3 pb-24 pt-3 sm:px-4 lg:pb-6">
+      <div className="mx-auto flex min-h-svh w-full max-w-9xl gap-4 px-3 pb-24 pt-3 sm:px-4 lg:pb-6">
         <aside className="hidden w-72 shrink-0 xl:block">
           <Card className="sticky top-4 flex h-[calc(100svh-2rem)] flex-col justify-between border bg-card/95 p-4 shadow-none">
             <div className="space-y-6">
@@ -106,8 +122,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   {tenant?.name || `Univote ${participantLabels.singular}`}
                 </div>
                 <div>
-                  <h1 className={compactUi.typography.pageTitle}>Voting workspace</h1>
-                  
+                  <h1 className={compactUi.typography.pageTitle}>
+                    Voting workspace
+                  </h1>
+
                   {tenant ? (
                     <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
@@ -165,7 +183,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             <div className="space-y-3 rounded-2xl border bg-muted/20 p-3">
               <div className="flex items-center gap-3">
                 <Avatar size="lg">
-                  <AvatarImage src={student?.photo_url || undefined} alt={student?.full_name || participantLabels.singular} />
+                  <AvatarImage
+                    src={student?.photo_url || undefined}
+                    alt={student?.full_name || participantLabels.singular}
+                  />
                   <AvatarFallback>{initials || "PT"}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
@@ -178,7 +199,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" className="w-full" onClick={() => void handleLogout()}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => void handleLogout()}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Log out
               </Button>
@@ -187,26 +212,48 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main className="min-w-0 flex-1">
-          <div className="sticky top-0 z-20 mb-3 rounded-[1.5rem] border bg-background/95 p-3 shadow-none backdrop-blur">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className={compactUi.typography.eyebrow}>
-                    {pageTitle}
-                  </p>
-                  <h2 className={compactUi.typography.pageTitle}>
-                    {student ? `Hi, ${student.full_name.split(" ")[0]}` : `${participantLabels.singular} portal`}
-                  </h2>
-                  {tenant ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {tenant.name}
-                      {tenant.primary_domain ? ` • ${tenant.primary_domain}` : ""}
+          <div className="sticky top-0 z-30 mb-3 shrink-0">
+            <div
+              className={cn(
+                "rounded-2xl border px-3 py-2.5 transition-all duration-300 ease-out",
+                isScrolled
+                  ? "border-border/50 bg-background/90 shadow-sm shadow-black/5 backdrop-blur-xl"
+                  : "border-transparent bg-background/60 backdrop-blur",
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Link href="/students/home" className="shrink-0">
+                    <LogoIcon className="h-7 w-7" />
+                  </Link>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium uppercase leading-none tracking-[0.18em] text-muted-foreground">
+                      {pageTitle}
                     </p>
-                  ) : null}
+                    <p className="truncate text-sm font-semibold leading-snug text-foreground">
+                      {student
+                        ? `Hi, ${student.full_name.split(" ")[0]}`
+                        : `${participantLabels.singular} portal`}
+                    </p>
+                    {tenant?.name ? (
+                      <p className="mt-0.5 truncate text-[11px] leading-none text-muted-foreground">
+                        {tenant.name}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" asChild className="relative size-8 rounded-xl">
-                    <Link href="/students/notifications" aria-label="Notifications">
+
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="relative size-8 rounded-xl"
+                  >
+                    <Link
+                      href="/students/notifications"
+                      aria-label="Notifications"
+                    >
                       <Bell className="h-4 w-4" />
                       <NotificationCountBadge
                         count={unreadNotifications}
@@ -214,7 +261,12 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       />
                     </Link>
                   </Button>
-                  <Button variant="outline" size="icon" asChild className="size-8 rounded-xl md:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="size-8 rounded-xl"
+                  >
                     <Link href="/students/support" aria-label="Support">
                       <LifeBuoy className="h-4 w-4" />
                     </Link>
@@ -224,12 +276,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       src={student?.photo_url || undefined}
                       alt={student?.full_name || "Participant"}
                     />
-                    <AvatarFallback>{initials || "PT"}</AvatarFallback>
+                    <AvatarFallback className="text-xs">
+                      {initials || "PT"}
+                    </AvatarFallback>
                   </Avatar>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 xl:hidden">
+              <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 xl:hidden">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const active = isActivePath(pathname, item.href);
@@ -239,10 +293,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                         active
                           ? "border-foreground bg-foreground text-background"
-                          : "bg-background text-muted-foreground hover:text-foreground",
+                          : "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -251,36 +305,18 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="flex items-center gap-2 rounded-2xl border bg-muted/30 px-3 py-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-foreground">
-                      {participantIdentifier || "Portal access"}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {tenant?.slug || "Organization context"}
-                    </p>
-                  </div>
-                </div>
-                <div className="hidden items-center gap-2 md:flex">
-                  <Button variant="outline" size="sm" asChild className="rounded-xl">
-                    <Link href="/students/support">
-                      <LifeBuoy className="mr-2 h-4 w-4" />
-                      Support
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => void handleLogout()} className="rounded-xl">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
 
-          <div className="mx-auto max-w-4xl space-y-3">{children}</div>
+          <div
+            className={cn(
+              "space-y-3",
+              isSupportRoute &&
+                "h-[calc(100svh-13rem)] min-h-0 pb-0 lg:h-[calc(100svh-8rem)]",
+            )}
+          >
+            {children}
+          </div>
         </main>
       </div>
 

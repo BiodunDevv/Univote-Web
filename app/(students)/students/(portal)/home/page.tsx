@@ -92,11 +92,15 @@ export default function StudentHomePage() {
         eyebrow={
           <div className="flex flex-wrap items-center gap-2">
             <span>{participantLabels.singular} overview</span>
-            {data.tenant ? <Badge variant="secondary">{data.tenant.name}</Badge> : null}
+            {data.tenant ? (
+              <Badge variant="secondary">{data.tenant.name}</Badge>
+            ) : null}
           </div>
         }
         title={data.student_info.full_name}
-        description={[participantIdentifier, ...participantMeta].filter(Boolean).join(" • ")}
+        description={[participantIdentifier, ...participantMeta]
+          .filter(Boolean)
+          .join(" • ")}
         actions={
           <div className="rounded-2xl border bg-background/70 px-3 py-2 text-xs text-muted-foreground">
             <p>Last login</p>
@@ -150,7 +154,8 @@ export default function StudentHomePage() {
                 Change your temporary password
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                You signed in with the default password. Update it now to secure your {participantLabels.singular.toLowerCase()} account.
+                You signed in with the default password. Update it now to secure
+                your {participantLabels.singular.toLowerCase()} account.
               </p>
             </div>
             <Button asChild>
@@ -187,7 +192,10 @@ export default function StudentHomePage() {
             title="Your eligible sessions"
             description="Prioritized so you can move quickly into live ballots."
             action={
-              <Link href="/students/sessions" className="text-xs font-medium text-foreground underline underline-offset-4">
+              <Link
+                href="/students/sessions"
+                className="text-xs font-medium text-foreground underline underline-offset-4"
+              >
                 View all
               </Link>
             }
@@ -198,9 +206,18 @@ export default function StudentHomePage() {
               data.sessions.eligible.map((session) => (
                 <StudentSessionCard
                   key={session._id}
-                  session={{ ...session, description: "", candidate_count: 0, is_off_campus_allowed: false }}
+                  session={{
+                    ...session,
+                    description: "",
+                    candidate_count: 0,
+                    is_off_campus_allowed: false,
+                  }}
                   href={`/students/sessions/${session._id}`}
-                  ctaLabel={session.status === "active" ? "Open session" : "Review session"}
+                  ctaLabel={
+                    session.status === "active"
+                      ? "Open session"
+                      : "Review session"
+                  }
                   compact
                 />
               ))
@@ -251,7 +268,10 @@ export default function StudentHomePage() {
             <CardContent className="space-y-3">
               {data.voting_history.length > 0 ? (
                 data.voting_history.slice(0, 4).map((entry, index) => (
-                  <div key={`${entry.session}-${index}`} className="rounded-2xl border bg-muted/20 p-4">
+                  <div
+                    key={`${entry.session}-${index}`}
+                    className="rounded-2xl border bg-muted/20 p-4"
+                  >
                     <p className="text-sm font-medium text-foreground">
                       {entry.session}
                     </p>

@@ -7,32 +7,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import {
-  getTenantParticipantLabels,
-  getTenantLoginIdentifier,
-  getTenantRecoveryIdentifierLabels,
-} from "@/lib/tenant-config";
+import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
 export default function StudentForgotPasswordPage() {
   const router = useRouter();
   const searchParams = new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
   );
-  const { forgotPassword, isLoading, error, clearError, tenant } = useStudentAuthStore();
-  const [identifier, setIdentifier] = useState("");
+  const { forgotPassword, isLoading, error, clearError, tenant } =
+    useStudentAuthStore();
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const organization = searchParams.get("organization") || "";
   const labels = getTenantParticipantLabels(tenant);
-  const loginIdentifier = getTenantLoginIdentifier(tenant);
-  const recoveryLabels = getTenantRecoveryIdentifierLabels(tenant);
-  const recoveryHint =
-    recoveryLabels.length > 0
-      ? recoveryLabels.join(" or ")
-      : "your recovery identifier";
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -41,11 +38,11 @@ export default function StudentForgotPasswordPage() {
     setSuccess(false);
 
     try {
-      await forgotPassword(identifier.trim(), organization || null);
+      await forgotPassword(email.trim(), organization || null);
       setSuccess(true);
       setTimeout(() => {
         const nextSearch = new URLSearchParams({
-          identifier: identifier.trim(),
+          email: email.trim(),
         });
         if (organization) {
           nextSearch.set("organization", organization);
@@ -84,7 +81,8 @@ export default function StudentForgotPasswordPage() {
               <div>
                 <CardTitle>Reset your portal password</CardTitle>
                 <CardDescription>
-                  Enter your {recoveryHint.toLowerCase()} and we&apos;ll send a six-digit reset code for your {labels.singular.toLowerCase()} portal.
+                  Enter your email address and we&apos;ll send a six-digit reset
+                  code for your {labels.singular.toLowerCase()} portal.
                 </CardDescription>
               </div>
             </div>
@@ -94,7 +92,8 @@ export default function StudentForgotPasswordPage() {
               <Alert className="border-green-500 bg-green-50 text-green-900">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
-                  If your account exists, a reset code has been sent. Redirecting you to the reset form.
+                  If your account exists, a reset code has been sent.
+                  Redirecting you to the reset form.
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -107,17 +106,23 @@ export default function StudentForgotPasswordPage() {
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-1.5">
-                <Label htmlFor="identifier">{recoveryHint}</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="identifier"
-                  placeholder={`${loginIdentifier.placeholder} or your recovery email`}
-                  value={identifier}
-                  onChange={(event) => setIdentifier(event.target.value)}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@organization.org"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   required
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || success}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || success}
+              >
                 {isLoading ? "Sending reset code..." : "Send reset code"}
               </Button>
             </form>

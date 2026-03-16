@@ -1,10 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  apiRequest,
-  ApiError,
-  getStoredStudentToken,
-} from "@/lib/api/client";
+import { apiRequest, ApiError, getStoredStudentToken } from "@/lib/api/client";
 import type { StudentPortalUser } from "@/types/student-portal";
 import type { TenantContext } from "@/types/tenant";
 
@@ -31,7 +27,7 @@ interface StudentAuthState {
   error: string | null;
   setHasHydrated: (value: boolean) => void;
   login: (
-    identifier: string,
+    email: string,
     password: string,
     tenantSlug?: string | null,
   ) => Promise<{ newDevice: boolean; requiresPasswordChange: boolean }>;
@@ -42,9 +38,9 @@ interface StudentAuthState {
     email?: string;
     photo_url?: string | null;
   }) => Promise<StudentPortalUser>;
-  forgotPassword: (identifier: string, tenantSlug?: string | null) => Promise<void>;
+  forgotPassword: (email: string, tenantSlug?: string | null) => Promise<void>;
   resetPassword: (
-    identifier: string,
+    email: string,
     resetCode: string,
     newPassword: string,
     tenantSlug?: string | null,
@@ -55,13 +51,15 @@ interface StudentAuthState {
 }
 
 function normalizeStudentProfile(
-  payload: (StudentPortalUser & {
-    _id?: string;
-    display_identifier?: string | null;
-    member_id?: string | null;
-    employee_id?: string | null;
-    username?: string | null;
-  }) | undefined,
+  payload:
+    | (StudentPortalUser & {
+        _id?: string;
+        display_identifier?: string | null;
+        member_id?: string | null;
+        employee_id?: string | null;
+        username?: string | null;
+      })
+    | undefined,
 ): StudentPortalUser {
   if (!payload) {
     throw new Error("Student profile is unavailable");
@@ -106,24 +104,27 @@ export const useStudentAuthStore = create<StudentAuthState>()(
 
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
-      login: async (identifier, password, tenantSlug) => {
+      login: async (email, password, tenantSlug) => {
         set({ isLoading: true, error: null });
 
         try {
-          const response = await apiRequest<StudentLoginResponse>("/api/auth/login", {
-            method: "POST",
-            data: {
-              identifier: identifier.trim(),
-              password,
-              device_id:
-                typeof navigator !== "undefined"
-                  ? navigator.userAgent
-                  : "web-client",
+          const response = await apiRequest<StudentLoginResponse>(
+            "/api/auth/login",
+            {
+              method: "POST",
+              data: {
+                email: email.trim(),
+                password,
+                device_id:
+                  typeof navigator !== "undefined"
+                    ? navigator.userAgent
+                    : "web-client",
+              },
+              headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
+              auth: "optional",
+              redirectOnAuthError: false,
             },
-            headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
-            auth: "optional",
-            redirectOnAuthError: false,
-          });
+          );
 
           const student = normalizeStudentProfile(response.student);
           set({
@@ -209,9 +210,12 @@ export const useStudentAuthStore = create<StudentAuthState>()(
           throw new Error("No student session found");
         }
 
-        const response = await apiRequest<StudentProfileResponse>("/api/auth/me", {
-          auth: "student",
-        });
+        const response = await apiRequest<StudentProfileResponse>(
+          "/api/auth/me",
+          {
+            auth: "student",
+          },
+        );
         const student = normalizeStudentProfile(
           response.profile || response.student,
         );
@@ -234,14 +238,14 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         return student;
       },
 
-      forgotPassword: async (identifier, tenantSlug) => {
+      forgotPassword: async (email, tenantSlug) => {
         set({ isLoading: true, error: null });
 
         try {
           await apiRequest("/api/auth/forgot-password", {
             method: "POST",
             auth: "optional",
-            data: { identifier },
+            data: { email },
             headers: tenantSlug ? { "X-Tenant-Slug": tenantSlug } : undefined,
             redirectOnAuthError: false,
           });
@@ -256,7 +260,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
         }
       },
 
-      resetPassword: async (identifier, resetCode, newPassword, tenantSlug) => {
+      resetPassword: async (email, resetCode, newPassword, tenantSlug) => {
         set({ isLoading: true, error: null });
 
         try {
@@ -264,7 +268,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
             method: "POST",
             auth: "optional",
             data: {
-              identifier,
+              email,
               reset_code: resetCode,
               new_password: newPassword,
             },
@@ -280,9 +284,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
           });
         } catch (error) {
           const message =
-            error instanceof Error
-              ? error.message
-              : "Failed to reset password";
+            error instanceof Error ? error.message : "Failed to reset password";
           set({ isLoading: false, error: message });
           throw error;
         }

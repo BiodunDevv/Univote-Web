@@ -42,10 +42,13 @@ export function usePublicOrganizationsQuery(search = "") {
   return useQuery({
     queryKey: queryKeys.public.organizations(search),
     queryFn: ({ signal }) =>
-      apiRequest<{ organizations: PublicOrganization[] }>("/api/public/organizations", {
-        signal,
-        params: search ? { search } : undefined,
-      }),
+      apiRequest<{ organizations: PublicOrganization[] }>(
+        "/api/public/organizations",
+        {
+          signal,
+          params: search ? { search } : undefined,
+        },
+      ),
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -55,9 +58,12 @@ export function usePublicOrganizationQuery(slug: string, enabled = true) {
     enabled: enabled && Boolean(slug),
     queryKey: queryKeys.public.organization(slug),
     queryFn: ({ signal }) =>
-      apiRequest<{ organization: PublicOrganization }>(`/api/public/organizations/${slug}`, {
-        signal,
-      }),
+      apiRequest<{ organization: PublicOrganization }>(
+        `/api/public/organizations/${slug}`,
+        {
+          signal,
+        },
+      ),
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -72,7 +78,9 @@ export function useSubmitTenantApplicationMutation() {
         data: payload,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.public.landing() });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.public.landing(),
+      });
     },
   });
 }
@@ -80,22 +88,41 @@ export function useSubmitTenantApplicationMutation() {
 export function useUpdateTenantApplicationMutation(reference: string) {
   return useMutation({
     mutationFn: (payload: TenantApplicationPayload & { submit?: boolean }) =>
-      apiRequest<TenantApplicationResponse>(`/api/public/applications/${reference}`, {
-        method: "PATCH",
-        data: payload,
-      }),
+      apiRequest<TenantApplicationResponse>(
+        `/api/public/applications/${reference}`,
+        {
+          method: "PATCH",
+          data: payload,
+        },
+      ),
   });
 }
 
-export function useTenantApplicationStatusQuery(reference: string, email: string, enabled = true) {
+export function useTenantApplicationStatusQuery(
+  email: string,
+  reference?: string,
+  enabled = true,
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedReference = (reference || "").trim().toUpperCase();
+
   return useQuery({
-    enabled: enabled && Boolean(reference) && Boolean(email),
-    queryKey: queryKeys.public.applicationStatus(reference, email),
+    enabled: enabled && Boolean(normalizedEmail),
+    queryKey: queryKeys.public.applicationStatus(
+      normalizedEmail,
+      normalizedReference,
+    ),
     queryFn: ({ signal }) =>
-      apiRequest<TenantApplicationStatusResponse>("/api/public/applications/status", {
-        signal,
-        params: { reference, email },
-      }),
+      apiRequest<TenantApplicationStatusResponse>(
+        "/api/public/applications/status",
+        {
+          signal,
+          params: {
+            email: normalizedEmail,
+            reference: normalizedReference || undefined,
+          },
+        },
+      ),
     staleTime: 1000 * 30,
   });
 }
@@ -103,9 +130,12 @@ export function useTenantApplicationStatusQuery(reference: string, email: string
 export function useRetryTenantApplicationCheckoutMutation(reference: string) {
   return useMutation({
     mutationFn: () =>
-      apiRequest<TenantApplicationResponse>(`/api/public/applications/${reference}/checkout`, {
-        method: "POST",
-      }),
+      apiRequest<TenantApplicationResponse>(
+        `/api/public/applications/${reference}/checkout`,
+        {
+          method: "POST",
+        },
+      ),
   });
 }
 
@@ -137,10 +167,13 @@ export function useCouponValidationQuery(
 export function useResolveCheckoutMutation() {
   return useMutation({
     mutationFn: (reference: string) =>
-      apiRequest<{ resolution: CheckoutResolution }>("/api/billing/verify-checkout", {
-        method: "POST",
-        data: { reference },
-      }),
+      apiRequest<{ resolution: CheckoutResolution }>(
+        "/api/billing/verify-checkout",
+        {
+          method: "POST",
+          data: { reference },
+        },
+      ),
   });
 }
 
@@ -163,7 +196,9 @@ export function useSubmitTestimonialMutation() {
         data: payload,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.public.testimonials() });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.public.testimonials(),
+      });
     },
   });
 }
