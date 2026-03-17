@@ -16,10 +16,6 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useTenantWorkspaceSwitch } from "@/hooks/use-tenant-workspace-switch";
 import { cn } from "@/lib/utils";
 
-function formatPlan(planCode?: string) {
-  return planCode ? planCode.replace(/_/g, " ") : "tenant";
-}
-
 function formatRole(role?: string) {
   if (!role) return "Tenant Admin";
   if (role === "owner") return "Tenant Owner";
@@ -54,8 +50,6 @@ export function TenantHeaderSwitcher({
             role: membership?.role || "owner",
             primary_domain: tenant.primary_domain,
             status: tenant.status,
-            subscription_status: tenant.subscription_status,
-            plan_code: tenant.plan_code,
           },
         ];
 
@@ -115,7 +109,7 @@ export function TenantHeaderSwitcher({
           </div>
         </Button>
       </DropdownMenuTrigger>
-        <DropdownMenuContent
+      <DropdownMenuContent
         align="end"
         className={cn(
           "max-w-[calc(100vw-1rem)] rounded-2xl border-border/70 p-1",
@@ -148,8 +142,7 @@ export function TenantHeaderSwitcher({
                     : ""}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {formatRole(organization.role)} •{" "}
-                  {formatPlan(organization.plan_code)}
+                  {formatRole(organization.role)}
                   {organization.linked ? " • linked" : ""}
                 </div>
               </div>

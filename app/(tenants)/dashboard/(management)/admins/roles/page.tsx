@@ -10,7 +10,13 @@ import {
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function AdminRolesPage() {
   const { admin, hasHydrated } = useAuthStore();
@@ -31,7 +37,8 @@ export default function AdminRolesPage() {
   const platformTotals = useMemo(
     () => ({
       total: globalAdmins.length,
-      superAdmins: globalAdmins.filter((item) => item.role === "super_admin").length,
+      superAdmins: globalAdmins.filter((item) => item.role === "super_admin")
+        .length,
       admins: globalAdmins.filter((item) => item.role === "admin").length,
       active: globalAdmins.filter((item) => item.is_active).length,
     }),
@@ -64,7 +71,7 @@ export default function AdminRolesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
+      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl border bg-muted p-3">
             <ShieldCheck className="size-5" />
@@ -102,7 +109,9 @@ export default function AdminRolesPage() {
               <Card key={item.label} className="border shadow-none">
                 <CardContent className="p-5">
                   <p className="text-sm text-muted-foreground">{item.label}</p>
-                  <p className="mt-2 text-3xl font-semibold text-foreground">{item.value}</p>
+                  <p className="mt-2 text-3xl font-semibold text-foreground">
+                    {item.value}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -112,18 +121,21 @@ export default function AdminRolesPage() {
             <CardHeader>
               <CardTitle>Platform roles</CardTitle>
               <CardDescription>
-                Super admins control the platform globally. Regular admins remain assignable to tenant workspaces.
+                Super admins control the platform globally. Regular admins
+                remain assignable to tenant workspaces.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {[
                 {
                   label: "super_admin",
-                  description: "Global operations, tenant lifecycle, billing oversight, and platform support.",
+                  description:
+                    "Global operations, tenant lifecycle, onboarding oversight, and platform support.",
                 },
                 {
                   label: "admin",
-                  description: "Reusable global admin identity that can be attached to tenant memberships.",
+                  description:
+                    "Reusable global admin identity that can be attached to tenant memberships.",
                 },
               ].map((role) => (
                 <div
@@ -132,7 +144,9 @@ export default function AdminRolesPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">{role.label}</Badge>
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {role.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -153,7 +167,9 @@ export default function AdminRolesPage() {
               <Card key={item.label} className="border shadow-none">
                 <CardContent className="p-5">
                   <p className="text-sm text-muted-foreground">{item.label}</p>
-                  <p className="mt-2 text-3xl font-semibold text-foreground">{item.value}</p>
+                  <p className="mt-2 text-3xl font-semibold text-foreground">
+                    {item.value}
+                  </p>
                 </CardContent>
               </Card>
             ))}

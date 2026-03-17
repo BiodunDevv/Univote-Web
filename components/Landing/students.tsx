@@ -5,8 +5,8 @@ export default function ContentSection() {
   return (
     <section id="students" className="py-16 md:py-24">
       <div className="mx-auto max-w-5xl space-y-6 px-2 sm:px-6 md:space-y-8">
-        <h2 className="relative z-10 max-w-xl text-lg font-semibold sm:text-xl">
-          Built for every student, from first-time voters to campus leaders organizing elections.
+        <h2 className="relative right-0 z-10 max-w-xl text-lg font-semibold sm:text-xl">
+          Designed for Students
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
           <div className="relative mt-6 sm:mt-0 order-2 sm:order-1">

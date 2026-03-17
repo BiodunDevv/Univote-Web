@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/client";
 import { queryKeys } from "@/lib/query-keys";
 import type {
@@ -16,7 +12,11 @@ import type {
   UpdateSessionDto,
   VotingSession,
 } from "@/types/session";
-import type { Student, StudentCSVData, UploadStudentsResponse } from "@/types/student";
+import type {
+  Student,
+  StudentCSVData,
+  UploadStudentsResponse,
+} from "@/types/student";
 import type {
   DatabaseStats,
   NotificationPreferences,
@@ -665,10 +665,10 @@ export function useAdminDashboardQuery(options?: QueryHookOptions) {
 
 export function useAdminSessionsQuery(
   filters: {
-  page?: number;
-  limit?: number;
-  status?: string;
-},
+    page?: number;
+    limit?: number;
+    status?: string;
+  },
   options?: QueryHookOptions,
 ) {
   return useQuery({
@@ -710,11 +710,14 @@ export function useAdminSessionDetailQuery(
     enabled: (options?.enabled ?? true) && Boolean(sessionId),
     queryKey: queryKeys.sessions.adminDetail(sessionId),
     queryFn: ({ signal }) =>
-      apiRequest<AdminSessionDetailResponse>(`/api/admin/sessions/${sessionId}`, {
-        auth: "admin",
-        params: { fresh: true },
-        signal,
-      }),
+      apiRequest<AdminSessionDetailResponse>(
+        `/api/admin/sessions/${sessionId}`,
+        {
+          auth: "admin",
+          params: { fresh: true },
+          signal,
+        },
+      ),
   });
 }
 
@@ -726,10 +729,13 @@ export function useAdminSessionStatsQuery(
     enabled: (options?.enabled ?? true) && Boolean(sessionId),
     queryKey: queryKeys.sessions.adminStats(sessionId),
     queryFn: ({ signal }) =>
-      apiRequest<AdminSessionStatsResponse>(`/api/admin/session-stats/${sessionId}`, {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminSessionStatsResponse>(
+        `/api/admin/session-stats/${sessionId}`,
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -769,10 +775,13 @@ export function useAdminStudentDetailQuery(
     enabled: (options?.enabled ?? true) && Boolean(studentId),
     queryKey: queryKeys.students.detail(studentId),
     queryFn: ({ signal }) =>
-      apiRequest<AdminStudentDetailResponse>(`/api/admin/participants/${studentId}`, {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminStudentDetailResponse>(
+        `/api/admin/participants/${studentId}`,
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -800,10 +809,13 @@ export function useAdminCollegeDetailQuery(
     enabled: (options?.enabled ?? true) && Boolean(collegeId),
     queryKey: queryKeys.colleges.detail(collegeId),
     queryFn: ({ signal }) =>
-      apiRequest<AdminCollegeDetailResponse>(`/api/admin/structure/colleges/${collegeId}`, {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminCollegeDetailResponse>(
+        `/api/admin/structure/colleges/${collegeId}`,
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -812,10 +824,13 @@ export function useAdminCollegeStatsQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.colleges.stats(),
     queryFn: ({ signal }) =>
-      apiRequest<AdminCollegeStatistics>("/api/admin/structure/colleges/statistics", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminCollegeStatistics>(
+        "/api/admin/structure/colleges/statistics",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -837,13 +852,16 @@ export function useAdminCollegeDetailStatsQuery(
   });
 }
 
-export function useAdminDepartmentsQuery(filters: {
-  search?: string;
-  college_id?: string;
-  is_active?: boolean;
-  page?: number;
-  limit?: number;
-}, options?: QueryHookOptions) {
+export function useAdminDepartmentsQuery(
+  filters: {
+    search?: string;
+    college_id?: string;
+    is_active?: boolean;
+    page?: number;
+    limit?: number;
+  },
+  options?: QueryHookOptions,
+) {
   return useQuery({
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.departments.list(filters),
@@ -861,10 +879,13 @@ export function useAdminDepartmentsOverviewQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.departments.overview(),
     queryFn: ({ signal }) =>
-      apiRequest<AdminDepartmentsOverview>("/api/admin/structure/departments/overview", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminDepartmentsOverview>(
+        "/api/admin/structure/departments/overview",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -911,10 +932,13 @@ export function useAdminAuditActionsQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.settings.auditActions(),
     queryFn: ({ signal }) =>
-      apiRequest<AdminAuditActionsResponse>("/api/admin/settings/audit-actions", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<AdminAuditActionsResponse>(
+        "/api/admin/settings/audit-actions",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -923,10 +947,13 @@ export function useAdminSystemConfigQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.settings.system(),
     queryFn: ({ signal }) =>
-      apiRequest<{ system_config: SystemConfig }>("/api/admin/settings/system", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<{ system_config: SystemConfig }>(
+        "/api/admin/settings/system",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -990,11 +1017,14 @@ export function useAdminAnalyticsOverviewQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.analytics.overview(),
     queryFn: ({ signal }) =>
-      apiRequest<AdminAnalyticsOverviewResponse>("/api/admin/analytics/overview", {
-        auth: "admin",
-        params: { fresh: true },
-        signal,
-      }),
+      apiRequest<AdminAnalyticsOverviewResponse>(
+        "/api/admin/analytics/overview",
+        {
+          auth: "admin",
+          params: { fresh: true },
+          signal,
+        },
+      ),
   });
 }
 
@@ -1016,12 +1046,15 @@ export function useAdminAdvancedSessionAnalyticsQuery(
   });
 }
 
-export function useAdminDirectoryQuery(filters: {
-  page?: number;
-  limit?: number;
-  role?: string;
-  is_active?: boolean;
-}, options?: QueryHookOptions) {
+export function useAdminDirectoryQuery(
+  filters: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    is_active?: boolean;
+  },
+  options?: QueryHookOptions,
+) {
   return useQuery({
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.admins.list(filters),
@@ -1071,7 +1104,10 @@ export function useTenantAdminUsersQuery(
   });
 }
 
-export function useTenantAdminUserQuery(id: string, options?: QueryHookOptions) {
+export function useTenantAdminUserQuery(
+  id: string,
+  options?: QueryHookOptions,
+) {
   return useQuery({
     enabled: (options?.enabled ?? true) && Boolean(id),
     queryKey: queryKeys.admins.tenantDetail(id),
@@ -1088,10 +1124,13 @@ export function useTenantAdminOverviewQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.admins.tenantOverview(),
     queryFn: ({ signal }) =>
-      apiRequest<TenantAdminOverviewResponse>("/api/admin/admin-users/overview", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<TenantAdminOverviewResponse>(
+        "/api/admin/admin-users/overview",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -1100,41 +1139,13 @@ export function useTenantRoleCatalogQuery(options?: QueryHookOptions) {
     enabled: options?.enabled ?? true,
     queryKey: queryKeys.admins.tenantRoles(),
     queryFn: ({ signal }) =>
-      apiRequest<TenantRoleCatalogResponse>("/api/admin/admin-users/roles-catalog", {
-        auth: "admin",
-        signal,
-      }),
-  });
-}
-
-export function useAdminBillingSummaryQuery(options?: QueryHookOptions) {
-  return useQuery({
-    enabled: options?.enabled ?? true,
-    queryKey: queryKeys.billing.summary(),
-    queryFn: ({ signal }) =>
-      apiRequest<AdminBillingSummaryResponse>("/api/admin/billing/summary", {
-        auth: "admin",
-        signal,
-      }),
-  });
-}
-
-export function useAdminBillingInvoicesQuery(
-  filters: {
-    page?: number;
-    limit?: number;
-  } = {},
-  options?: QueryHookOptions,
-) {
-  return useQuery({
-    enabled: options?.enabled ?? true,
-    queryKey: queryKeys.billing.invoices(filters),
-    queryFn: ({ signal }) =>
-      apiRequest<AdminBillingInvoiceListResponse>("/api/admin/billing/invoices", {
-        auth: "admin",
-        params: filters,
-        signal,
-      }),
+      apiRequest<TenantRoleCatalogResponse>(
+        "/api/admin/admin-users/roles-catalog",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -1154,7 +1165,9 @@ export function useCreateSessionMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.sessions.adminSummary(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1165,11 +1178,14 @@ export function useUpdateSessionMutation(sessionId: string) {
 
   return useMutation({
     mutationFn: (payload: UpdateSessionDto) =>
-      apiRequest<{ session: VotingSession }>(`/api/admin/update-session/${sessionId}`, {
-        method: "PATCH",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<{ session: VotingSession }>(
+        `/api/admin/update-session/${sessionId}`,
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["sessions", "admin"] }),
@@ -1182,7 +1198,9 @@ export function useUpdateSessionMutation(sessionId: string) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.sessions.adminStats(sessionId),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1203,7 +1221,9 @@ export function useDeleteSessionMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.sessions.adminSummary(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1217,9 +1237,9 @@ export function useCreateCandidateMutation(sessionId: string) {
       apiRequest<{ candidate: SessionCandidate }>(
         `/api/admin/sessions/${sessionId}/candidates`,
         {
-        method: "POST",
-        auth: "admin",
-        data: payload,
+          method: "POST",
+          auth: "admin",
+          data: payload,
         },
       ).then((response) => response.candidate),
     onSuccess: async () => {
@@ -1296,7 +1316,10 @@ export function useCreateCollegeMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: Required<Pick<CollegeMutationPayload, "name" | "code">> & CollegeMutationPayload) =>
+    mutationFn: (
+      payload: Required<Pick<CollegeMutationPayload, "name" | "code">> &
+        CollegeMutationPayload,
+    ) =>
       apiRequest<AdminCollegeDetailResponse>("/api/admin/structure/colleges", {
         method: "POST",
         auth: "admin",
@@ -1306,7 +1329,9 @@ export function useCreateCollegeMutation() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["colleges"] }),
         queryClient.invalidateQueries({ queryKey: ["departments"] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1317,11 +1342,14 @@ export function useUpdateCollegeMutation(collegeId: string) {
 
   return useMutation({
     mutationFn: (payload: CollegeMutationPayload) =>
-      apiRequest<AdminCollegeDetailResponse>(`/api/admin/structure/colleges/${collegeId}`, {
-        method: "PATCH",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<AdminCollegeDetailResponse>(
+        `/api/admin/structure/colleges/${collegeId}`,
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["colleges"] }),
@@ -1332,7 +1360,9 @@ export function useUpdateCollegeMutation(collegeId: string) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.colleges.detailStats(collegeId),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1342,7 +1372,10 @@ export function useCreateDepartmentMutation(collegeId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: Required<Pick<DepartmentMutationPayload, "name" | "code">> & DepartmentMutationPayload) =>
+    mutationFn: (
+      payload: Required<Pick<DepartmentMutationPayload, "name" | "code">> &
+        DepartmentMutationPayload,
+    ) =>
       apiRequest<{
         message: string;
         department: AdminCollegeDepartment;
@@ -1366,7 +1399,10 @@ export function useCreateDepartmentMutation(collegeId: string) {
   });
 }
 
-export function useUpdateDepartmentMutation(collegeId: string, departmentId: string) {
+export function useUpdateDepartmentMutation(
+  collegeId: string,
+  departmentId: string,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -1374,11 +1410,14 @@ export function useUpdateDepartmentMutation(collegeId: string, departmentId: str
       apiRequest<{
         message: string;
         department: AdminCollegeDepartment;
-      }>(`/api/admin/structure/colleges/${collegeId}/departments/${departmentId}`, {
-        method: "PATCH",
-        auth: "admin",
-        data: payload,
-      }),
+      }>(
+        `/api/admin/structure/colleges/${collegeId}/departments/${departmentId}`,
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["colleges"] }),
@@ -1452,7 +1491,9 @@ export function useUploadStudentsMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.overview(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1477,7 +1518,9 @@ export function useUpdateStudentMutation(studentId: string) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.detail(studentId),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1508,7 +1551,9 @@ export function useBulkUpdateStudentsMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.overview(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1529,7 +1574,9 @@ export function useActivateStudentMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.overview(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1550,7 +1597,9 @@ export function useDeactivateStudentMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.overview(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1572,7 +1621,9 @@ export function useDeleteStudentMutation() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.students.overview(),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.admin() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
       ]);
     },
   });
@@ -1642,56 +1693,6 @@ export function useExportDataMutation() {
   });
 }
 
-export function useBillingCheckoutMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (planCode: string) =>
-      apiRequest<
-        AdminBillingSummaryResponse & {
-          message: string;
-          action: string;
-          checkout_url?: string | null;
-          invoice?: BillingInvoice | null;
-        }
-      >(
-        "/api/admin/billing/checkout",
-        {
-          method: "POST",
-          auth: "admin",
-          data: { plan_code: planCode },
-        },
-      ),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.billing.summary() }),
-        queryClient.invalidateQueries({ queryKey: ["billing", "invoices"] }),
-      ]);
-    },
-  });
-}
-
-export function useCancelBillingChangeMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () =>
-      apiRequest<AdminBillingSummaryResponse & { message: string; cancelled: boolean }>(
-        "/api/admin/billing/cancel-change",
-        {
-          method: "POST",
-          auth: "admin",
-        },
-      ),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.billing.summary() }),
-        queryClient.invalidateQueries({ queryKey: ["billing", "invoices"] }),
-      ]);
-    },
-  });
-}
-
 export function useCreateTenantAdminUserMutation() {
   const queryClient = useQueryClient();
 
@@ -1752,13 +1753,7 @@ export function useDeleteTenantAdminUserMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      permanent,
-    }: {
-      id: string;
-      permanent?: boolean;
-    }) =>
+    mutationFn: ({ id, permanent }: { id: string; permanent?: boolean }) =>
       apiRequest<{ message: string }>(`/api/admin/admin-users/${id}`, {
         method: "DELETE",
         auth: "admin",

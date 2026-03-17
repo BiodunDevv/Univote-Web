@@ -42,10 +42,8 @@ export function HeroSection({ stats }: HeroSectionProps) {
     tenant,
     hasHydrated: adminHasHydrated,
   } = useAuthStore();
-  const {
-    token: studentToken,
-    hasHydrated: participantHasHydrated,
-  } = useStudentAuthStore();
+  const { token: studentToken, hasHydrated: participantHasHydrated } =
+    useStudentAuthStore();
   const isCheckingSession = !adminHasHydrated || !participantHasHydrated;
   const tenantWorkspaceHref =
     tenant?.slug ||
@@ -169,7 +167,11 @@ export function HeroSection({ stats }: HeroSectionProps) {
                   className="h-11 rounded-xl px-5 text-sm"
                   asChild
                 >
-                  <a href="#apply">
+                  <a
+                    href="/tenant-application"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Start Tenant Application
                     <ArrowRight className="ml-2 size-4" />
                   </a>
@@ -177,24 +179,12 @@ export function HeroSection({ stats }: HeroSectionProps) {
               ) : null}
             </div>
 
-            {/* <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
-              {proofItems.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-start gap-2 rounded-2xl border border-border/60 bg-background/72 px-3 py-3 text-sm text-muted-foreground shadow-sm backdrop-blur"
-                >
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div> */}
-
             {!token && !studentToken ? (
               <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="size-4 text-primary" />
                 <span>
-                  Participant login stays simple while admin and workspace access
-                  adapt to the organisation you select.
+                  Participant login stays simple while admin and workspace
+                  access adapt to the organisation you select.
                 </span>
               </div>
             ) : null}

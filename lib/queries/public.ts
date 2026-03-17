@@ -4,8 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/client";
 import { queryKeys } from "@/lib/query-keys";
 import type {
-  CheckoutResolution,
-  CouponValidationResult,
   PublicLandingResponse,
   PublicOrganization,
   TenantApplicationPayload,
@@ -73,7 +71,7 @@ export function useSubmitTenantApplicationMutation() {
 
   return useMutation({
     mutationFn: (payload: TenantApplicationPayload & { submit?: boolean }) =>
-      apiRequest<TenantApplicationResponse>("/api/public/tenant-applications", {
+      apiRequest<TenantApplicationResponse>("/api/public/applications", {
         method: "POST",
         data: payload,
       }),
@@ -124,56 +122,6 @@ export function useTenantApplicationStatusQuery(
         },
       ),
     staleTime: 1000 * 30,
-  });
-}
-
-export function useRetryTenantApplicationCheckoutMutation(reference: string) {
-  return useMutation({
-    mutationFn: () =>
-      apiRequest<TenantApplicationResponse>(
-        `/api/public/applications/${reference}/checkout`,
-        {
-          method: "POST",
-        },
-      ),
-  });
-}
-
-export function useCouponValidationQuery(
-  code: string,
-  planCode: string,
-  email: string,
-  enabled = true,
-) {
-  return useQuery({
-    enabled: enabled && Boolean(code) && Boolean(planCode),
-    queryKey: queryKeys.public.coupon(code, planCode, email),
-    queryFn: ({ signal }) =>
-      apiRequest<{ valid: boolean; coupon: CouponValidationResult }>(
-        `/api/public/coupons/${encodeURIComponent(code)}/validate`,
-        {
-          signal,
-          params: {
-            plan_code: planCode,
-            email: email || undefined,
-          },
-        },
-      ),
-    retry: false,
-    staleTime: 1000 * 15,
-  });
-}
-
-export function useResolveCheckoutMutation() {
-  return useMutation({
-    mutationFn: (reference: string) =>
-      apiRequest<{ resolution: CheckoutResolution }>(
-        "/api/billing/verify-checkout",
-        {
-          method: "POST",
-          data: { reference },
-        },
-      ),
   });
 }
 

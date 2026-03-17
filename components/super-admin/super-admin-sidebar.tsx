@@ -4,16 +4,13 @@ import * as React from "react";
 import {
   Activity,
   Building2,
-  CreditCard,
   FileText,
   LayoutDashboard,
-  Layers3,
   LifeBuoy,
   Megaphone,
   Rocket,
   Settings2,
   Shield,
-  TicketPercent,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -66,15 +63,6 @@ const superAdminNavMain: NavItem[] = [
     ],
   },
   {
-    title: "Billing",
-    url: "/super-admin/billing",
-    icon: CreditCard,
-    items: [
-      { title: "Billing Overview", url: "/super-admin/billing" },
-      { title: "Plan Matrix", url: "/super-admin/plans" },
-    ],
-  },
-  {
     title: "Support",
     url: "/super-admin/support",
     icon: LifeBuoy,
@@ -88,10 +76,8 @@ const superAdminNavMain: NavItem[] = [
 const superAdminNavProjects = [
   { name: "Announcements", url: "/super-admin/announcements", icon: Megaphone },
   { name: "Testimonials", url: "/super-admin/testimonials", icon: Megaphone },
-  { name: "Coupons", url: "/super-admin/coupons", icon: TicketPercent },
   { name: "Onboarding", url: "/super-admin/onboarding", icon: Rocket },
   { name: "Audit Logs", url: "/super-admin/audit-logs", icon: FileText },
-  { name: "Plans", url: "/super-admin/plans", icon: Layers3 },
   { name: "System Health", url: "/super-admin/system-health", icon: Activity },
   { name: "Settings", url: "/super-admin/settings", icon: Settings2 },
 ];
@@ -132,9 +118,12 @@ function buildSearchItems(
   return results;
 }
 
-export function SuperAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function SuperAdminSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const { admin } = useAuthStore();
-  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
+  const { data: unreadNotifications = 0 } =
+    useNotificationSummaryQuery("admin");
   const supportOverviewQuery = useSupportOverviewQuery("admin");
   const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
 
@@ -150,14 +139,15 @@ export function SuperAdminSidebar({ ...props }: React.ComponentProps<typeof Side
                   subItem.title === "Notifications"
                     ? {
                         ...subItem,
-                        badge: unreadNotifications > 0 ? unreadNotifications : null,
+                        badge:
+                          unreadNotifications > 0 ? unreadNotifications : null,
                       }
                     : subItem.title === "Support Queue"
                       ? {
                           ...subItem,
                           badge: unreadSupport > 0 ? unreadSupport : null,
                         }
-                    : subItem,
+                      : subItem,
                 ) || item.items,
             }
           : item,

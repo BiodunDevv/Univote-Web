@@ -48,7 +48,8 @@ export default function EditSessionPage() {
   const deleteCandidate = useDeleteCandidateMutation(sessionId);
   const currentSession = sessionDetailQuery.data?.session;
   const colleges =
-    (collegesQuery.data?.colleges as SessionCreationCollege[] | undefined) ?? [];
+    (collegesQuery.data?.colleges as SessionCreationCollege[] | undefined) ??
+    [];
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -79,7 +80,7 @@ export default function EditSessionPage() {
         messages={[
           "Loading session configuration...",
           needsStructureData
-            ? "Syncing structure-aware eligibility..."
+            ? "Syncing university eligibility scope..."
             : "Applying tenant-wide eligibility...",
           "Preparing edit workflow...",
         ]}
@@ -107,7 +108,10 @@ export default function EditSessionPage() {
           <CardContent className="space-y-4 p-6 text-center">
             <p className="text-sm text-muted-foreground">{message}</p>
             <div className="flex items-center justify-center gap-2">
-              <Button variant="outline" onClick={() => router.push("/dashboard/sessions")}>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/sessions")}
+              >
                 Back
               </Button>
               <Button
@@ -135,7 +139,7 @@ export default function EditSessionPage() {
       title="Edit Session Wizard"
       description={
         needsStructureData
-          ? "Update this session using the same structure-aware workflow as session creation."
+          ? "Update this session using the same college and department eligibility workflow as session creation."
           : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
       }
       colleges={colleges}
@@ -163,7 +167,9 @@ export default function EditSessionPage() {
       onUpdateCandidate={(candidateId, payload) =>
         updateCandidate.mutateAsync({ candidateId, payload })
       }
-      onDeleteCandidate={(candidateId) => deleteCandidate.mutateAsync(candidateId)}
+      onDeleteCandidate={(candidateId) =>
+        deleteCandidate.mutateAsync(candidateId)
+      }
     />
   );
 }

@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { FileBarChart } from "lucide-react";
 import { toast } from "sonner";
-import { useAdminBillingSummaryQuery, useExportDataMutation } from "@/lib/queries/admin";
-import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { PlanFeatureGate } from "@/components/tenants/billing/plan-feature-gate";
+import { useExportDataMutation } from "@/lib/queries/admin";
 import {
   TenantPageHeader,
   TenantSectionCard,
@@ -33,7 +31,6 @@ function downloadBlob(blob: Blob, filename: string) {
 export default function ReportsPage() {
   const { tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
-  const billingQuery = useAdminBillingSummaryQuery();
   const exportData = useExportDataMutation();
   const [format, setFormat] = useState("json");
 
@@ -43,33 +40,27 @@ export default function ReportsPage() {
       label: `${participantLabels.singular} registry`,
       description: `Download active and inactive ${participantLabels.singular.toLowerCase()} data.`,
     },
-    { key: "votes", label: "Votes", description: "Export raw vote records with session references." },
-    { key: "sessions", label: "Sessions", description: "Export session definitions and ballot configuration." },
-    { key: "admins", label: "Administrators", description: "Download administrator account metadata." },
-    { key: "audit_logs", label: "Audit logs", description: "Extract operational activity for compliance review." },
+    {
+      key: "votes",
+      label: "Votes",
+      description: "Export raw vote records with session references.",
+    },
+    {
+      key: "sessions",
+      label: "Sessions",
+      description: "Export session definitions and ballot configuration.",
+    },
+    {
+      key: "admins",
+      label: "Administrators",
+      description: "Download administrator account metadata.",
+    },
+    {
+      key: "audit_logs",
+      label: "Audit logs",
+      description: "Extract operational activity for compliance review.",
+    },
   ];
-
-  if (billingQuery.isLoading) {
-    return (
-      <ChangingLoadingState
-        messages={[
-          "Loading reporting workspace...",
-          "Checking plan entitlements...",
-        ]}
-      />
-    );
-  }
-
-  if (!billingQuery.data?.capabilities.features.advanced_reports) {
-    return (
-      <PlanFeatureGate
-        title="Reports"
-        description="Operational and compliance-ready exports across participants, votes, sessions, and audit activity."
-        featureLabel="Advanced reports"
-        requiredPlanLabel="Pro Plus"
-      />
-    );
-  }
 
   return (
     <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-3 p-2">
@@ -141,8 +132,8 @@ export default function ReportsPage() {
             }
           >
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-              The export is generated directly from the current tenant dataset and downloaded
-              locally once the backend stream is ready.
+              The export is generated directly from the current tenant dataset
+              and downloaded locally once the backend stream is ready.
             </div>
           </TenantSectionCard>
         ))}

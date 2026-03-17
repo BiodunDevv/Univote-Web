@@ -60,7 +60,12 @@ export class ApiError extends Error {
   code?: string;
   payload?: ErrorPayload | null;
 
-  constructor(message: string, status: number, code?: string, payload?: ErrorPayload | null) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    payload?: ErrorPayload | null,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -178,14 +183,16 @@ function handleTenantRestriction(auth: AuthScope, code?: string) {
   if (auth === "admin") {
     const currentPath = `${window.location.pathname}${window.location.search}`;
     if (
-      currentPath.startsWith("/dashboard/billing") ||
+      currentPath.startsWith("/dashboard/application") ||
       currentPath.startsWith("/dashboard/support")
     ) {
       return;
     }
 
     const reason = code || "tenant_restricted";
-    window.location.assign(`/dashboard/billing?reason=${encodeURIComponent(reason)}`);
+    window.location.assign(
+      `/dashboard/application?reason=${encodeURIComponent(reason)}`,
+    );
     return;
   }
 
@@ -199,7 +206,10 @@ function handleTenantRestriction(auth: AuthScope, code?: string) {
   }
 }
 
-function shouldRedirectOnAuthError(status: number, payload: ErrorPayload | null) {
+function shouldRedirectOnAuthError(
+  status: number,
+  payload: ErrorPayload | null,
+) {
   if (status === 401) return true;
   if (status !== 403) return false;
 
@@ -207,7 +217,8 @@ function shouldRedirectOnAuthError(status: number, payload: ErrorPayload | null)
     return true;
   }
 
-  const message = `${payload?.error || ""} ${payload?.message || ""}`.toLowerCase();
+  const message =
+    `${payload?.error || ""} ${payload?.message || ""}`.toLowerCase();
   return message.includes("invalid token type");
 }
 
@@ -248,9 +259,7 @@ export async function apiRequest<T>(
   const response = await fetch(buildUrl(path, params), {
     method,
     headers: requestHeaders,
-    body:
-      body ||
-      (data !== undefined ? JSON.stringify(data) : undefined),
+    body: body || (data !== undefined ? JSON.stringify(data) : undefined),
     signal,
     cache: "no-store",
   });

@@ -13,8 +13,22 @@ export function SessionCreationStepper({
   currentStep,
   completedSteps,
 }: SessionCreationStepperProps) {
+  const currentIndex = SESSION_CREATION_STEPS.findIndex(
+    (step) => step.id === currentStep,
+  );
+
   return (
-    <div className="rounded-xl border bg-card/60 p-4">
+    <div className="rounded-xl border bg-card/60 p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          Session setup progress
+        </p>
+        <p className="text-xs font-semibold text-foreground">
+          Step {Math.max(currentIndex + 1, 1)} of{" "}
+          {SESSION_CREATION_STEPS.length}
+        </p>
+      </div>
+
       <div className="grid gap-2 md:grid-cols-5">
         {SESSION_CREATION_STEPS.map((step, index) => {
           const isCurrent = step.id === currentStep;

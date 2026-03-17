@@ -25,10 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { SessionCandidateManager } from "@/components/tenants/sessions/candidates";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import {
-  getTenantParticipantLabels,
-  isTenantEligibilityDimensionEnabled,
-} from "@/lib/tenant-config";
+import { isTenantEligibilityDimensionEnabled } from "@/lib/tenant-config";
 import {
   AdminSessionStatsResponse,
   useAdminCollegesQuery,
@@ -152,9 +149,7 @@ type SessionDetailsLoadedProps = {
   candidateId: string | null;
   candidateMode: "view" | "edit" | "create" | null;
   router: ReturnType<typeof useRouter>;
-  createCandidate: (
-    payload: CandidateMutationDto,
-  ) => Promise<SessionCandidate>;
+  createCandidate: (payload: CandidateMutationDto) => Promise<SessionCandidate>;
   updateCandidate: (
     candidateId: string,
     payload: CandidateMutationDto,
@@ -180,7 +175,7 @@ export default function SessionDetailsPage() {
   const sessionId = params.id as string;
 
   const { token, hasHydrated, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
+  const participantLabels = { singular: "Student", plural: "Students" };
   const needsStructureData =
     isTenantEligibilityDimensionEnabled(tenant, "college") ||
     isTenantEligibilityDimensionEnabled(tenant, "department") ||
@@ -271,7 +266,12 @@ export default function SessionDetailsPage() {
       candidateState.sessionId === sessionId && candidateState.value
         ? candidateState.value
         : sessionCandidates,
-    [candidateState.sessionId, candidateState.value, sessionCandidates, sessionId],
+    [
+      candidateState.sessionId,
+      candidateState.value,
+      sessionCandidates,
+      sessionId,
+    ],
   );
   const canManageCandidates = session?.status === "upcoming";
   const categoryCoverage = useMemo(
@@ -377,9 +377,18 @@ export default function SessionDetailsPage() {
     <SessionDetailsLoaded
       sessionId={sessionId}
       participantPluralLabel={participantLabels.plural}
-      collegeEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "college")}
-      departmentEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "department")}
-      levelEligibilityEnabled={isTenantEligibilityDimensionEnabled(tenant, "level")}
+      collegeEligibilityEnabled={isTenantEligibilityDimensionEnabled(
+        tenant,
+        "college",
+      )}
+      departmentEligibilityEnabled={isTenantEligibilityDimensionEnabled(
+        tenant,
+        "department",
+      )}
+      levelEligibilityEnabled={isTenantEligibilityDimensionEnabled(
+        tenant,
+        "level",
+      )}
       currentSession={session}
       sessionStats={stats}
       displayedCandidates={displayedCandidates}
@@ -389,7 +398,9 @@ export default function SessionDetailsPage() {
       candidateId={candidateId}
       candidateMode={candidateMode}
       router={router}
-      createCandidate={(payload) => createCandidateMutation.mutateAsync(payload)}
+      createCandidate={(payload) =>
+        createCandidateMutation.mutateAsync(payload)
+      }
       updateCandidate={(nextCandidateId, payload) =>
         updateCandidateMutation.mutateAsync({
           candidateId: nextCandidateId,
@@ -426,17 +437,21 @@ function SessionDetailsLoaded({
   setCandidates,
   handleCandidateSheetStateChange,
 }: SessionDetailsLoadedProps) {
-  const hasDepartmentRestrictions = (currentSession.eligible_departments || []).length > 0;
-  const hasLevelRestrictions = (currentSession.eligible_levels || []).length > 0;
+  const hasDepartmentRestrictions =
+    (currentSession.eligible_departments || []).length > 0;
+  const hasLevelRestrictions =
+    (currentSession.eligible_levels || []).length > 0;
   const hasCollegeRestriction = Boolean(currentSession.eligible_college);
   const isTenantWide =
     !hasCollegeRestriction &&
     !hasDepartmentRestrictions &&
     !hasLevelRestrictions;
   const eligibilitySummary = isTenantWide
-    ? `Tenant-wide access for all ${participantPluralLabel.toLowerCase()}`
+    ? `Tenant-wide access for all students`
     : [
-        collegeEligibilityEnabled && hasCollegeRestriction ? "College-scoped" : null,
+        collegeEligibilityEnabled && hasCollegeRestriction
+          ? "College-scoped"
+          : null,
         departmentEligibilityEnabled && hasDepartmentRestrictions
           ? `${(currentSession.eligible_departments || []).length} department(s)`
           : null,
@@ -671,24 +686,24 @@ function SessionDetailsLoaded({
               </div>
 
               {levelEligibilityEnabled ? (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Eligible Levels
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {hasLevelRestrictions ? (
-                    (currentSession.eligible_levels || []).map((level) => (
-                      <Badge key={level} variant="outline">
-                        Level {level}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No level restrictions configured.
-                    </p>
-                  )}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Eligible Levels
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {hasLevelRestrictions ? (
+                      (currentSession.eligible_levels || []).map((level) => (
+                        <Badge key={level} variant="outline">
+                          Level {level}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No level restrictions configured.
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
               ) : null}
 
               <div>

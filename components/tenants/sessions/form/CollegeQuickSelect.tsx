@@ -22,16 +22,20 @@ export default function CollegeQuickSelect({
   selectedDepartmentIds,
   onCollegeClick,
   departmentMode = true,
-  participantPluralLabel = "Participants",
+  participantPluralLabel = "Students",
 }: CollegeQuickSelectProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium text-muted-foreground">
-          {departmentMode ? "Quick Select by College" : `Choose one ${participantPluralLabel.toLowerCase()} group`}
+          {departmentMode
+            ? "Quick Select by College"
+            : `Choose one ${participantPluralLabel.toLowerCase()} college`}
         </Label>
         <span className="text-[10px] text-muted-foreground hidden sm:inline">
-          {departmentMode ? "Tap to select all departments" : `Choose the one group of ${participantPluralLabel.toLowerCase()} that should access this session`}
+          {departmentMode
+            ? "Tap to select all departments"
+            : `Choose the one college of ${participantPluralLabel.toLowerCase()} that should access this session`}
         </span>
       </div>
       <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
@@ -43,7 +47,9 @@ export default function CollegeQuickSelect({
             : selectedCollegeId === college._id;
           const partiallySelected = departmentMode
             ? collegeDeptIds.length > 0 &&
-              collegeDeptIds.some((dId) => selectedDepartmentIds.includes(dId)) &&
+              collegeDeptIds.some((dId) =>
+                selectedDepartmentIds.includes(dId),
+              ) &&
               !isCollegeSelected
             : false;
 
@@ -56,8 +62,8 @@ export default function CollegeQuickSelect({
                 isCollegeSelected
                   ? "bg-blue-500 text-white border-blue-600 shadow-sm"
                   : partiallySelected
-                  ? "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800"
-                  : "bg-card text-foreground border-border hover:bg-muted/50"
+                    ? "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800"
+                    : "bg-card text-foreground border-border hover:bg-muted/50"
               }`}
               title={`${college.name} - ${collegeDeptIds.length} departments`}
             >
@@ -75,7 +81,8 @@ export default function CollegeQuickSelect({
         </p>
       ) : (
         <p className="text-[10px] sm:text-xs text-muted-foreground">
-          Choose the one group of {participantPluralLabel.toLowerCase()} that should access this session.
+          Choose the one college of {participantPluralLabel.toLowerCase()} that
+          should access this session.
         </p>
       )}
     </div>

@@ -24,14 +24,14 @@ type StudentsByLevelChartProps = {
 
 const chartConfig = {
   students: {
-    label: "Participants",
+    label: "Students",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
 export function StudentsByLevelChart({
   data,
-  participantPluralLabel = "Participants",
+  participantPluralLabel = "Students",
   dimensionLabel = "Level",
 }: StudentsByLevelChartProps) {
   const normalizedDimensionLabel =
@@ -45,7 +45,7 @@ export function StudentsByLevelChart({
         </CardTitle>
         <CardDescription>
           {participantPluralLabel} distribution across configured{" "}
-          {normalizedDimensionLabel.toLowerCase()} groupings
+          {normalizedDimensionLabel.toLowerCase()} bands
         </CardDescription>
       </CardHeader>
       <CardContent>

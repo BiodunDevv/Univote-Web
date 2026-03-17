@@ -5,7 +5,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { SessionCreationFormData } from "@/components/tenants/sessions/create/types";
 import {
   formatDateButtonLabel,
@@ -13,8 +17,6 @@ import {
   mergeDateAndTime,
   parseDateValue,
 } from "@/components/tenants/sessions/session-form-utils";
-
-import "leaflet/dist/leaflet.css";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -92,7 +94,11 @@ function DateTimeField({
             value={formatTimeValue(value)}
             onChange={(event) =>
               onChange(
-                mergeDateAndTime(value, selectedDate || new Date(), event.target.value),
+                mergeDateAndTime(
+                  value,
+                  selectedDate || new Date(),
+                  event.target.value,
+                ),
               )
             }
             className="pl-9"
@@ -144,6 +150,10 @@ export function ScheduleLocationStep({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-muted/20 p-2 text-xs text-muted-foreground">
+              Set where voters must be physically present to vote in this
+              session.
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground">
@@ -197,7 +207,7 @@ export function ScheduleLocationStep({
                   onChange={(event) =>
                     onLocationChange(
                       "radius_meters",
-                      Number(event.target.value) || 500,
+                      Math.max(100, Number(event.target.value) || 500),
                     )
                   }
                   className="text-center"
@@ -216,6 +226,20 @@ export function ScheduleLocationStep({
                   +
                 </Button>
               </div>
+              <Input
+                type="range"
+                min={100}
+                max={10000}
+                step={100}
+                value={formData.location.radius_meters}
+                onChange={(event) =>
+                  onLocationChange(
+                    "radius_meters",
+                    Number(event.target.value) || 500,
+                  )
+                }
+                className="mt-3"
+              />
               <p className="mt-2 text-xs text-muted-foreground">
                 Coverage radius:{" "}
                 {(formData.location.radius_meters / 1000).toFixed(2)} km
@@ -226,9 +250,7 @@ export function ScheduleLocationStep({
 
         <Card className="border shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">
-              Map Preview
-            </CardTitle>
+            <CardTitle className="text-sm font-semibold">Map Preview</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <MapComponent
@@ -237,8 +259,7 @@ export function ScheduleLocationStep({
               radius={formData.location.radius_meters}
             />
             <p className="text-xs text-muted-foreground">
-              The marker shows the session center, and the shaded region shows
-              the valid voting radius for geofenced ballots.
+              The center marker and ring visualize the current geofence radius.
             </p>
           </CardContent>
         </Card>

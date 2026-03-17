@@ -4,6 +4,7 @@ import { Edit, Eye, Trash2 } from "lucide-react";
 import type { College } from "@/components/tenants/colleges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 type CollegeDirectoryTableProps = {
   colleges: College[];
@@ -23,81 +24,77 @@ export function CollegeDirectoryTable({
   onDelete,
 }: CollegeDirectoryTableProps) {
   return (
-    <div className="min-w-0">
+    <div className="w-full min-w-0 max-w-full overflow-hidden">
       {colleges.length > 0 ? (
-        <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {colleges.map((college) => (
-            <div
+            <Card
               key={college._id}
-              className="rounded-xl border border-border/70 bg-background p-3 shadow-none"
+              className="rounded-xl border border-border/70 shadow-none"
             >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {college.name}
-                  </p>
-                  <p className="mt-1 font-mono text-xs text-primary">{college.code}</p>
+              <CardContent className="space-y-3 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {college.name}
+                    </p>
+                    <p className="font-mono text-xs text-primary">
+                      {college.code}
+                    </p>
+                  </div>
+                  <Badge variant={college.is_active ? "default" : "secondary"}>
+                    {college.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </div>
-                <Badge variant={college.is_active ? "default" : "secondary"}>
-                  {college.is_active ? "Active" : "Inactive"}
-                </Badge>
-              </div>
 
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                {college.description || "No description provided."}
-              </p>
-
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Dean
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  <p className="truncate">
+                    Dean: {college.dean_name || "Not assigned"}
                   </p>
-                  <p className="mt-1 text-sm font-medium">
-                    {college.dean_name || "Not assigned"}
-                  </p>
-                  <p className="mt-1 break-all text-xs text-muted-foreground">
+                  <p className="truncate">
                     {college.dean_email || "No dean email"}
                   </p>
+                  <p>
+                    {college.departments.length.toLocaleString()} departments
+                  </p>
+                  <p>
+                    {college.student_count.toLocaleString()}{" "}
+                    {participantPluralLabel.toLowerCase()}
+                  </p>
                 </div>
-                <div className="grid gap-2">
-                  <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                      Departments
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">
-                      {college.departments.length.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                      {participantPluralLabel}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">
-                      {college.student_count.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => onView(college._id)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View
-                </Button>
-                {canManageColleges ? (
-                  <>
-                    <Button variant="outline" size="sm" onClick={() => onEdit(college)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => onDelete(college)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onView(college._id)}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View
+                  </Button>
+                  {canManageColleges ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(college)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onDelete(college)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (

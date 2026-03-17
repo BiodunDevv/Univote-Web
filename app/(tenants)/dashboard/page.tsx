@@ -88,7 +88,10 @@ export default function DashboardWelcomePage() {
                 ? dashboardQuery.error.message
                 : "Failed to load dashboard"}
             </p>
-            <Button variant="outline" onClick={() => void dashboardQuery.refetch()}>
+            <Button
+              variant="outline"
+              onClick={() => void dashboardQuery.refetch()}
+            >
               Retry
             </Button>
           </CardContent>
@@ -119,8 +122,7 @@ export default function DashboardWelcomePage() {
     tenantContext,
     "level",
   );
-  const structureDimensionLabel = "Group";
-  const departmentDimensionLabel = "Sub-groups";
+  const structureDimensionLabel = "College";
   const levelDimensionLabel = "Access level";
 
   // Prepare chart data
@@ -141,13 +143,13 @@ export default function DashboardWelcomePage() {
     students: {
       label: participantLabels.plural,
     },
-    college1: { label: "Group 1", color: "var(--chart-1)" },
-    college2: { label: "Group 2", color: "var(--chart-2)" },
-    college3: { label: "Group 3", color: "var(--chart-3)" },
-    college4: { label: "Group 4", color: "var(--chart-4)" },
-    college5: { label: "Group 5", color: "var(--chart-5)" },
-    college6: { label: "Group 6", color: "var(--chart-1)" },
-    college7: { label: "Group 7", color: "var(--chart-2)" },
+    college1: { label: "College 1", color: "var(--chart-1)" },
+    college2: { label: "College 2", color: "var(--chart-2)" },
+    college3: { label: "College 3", color: "var(--chart-3)" },
+    college4: { label: "College 4", color: "var(--chart-4)" },
+    college5: { label: "College 5", color: "var(--chart-5)" },
+    college6: { label: "College 6", color: "var(--chart-1)" },
+    college7: { label: "College 7", color: "var(--chart-2)" },
   } satisfies ChartConfig;
 
   const openSession = (sessionId: string) => {
@@ -156,7 +158,7 @@ export default function DashboardWelcomePage() {
 
   if (dashboardQuery.isLoading) {
     return (
-        <ChangingLoadingState
+      <ChangingLoadingState
         messages={[
           "Fetching dashboard data...",
           "Loading vote statistics...",
@@ -176,7 +178,10 @@ export default function DashboardWelcomePage() {
         subtitle={`Track ${participantLabels.singular.toLowerCase()} readiness, election activity, turnout momentum, and recent actions from one workspace.`}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => router.push("/dashboard/reports")}>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard/reports")}
+            >
               Reports
             </Button>
             <Button onClick={() => router.push("/dashboard/sessions/create")}>
@@ -238,7 +243,7 @@ export default function DashboardWelcomePage() {
               />
             ) : (
               <Card className="border shadow-none">
-                <CardContent className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 p-6 text-center">
+                <CardContent className="flex h-full min-h-80 flex-col items-center justify-center gap-3 p-6 text-center">
                   <div className="rounded-2xl border border-border/70 bg-muted/30 p-3 text-muted-foreground">
                     <Building2 className="h-5 w-5" />
                   </div>
@@ -247,8 +252,9 @@ export default function DashboardWelcomePage() {
                       Structure insights are streamlined
                     </p>
                     <p className="max-w-sm text-sm text-muted-foreground">
-                      This workspace is not grouping {participantLabels.plural.toLowerCase()} by
-                      level, so the operational focus stays on sessions, turnout, and recent
+                      This workspace is not organizing{" "}
+                      {participantLabels.plural.toLowerCase()} by level, so the
+                      operational focus stays on sessions, turnout, and recent
                       activity.
                     </p>
                   </div>
@@ -272,7 +278,7 @@ export default function DashboardWelcomePage() {
           title="Coverage and engagement"
           description={
             showCollegeStructure
-              ? `See where ${participantLabels.singular.toLowerCase()} density lives across visible groups and who is consistently participating across sessions.`
+              ? `See where ${participantLabels.singular.toLowerCase()} density lives across visible colleges and who is consistently participating across sessions.`
               : `Track participation consistency and engagement across recent sessions.`
           }
         >
@@ -317,7 +323,9 @@ export default function DashboardWelcomePage() {
                   Avg votes / session
                 </p>
                 <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                  {overview?.avg_votes_per_session?.toLocaleString?.() || overview?.avg_votes_per_session || 0}
+                  {overview?.avg_votes_per_session?.toLocaleString?.() ||
+                    overview?.avg_votes_per_session ||
+                    0}
                 </p>
               </div>
             </CardContent>
@@ -345,7 +353,7 @@ export default function DashboardWelcomePage() {
                 </div>
                 <div>
                   <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                    {structureDimensionLabel}s
+                    Colleges
                   </p>
                   <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                     {overview?.total_colleges?.toLocaleString() || 0}

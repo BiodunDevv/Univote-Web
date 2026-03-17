@@ -10,7 +10,7 @@ import {
 
 const collegeChartConfig = {
   students: {
-    label: "Participants",
+    label: "Students",
     color: "var(--chart-1)",
   },
   departments: {
@@ -30,7 +30,7 @@ type CollegeOverviewChartProps = {
 
 export function CollegeOverviewChart({
   data,
-  participantPluralLabel = "Participants",
+  participantPluralLabel = "Students",
 }: CollegeOverviewChartProps) {
   if (data.length === 0) {
     return (

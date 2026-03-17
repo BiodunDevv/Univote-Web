@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Circle, Marker, useMap } from "react-leaflet";
+import { Circle, MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix default marker icon issue with Leaflet in Next.js
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -17,7 +16,6 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Custom red marker icon
 const redIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
@@ -29,16 +27,15 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-interface MapUpdaterProps {
+type MapUpdaterProps = {
   center: [number, number];
-}
+};
 
-// Component to update map view when center changes
 function MapUpdater({ center }: MapUpdaterProps) {
   const map = useMap();
 
   useEffect(() => {
-    map.setView(center, map.getZoom());
+    map.setView(center, map.getZoom(), { animate: true });
   }, [center, map]);
 
   return null;
@@ -55,28 +52,26 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
   const center: [number, number] = [lat, lng];
 
   useEffect(() => {
-    // Use a microtask to avoid synchronous setState warning
     Promise.resolve().then(() => setIsMounted(true));
   }, []);
 
   if (!isMounted) {
     return (
-      <div className="w-full h-[500px] rounded-xl border-2 border-border bg-muted flex items-center justify-center">
+      <div className="flex h-[500px] w-full items-center justify-center rounded-xl border-2 border-border bg-muted">
         <p className="text-xs text-muted-foreground">Loading map...</p>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-[500px] rounded-xl overflow-hidden border-2 border-border shadow-lg">
+    <div className="relative h-[500px] w-full overflow-hidden rounded-xl border-2 border-border shadow-lg">
       <MapContainer
         center={center}
         zoom={15}
-        scrollWheelZoom={true}
+        scrollWheelZoom
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
-        {/* Satellite/Street view tiles */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}"
@@ -84,38 +79,32 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
           maxZoom={20}
         />
 
-        {/* Red marker for center */}
         <Marker position={center} icon={redIcon} />
-
-        {/* Blue circle for radius */}
         <Circle
           center={center}
-          radius={radius}
+          radius={Math.max(1, radius)}
           pathOptions={{
             fillColor: "#3b82f6",
             fillOpacity: 0.15,
             color: "#3b82f6",
-            opacity: 0.6,
+            opacity: 0.7,
             weight: 2,
           }}
         />
-
-        {/* Map updater */}
         <MapUpdater center={center} />
       </MapContainer>
 
-      {/* Location Info Card - Facebook Style */}
-      <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 px-4 py-3 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-1000">
+      <div className="absolute top-3 left-3 z-20 rounded-xl border border-gray-200 bg-white/95 px-4 py-3 shadow-xl backdrop-blur dark:border-gray-700 dark:bg-gray-900/95">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
             <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
               Center Point
             </span>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium w-12">
+              <span className="w-12 text-xs font-medium text-gray-600 dark:text-gray-400">
                 Lat:
               </span>
               <span className="font-mono text-xs font-bold text-gray-900 dark:text-gray-100">
@@ -123,7 +112,7 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium w-12">
+              <span className="w-12 text-xs font-medium text-gray-600 dark:text-gray-400">
                 Lng:
               </span>
               <span className="font-mono text-xs font-bold text-gray-900 dark:text-gray-100">
@@ -134,15 +123,14 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
         </div>
       </div>
 
-      {/* Radius Info Card - Facebook Style */}
-      <div className="absolute bottom-3 left-3 bg-blue-500 dark:bg-blue-600 backdrop-blur-md bg-opacity-95 px-4 py-2.5 rounded-xl shadow-xl border border-blue-400 dark:border-blue-500 z-1000">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
-          <div className="text-white">
+      <div className="absolute bottom-3 left-3 z-20 rounded-xl border border-blue-400 bg-blue-500/95 px-4 py-2.5 shadow-xl backdrop-blur dark:border-blue-500 dark:bg-blue-600/95">
+        <div className="flex items-center gap-2.5 text-white">
+          <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-white" />
+          <div>
             <p className="text-xs font-semibold">Voting Radius</p>
             <p className="text-sm font-bold">
               {radius}m
-              <span className="text-xs font-normal ml-1 opacity-90">
+              <span className="ml-1 text-xs font-normal opacity-90">
                 ({(radius / 1000).toFixed(2)}km)
               </span>
             </p>
@@ -150,13 +138,12 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
         </div>
       </div>
 
-      {/* Map Controls Card - Facebook Style */}
-      <div className="absolute top-3 right-3 bg-white dark:bg-gray-900 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 px-3 py-2 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-1000">
-        <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1.5">
-          🛰️ Satellite View
+      <div className="absolute top-3 right-3 z-20 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-xl backdrop-blur dark:border-gray-700 dark:bg-gray-900/95">
+        <p className="mb-1.5 text-xs font-semibold text-gray-900 dark:text-gray-100">
+          Satellite View
         </p>
         <p className="text-xs text-gray-600 dark:text-gray-400">
-          Zoom & Pan enabled
+          Zoom and pan enabled
         </p>
       </div>
     </div>

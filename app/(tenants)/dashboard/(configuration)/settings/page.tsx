@@ -53,8 +53,7 @@ type ParticipantFieldPolicy = {
 type SettingsTab = "profile" | "security" | "system";
 type ParticipantStructureTab = "identity" | "structure" | "media";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 function SettingsContent() {
   const router = useRouter();
@@ -507,7 +506,11 @@ function SettingsContent() {
                   </div>
                   <div className="space-y-2">
                     <Label>Role</Label>
-                    <Input value={roleLabel} disabled className="h-11 bg-muted/40" />
+                    <Input
+                      value={roleLabel}
+                      disabled
+                      className="h-11 bg-muted/40"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Workspace access</Label>
@@ -546,7 +549,9 @@ function SettingsContent() {
                 </p>
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <span className="text-sm text-muted-foreground">Role access</span>
+                <span className="text-sm text-muted-foreground">
+                  Role access
+                </span>
                 <Badge variant="secondary">{roleLabel}</Badge>
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4">
@@ -662,7 +667,8 @@ function SettingsContent() {
               </form>
 
               <div className="space-y-3">
-                {organizations.filter((organization) => organization.linked).length === 0 ? (
+                {organizations.filter((organization) => organization.linked)
+                  .length === 0 ? (
                   <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
                     No extra organizations are linked yet.
                   </div>
@@ -683,13 +689,17 @@ function SettingsContent() {
                           </div>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {organization.slug}
-                            {organization.label ? ` • ${organization.label}` : ""}
+                            {organization.label
+                              ? ` • ${organization.label}`
+                              : ""}
                           </p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={unlinkingOrganizationSlug === organization.slug}
+                          disabled={
+                            unlinkingOrganizationSlug === organization.slug
+                          }
                           onClick={async () => {
                             setUnlinkingOrganizationSlug(organization.slug);
                             try {
@@ -720,185 +730,16 @@ function SettingsContent() {
 
           {!isSuperAdmin ? (
             <TenantSectionCard
-              title="Participant structure"
-              description="Control which participant fields exist across sign-in, profile, filters, imports, and session eligibility for this tenant."
-              contentClassName="space-y-4"
+              title="University structure policy"
+              description="Identity and structure controls are now standardized platform-wide for all university tenants."
+              contentClassName="space-y-3"
             >
-              {fieldsLoading ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : (
-                <>
-                  <Alert>
-                    <AlertDescription>
-                      Participant structure controls how records behave across the
-                      whole tenant. Enable a field only when your organization
-                      actively uses it. Required fields must be supplied during
-                      manual creation and bulk upload. Profile visibility affects
-                      what participants see in their portal. Filter visibility
-                      adds the field to admin search and list screens. Eligibility
-                      allows sessions to restrict who can vote using that field.
-                    </AlertDescription>
-                  </Alert>
-                  <Tabs
-                    value={participantStructureTab}
-                    onValueChange={(value) =>
-                      setParticipantStructureTab(value as ParticipantStructureTab)
-                    }
-                    className="space-y-4"
-                  >
-                    <TabsList
-                      variant="line"
-                      className="w-full justify-start overflow-x-auto border-b border-border/70 px-0"
-                    >
-                      <TabsTrigger value="identity" className="px-4 py-2">
-                        Identity fields
-                      </TabsTrigger>
-                      <TabsTrigger value="structure" className="px-4 py-2">
-                        Structure fields
-                      </TabsTrigger>
-                      <TabsTrigger value="media" className="px-4 py-2">
-                        Media & verification
-                      </TabsTrigger>
-                    </TabsList>
-
-                    {(
-                      [
-                        {
-                          value: "identity",
-                          fields: ["email"],
-                        },
-                        {
-                          value: "structure",
-                          fields: ["college", "department", "level"],
-                        },
-                        {
-                          value: "media",
-                          fields: ["photo_url"],
-                        },
-                      ] as Array<{
-                        value: ParticipantStructureTab;
-                        fields: string[];
-                      }>
-                    ).map((group) => (
-                      <TabsContent
-                        key={group.value}
-                        value={group.value}
-                        className="space-y-4"
-                      >
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                          {Object.entries(participantFields)
-                            .filter(([fieldKey]) => group.fields.includes(fieldKey))
-                            .map(([fieldKey, field]) => (
-                              <div
-                                key={fieldKey}
-                                className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-                              >
-                                <div className="mb-3">
-                                  <p className="text-sm font-semibold text-foreground">
-                                    {field.label || fieldKey}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {fieldKey === "email"
-                                      ? "Use this for notifications, recovery, and direct communication with participants."
-                                      : fieldKey === "college"
-                                        ? "Use this for top-level groups such as schools, regions, divisions, or broad units."
-                                        : fieldKey === "department"
-                                          ? "Use this for smaller units such as departments, teams, chapters, or programs."
-                                          : fieldKey === "level"
-                                            ? "Use this for stages like year of study, cohort, class, or membership tier."
-                                            : "Use this when profile images or biometric verification are part of your workflow."}
-                                  </p>
-                                </div>
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs text-muted-foreground">Enabled</span>
-                                    <Switch
-                                      checked={field.enabled !== false}
-                                      onCheckedChange={(checked) =>
-                                        handleParticipantFieldToggle(fieldKey, "enabled", checked)
-                                      }
-                                    />
-                                  </div>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs text-muted-foreground">Required</span>
-                                    <Switch
-                                      checked={Boolean(field.required)}
-                                      disabled={field.enabled === false}
-                                      onCheckedChange={(checked) =>
-                                        handleParticipantFieldToggle(fieldKey, "required", checked)
-                                      }
-                                    />
-                                  </div>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs text-muted-foreground">Show in profile</span>
-                                    <Switch
-                                      checked={Boolean(field.show_in_profile)}
-                                      disabled={field.enabled === false}
-                                      onCheckedChange={(checked) =>
-                                        handleParticipantFieldToggle(
-                                          fieldKey,
-                                          "show_in_profile",
-                                          checked,
-                                        )
-                                      }
-                                    />
-                                  </div>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs text-muted-foreground">Show in filters</span>
-                                    <Switch
-                                      checked={Boolean(field.show_in_filters)}
-                                      disabled={field.enabled === false}
-                                      onCheckedChange={(checked) =>
-                                        handleParticipantFieldToggle(
-                                          fieldKey,
-                                          "show_in_filters",
-                                          checked,
-                                        )
-                                      }
-                                    />
-                                  </div>
-                                  {["college", "department", "level"].includes(fieldKey) ? (
-                                    <div className="flex items-center justify-between gap-3">
-                                      <span className="text-xs text-muted-foreground">
-                                        Allow in eligibility
-                                      </span>
-                                      <Switch
-                                        checked={Boolean(field.allow_in_eligibility)}
-                                        disabled={field.enabled === false}
-                                        onCheckedChange={(checked) =>
-                                          handleParticipantFieldToggle(
-                                            fieldKey,
-                                            "allow_in_eligibility",
-                                            checked,
-                                          )
-                                        }
-                                      />
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                  {fieldsMessage ? (
-                    <Alert>
-                      <AlertDescription>{fieldsMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                  <div className="flex justify-end">
-                    <Button onClick={() => void saveParticipantFields()} disabled={fieldsSaving}>
-                      {fieldsSaving ? "Saving..." : "Save participant structure"}
-                    </Button>
-                  </div>
-                </>
-              )}
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                University tenants now use a fixed model: colleges, departments,
+                levels, required photo, and mandatory face verification. Custom
+                identifier and participant-structure editing has been removed
+                from this settings page.
+              </div>
             </TenantSectionCard>
           ) : null}
         </TabsContent>
@@ -939,7 +780,9 @@ function SettingsContent() {
                       id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
                       value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      onChange={(event) =>
+                        setCurrentPassword(event.target.value)
+                      }
                       className="h-11 pr-11"
                       required
                     />
@@ -973,7 +816,9 @@ function SettingsContent() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowNewPassword((current) => !current)}
+                        onClick={() =>
+                          setShowNewPassword((current) => !current)
+                        }
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                       >
                         {showNewPassword ? (
@@ -1052,7 +897,7 @@ function SettingsContent() {
                 "Use a unique password for Univote only.",
                 "Rotate credentials immediately after staff changes.",
                 "Do not share tenant-admin access across departments.",
-                "Review notification and billing notices regularly.",
+                "Review notifications and application updates regularly.",
               ].map((item) => (
                 <div
                   key={item}
@@ -1152,20 +997,36 @@ function SettingsContent() {
                     <span className="text-sm text-muted-foreground">
                       Face verification
                     </span>
-                    <Badge variant={systemConfig?.facepp.configured ? "default" : "secondary"}>
-                      {systemConfig?.facepp.configured ? "Configured" : "Pending"}
+                    <Badge
+                      variant={
+                        systemConfig?.facepp.configured
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {systemConfig?.facepp.configured
+                        ? "Configured"
+                        : "Pending"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4">
                     <span className="text-sm text-muted-foreground">
                       Email delivery
                     </span>
-                    <Badge variant={systemConfig?.email.configured ? "default" : "secondary"}>
-                      {systemConfig?.email.configured ? "Configured" : "Pending"}
+                    <Badge
+                      variant={
+                        systemConfig?.email.configured ? "default" : "secondary"
+                      }
+                    >
+                      {systemConfig?.email.configured
+                        ? "Configured"
+                        : "Pending"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <span className="text-sm text-muted-foreground">Environment</span>
+                    <span className="text-sm text-muted-foreground">
+                      Environment
+                    </span>
                     <Badge variant="outline">
                       {systemConfig?.other.environment || "Unknown"}
                     </Badge>
@@ -1184,7 +1045,9 @@ function SettingsContent() {
                       type="email"
                       placeholder="test@example.com"
                       value={testEmailAddress}
-                      onChange={(event) => setTestEmailAddress(event.target.value)}
+                      onChange={(event) =>
+                        setTestEmailAddress(event.target.value)
+                      }
                       className="h-11"
                     />
                   </div>

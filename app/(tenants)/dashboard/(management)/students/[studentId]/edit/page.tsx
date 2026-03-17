@@ -19,7 +19,6 @@ import {
 import type { Student } from "@/types/student";
 import {
   formatParticipantIdentifier,
-  getTenantParticipantLabels,
   isTenantParticipantFieldEnabled,
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
@@ -33,10 +32,10 @@ export default function EditStudentPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const studentId = params.studentId as string;
-  const backRef = searchParams.get("ref") || "/dashboard/participants";
+  const backRef = searchParams.get("ref") || "/dashboard/students";
 
   const { token, hasHydrated, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
+  const participantLabels = { singular: "Student", plural: "Students" };
   const isAuthorized = hasHydrated && Boolean(token);
   const studentDetailQuery = useAdminStudentDetailQuery(studentId, {
     enabled: isAuthorized,
@@ -195,96 +194,96 @@ function EditStudentForm({
       title={`${participantSingularLabel} profile`}
       description={`Update the identity fields and access state for this ${participantSingularLabel.toLowerCase()} account.`}
     >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void onSubmit({
-              full_name: fullName,
-              email,
-              level,
-              is_active: isActive,
-            });
-          }}
-          className="space-y-3"
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Full Name</Label>
-              <Input
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                required
-              />
-            </div>
-
-            {showEmail ? (
-              <div className="space-y-1.5">
-                <Label className="text-xs">Email</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {showLevel ? (
-              <div className="space-y-1.5">
-                <Label className="text-xs">Level</Label>
-                <Input
-                  value={level}
-                  onChange={(event) => setLevel(event.target.value)}
-                  required
-                />
-              </div>
-            ) : null}
-
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <div className="flex items-start gap-3">
-                <div className="rounded-xl border border-border/70 bg-background/80 p-2">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Verification state
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {student.has_facial_data
-                      ? `This ${participantSingularLabel.toLowerCase()} already has facial verification data.`
-                      : "No facial verification record is attached yet."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div>
-              <p className="text-sm font-medium">Active Status</p>
-              <p className="text-xs text-muted-foreground">
-                {`Toggle ${participantSingularLabel.toLowerCase()} access`}
-              </p>
-            </div>
-            <Checkbox
-              checked={isActive}
-              onCheckedChange={(checked) => setIsActive(checked === true)}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSubmit({
+            full_name: fullName,
+            email,
+            level,
+            is_active: isActive,
+          });
+        }}
+        className="space-y-3"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Full Name</Label>
+            <Input
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              required
             />
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {showEmail ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+          ) : null}
+        </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
+        <div className="grid gap-4 md:grid-cols-2">
+          {showLevel ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Level</Label>
+              <Input
+                value={level}
+                onChange={(event) => setLevel(event.target.value)}
+                required
+              />
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl border border-border/70 bg-background/80 p-2">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Verification state
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {student.has_facial_data
+                    ? `This ${participantSingularLabel.toLowerCase()} already has facial verification data.`
+                    : "No facial verification record is attached yet."}
+                </p>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <p className="text-sm font-medium">Active Status</p>
+            <p className="text-xs text-muted-foreground">
+              {`Toggle ${participantSingularLabel.toLowerCase()} access`}
+            </p>
+          </div>
+          <Checkbox
+            checked={isActive}
+            onCheckedChange={(checked) => setIsActive(checked === true)}
+          />
+        </div>
+
+        {error && <p className="text-xs text-destructive">{error}</p>}
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
     </TenantSectionCard>
   );
 }

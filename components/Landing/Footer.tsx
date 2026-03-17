@@ -11,16 +11,16 @@ const links = [
     href: "/#features",
   },
   {
-    title: "Pricing",
-    href: "/#pricing",
-  },
-  {
     title: "Stories",
     href: "/#stories",
   },
   {
-    title: "Apply",
-    href: "/#apply",
+    title: "Tenant Application",
+    href: "/tenant-application",
+  },
+  {
+    title: "Review Application",
+    href: "/application-status",
   },
   {
     title: "Participant Login",

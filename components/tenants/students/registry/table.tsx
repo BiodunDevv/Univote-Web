@@ -11,6 +11,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import type { StudentsRegistryTableProps } from "./types";
 
 function getStudentIdentifier(student: {
@@ -34,10 +35,11 @@ function getStudentIdentifier(student: {
 
 export function StudentsRegistryTable({
   students,
+  rowStartIndex = 0,
   selectedIds,
   canManageStudents,
-  participantSingularLabel = "Participant",
-  participantPluralLabel = "Participants",
+  participantSingularLabel = "Student",
+  participantPluralLabel = "Students",
   showCollegeField = true,
   showDepartmentField = true,
   showLevelField = true,
@@ -54,10 +56,12 @@ export function StudentsRegistryTable({
   onPreviewImage,
 }: StudentsRegistryTableProps) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-3">
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{students.length} visible {participantPluralLabel.toLowerCase()}</span>
+          <span>
+            {students.length} visible {participantPluralLabel.toLowerCase()}
+          </span>
           <span className="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 font-medium text-foreground">
             {selectedIds.length} selected
           </span>
@@ -75,8 +79,8 @@ export function StudentsRegistryTable({
       </div>
 
       {students.length > 0 ? (
-        <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
-          {students.map((student) => {
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {students.map((student, index) => {
             const initials = student.full_name
               .split(" ")
               .map((name) => name[0])
@@ -85,23 +89,39 @@ export function StudentsRegistryTable({
               .slice(0, 2);
 
             return (
-              <div
+              <Card
                 key={student._id}
-                className="rounded-xl border border-border/70 bg-background p-3 shadow-none"
+                className="rounded-xl border border-border/70 shadow-none"
               >
-                <div className="flex items-start gap-3">
-                  {canManageStudents ? (
-                    <Checkbox
-                      checked={selectedIds.includes(student._id)}
-                      onCheckedChange={(checked) =>
-                        onToggleOne(student._id, checked === true)
+                <CardContent className="space-y-3 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="inline-flex items-center gap-1.5">
+                      <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border/70 bg-muted/20 px-1.5 text-xs font-medium text-muted-foreground">
+                        {rowStartIndex + index + 1}
+                      </span>
+                      {canManageStudents ? (
+                        <Checkbox
+                          checked={selectedIds.includes(student._id)}
+                          onCheckedChange={(checked) =>
+                            onToggleOne(student._id, checked === true)
+                          }
+                          aria-label={`Select ${student.full_name}`}
+                        />
+                      ) : null}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        student.is_active
+                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
+                          : "border-border bg-muted/60 text-muted-foreground"
                       }
-                      aria-label={`Select ${student.full_name}`}
-                      className="mt-1"
-                    />
-                  ) : null}
+                    >
+                      {student.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
 
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -112,147 +132,116 @@ export function StudentsRegistryTable({
                           identifier: getStudentIdentifier(student),
                         });
                       }}
-                      className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-0.5"
+                      className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/40"
                     >
                       {showPhotoField && student.photo_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={student.photo_url}
                           alt={student.full_name}
-                          className="h-full w-full rounded-sm object-contain"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center rounded-sm text-[10px] font-semibold text-muted-foreground">
+                        <span className="text-[10px] font-semibold text-muted-foreground">
                           {initials}
                         </span>
                       )}
                     </button>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground">
-                            {student.full_name}
-                          </p>
-                          <p className="mt-1 font-mono text-xs text-primary">
-                            {getStudentIdentifier(student)}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={
-                            student.is_active
-                              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
-                              : "border-border bg-muted/60 text-muted-foreground"
-                          }
-                        >
-                          {student.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-
-                      <p className="mt-1 break-all text-xs text-muted-foreground">
-                        {student.email}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {student.full_name}
+                      </p>
+                      <p className="truncate font-mono text-xs text-primary">
+                        {getStudentIdentifier(student)}
                       </p>
                     </div>
                   </div>
-                </div>
 
-                {showCollegeField || showDepartmentField ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    <p className="truncate">{student.email}</p>
                     {showCollegeField ? (
-                      <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                          College
-                        </p>
-                        <p className="mt-1 truncate text-sm font-medium">
-                          {student.college || "Not used"}
-                        </p>
-                      </div>
+                      <p className="truncate">
+                        College: {student.college || "Not used"}
+                      </p>
                     ) : null}
                     {showDepartmentField ? (
-                      <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                          Department
-                        </p>
-                        <p className="mt-1 truncate text-sm font-medium">
-                          {student.department || "Not used"}
-                        </p>
-                      </div>
+                      <p className="truncate">
+                        Department: {student.department || "Not used"}
+                      </p>
+                    ) : null}
+                    {showLevelField ? (
+                      <p>Level: {student.level || "Not set"}</p>
+                    ) : null}
+                    {showFaceField ? (
+                      <Badge
+                        variant={
+                          student.has_facial_data ? "default" : "outline"
+                        }
+                        className="mt-1"
+                      >
+                        {student.has_facial_data ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" />
+                            Face ready
+                          </>
+                        ) : (
+                          "Face pending"
+                        )}
+                      </Badge>
                     ) : null}
                   </div>
-                ) : null}
 
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {showLevelField ? (
-                    <Badge variant="secondary">Level {student.level || "Not set"}</Badge>
-                  ) : null}
-                  {showFaceField ? (
-                    <Badge variant={student.has_facial_data ? "default" : "outline"}>
-                      {student.has_facial_data ? (
-                        <>
-                          <CheckCircle2 className="h-3 w-3" />
-                          Face ready
-                        </>
-                      ) : (
-                        "Face pending"
-                      )}
-                    </Badge>
-                  ) : null}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => onView(student._id)}>
-                    <IconEye className="mr-2 h-4 w-4" />
-                    View
-                  </Button>
-                  {showPhotoField && student.photo_url ? (
+                  <div className="flex flex-wrap gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        onPreviewImage({
-                          url: student.photo_url!,
-                          fullName: student.full_name,
-                          identifier: getStudentIdentifier(student),
-                        })
-                      }
+                      onClick={() => onView(student._id)}
                     >
-                      Preview image
+                      <IconEye className="mr-2 h-4 w-4" />
+                      View
                     </Button>
-                  ) : null}
-                  {canManageStudents ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => onEdit(student._id)}>
-                        <IconEdit className="mr-2 h-4 w-4" />
-                        Edit
-                      </Button>
-                      {student.is_active ? (
+                    {canManageStudents ? (
+                      <>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onMarkInactive(student._id)}
+                          onClick={() => onEdit(student._id)}
                         >
-                          <IconUserX className="mr-2 h-4 w-4" />
-                          Inactivate
+                          <IconEdit className="mr-2 h-4 w-4" />
+                          Edit
                         </Button>
-                      ) : (
+                        {student.is_active ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onMarkInactive(student._id)}
+                          >
+                            <IconUserX className="mr-2 h-4 w-4" />
+                            Inactive
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onMarkActive(student._id)}
+                          >
+                            <IconUserCheck className="mr-2 h-4 w-4" />
+                            Active
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onMarkActive(student._id)}
+                          onClick={() => onDelete(student._id)}
                         >
-                          <IconUserCheck className="mr-2 h-4 w-4" />
-                          Activate
+                          <IconTrash className="mr-2 h-4 w-4" />
+                          Delete
                         </Button>
-                      )}
-                      <Button variant="outline" size="sm" onClick={() => onDelete(student._id)}>
-                        <IconTrash className="mr-2 h-4 w-4" />
-                        Delete
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
-              </div>
+                      </>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>

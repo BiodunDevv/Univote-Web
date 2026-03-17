@@ -81,6 +81,23 @@ export interface TenantContext {
   participant_fields?: Record<string, TenantParticipantFieldPolicy>;
   eligibility_policy?: TenantEligibilityPolicy;
   entitlements?: TenantFeatureEntitlements;
+  onboarding?: {
+    contact_name?: string | null;
+    contact_email?: string | null;
+    student_count_estimate?: number | null;
+    admin_count_estimate?: number | null;
+    application_submitted_at?: string | null;
+    activated_at?: string | null;
+    approved_at?: string | null;
+    rejected_at?: string | null;
+    rejection_reason?: string | null;
+    status_timeline?: Array<{
+      status: string;
+      label: string;
+      note?: string | null;
+      at: string;
+    }>;
+  };
   billing?: {
     billing_cycle?: string;
     currency?: string;

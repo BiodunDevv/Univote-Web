@@ -26,7 +26,7 @@ type StudentsByCollegeChartProps = {
 export function StudentsByCollegeChart({
   data,
   chartConfig,
-  participantPluralLabel = "Participants",
+  participantPluralLabel = "Students",
   dimensionLabel = "College",
 }: StudentsByCollegeChartProps) {
   const totalParticipants = data.reduce(
@@ -42,7 +42,7 @@ export function StudentsByCollegeChart({
         </CardTitle>
         <CardDescription>
           {totalParticipants.toLocaleString()} tracked across visible{" "}
-          {dimensionLabel.toLowerCase()} groups
+          {dimensionLabel.toLowerCase()} units
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -3,12 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  AlertCircle,
-  Building2,
-  Mail,
-  User,
-} from "lucide-react";
+import { AlertCircle, Building2, Mail, User } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -161,22 +156,26 @@ export default function EditCollegePage() {
     return (
       <div className="mx-auto flex min-w-0 w-full max-w-4xl flex-1 flex-col gap-4 p-2">
         <TenantPageHeader
-          eyebrow="Tenant structure"
+          eyebrow="University structure"
           icon={<Building2 className="h-5 w-5" />}
           title="College editing is restricted"
-          subtitle="Your current tenant role can review structure, but only managers can update college configuration."
-          onBack={() => router.push(`/dashboard/structure/colleges/${collegeId}`)}
+          subtitle="Your current tenant role can review university structure, but only managers can update college configuration."
+          onBack={() =>
+            router.push(`/dashboard/structure/colleges/${collegeId}`)
+          }
         />
         <Card className="rounded-[1.75rem] border shadow-none">
           <CardContent className="space-y-3 p-6 text-sm text-muted-foreground">
             <p>
-              Ask a tenant owner or administrator with structure management access
+              Ask a tenant owner or administrator with college management access
               to update this college.
             </p>
             <div>
               <Button
                 variant="outline"
-                onClick={() => router.push(`/dashboard/structure/colleges/${collegeId}`)}
+                onClick={() =>
+                  router.push(`/dashboard/structure/colleges/${collegeId}`)
+                }
               >
                 Back to college
               </Button>
@@ -190,7 +189,7 @@ export default function EditCollegePage() {
   return (
     <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-4 p-2">
       <TenantPageHeader
-        eyebrow="Tenant structure"
+        eyebrow="University structure"
         icon={<Building2 className="h-5 w-5" />}
         title="Edit College"
         subtitle="Update naming, dean details, and operating state without leaving the tenant workspace."
@@ -209,14 +208,17 @@ export default function EditCollegePage() {
             ).toLocaleString(),
           },
           {
-            label: participantLabels.plural,
+            label: "Students",
             value: (
-              detailStatsQuery.data?.total_students ?? currentCollege.student_count
+              detailStatsQuery.data?.total_students ??
+              currentCollege.student_count
             ).toLocaleString(),
           },
           {
-            label: `Active ${participantLabels.plural.toLowerCase()}`,
-            value: (detailStatsQuery.data?.active_students ?? 0).toLocaleString(),
+            label: "Active students",
+            value: (
+              detailStatsQuery.data?.active_students ?? 0
+            ).toLocaleString(),
           },
           {
             label: "Current status",
@@ -227,8 +229,8 @@ export default function EditCollegePage() {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <TenantSectionCard
-          title="Structure identity"
-          description={`These fields shape how the college appears across ${participantLabels.singular.toLowerCase()} management, reporting, and session eligibility.`}
+          title="College identity"
+          description="These fields shape how the college appears across student management, reporting, and session eligibility."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
@@ -324,7 +326,8 @@ export default function EditCollegePage() {
                   College active
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Disable to keep the record while preventing new operational use.
+                  Disable to keep the record while preventing new operational
+                  use.
                 </p>
               </div>
               <Switch
@@ -353,7 +356,9 @@ export default function EditCollegePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/dashboard/structure/colleges/${collegeId}`)}
+            onClick={() =>
+              router.push(`/dashboard/structure/colleges/${collegeId}`)
+            }
           >
             Cancel
           </Button>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function StudentsUploadRedirectPage() {
-  redirect("/dashboard/participants?open=create&mode=bulk");
+  redirect("/dashboard/students?open=create&mode=bulk");
 }

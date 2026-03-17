@@ -24,9 +24,8 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   { name: "Features", href: "/#features" },
-  { name: "Pricing", href: "/#pricing" },
   { name: "Stories", href: "/#stories" },
-  { name: "Apply", href: "/#apply" },
+  { name: "Application", href: "/tenant-application" },
 ];
 
 export const HeroHeader = () => {
@@ -48,11 +47,10 @@ export const HeroHeader = () => {
     tenant,
     hasHydrated: adminHasHydrated,
   } = useAuthStore();
-  const {
-    token: studentToken,
-    hasHydrated: participantHasHydrated,
-  } = useStudentAuthStore();
-  const isCheckingSession = !mounted || !adminHasHydrated || !participantHasHydrated;
+  const { token: studentToken, hasHydrated: participantHasHydrated } =
+    useStudentAuthStore();
+  const isCheckingSession =
+    !mounted || !adminHasHydrated || !participantHasHydrated;
 
   const tenantWorkspaceHref =
     tenant?.slug ||
@@ -103,7 +101,10 @@ export const HeroHeader = () => {
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-5">
-              <Link href="/" className="flex items-center gap-2 text-xl font-bold">
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-xl font-bold"
+              >
                 <Logo />
               </Link>
               <nav className="hidden items-center gap-5 md:flex">
@@ -156,6 +157,14 @@ export const HeroHeader = () => {
                 </Button>
               ) : (
                 <>
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="hidden transition-transform md:inline-flex"
+                    size="sm"
+                  >
+                    <Link href="/application-status">Review Application</Link>
+                  </Button>
                   <Button
                     asChild
                     className="hidden transition-transform md:inline-flex"
@@ -252,6 +261,16 @@ export const HeroHeader = () => {
                         </Button>
                       ) : (
                         <>
+                          <Button
+                            variant="outline"
+                            asChild
+                            className="w-full py-3 text-sm"
+                            onClick={handleLinkClick}
+                          >
+                            <Link href="/application-status">
+                              Review Application
+                            </Link>
+                          </Button>
                           <Button
                             asChild
                             className="w-full py-3 text-sm"

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Settings2, Vote, CreditCard, Building2 } from "lucide-react";
+import { ArrowRight, Settings2, Vote, Building2 } from "lucide-react";
 import { type AuthSessionData, useAuthStore } from "@/lib/store/useAuthStore";
 import {
   buildPublicAppUrl,
@@ -29,7 +29,10 @@ function dismissWorkspaceGuide(tenantSlug: string | null) {
 function shouldShowWorkspaceGuide(tenantSlug: string | null) {
   if (typeof window === "undefined" || !tenantSlug) return false;
 
-  return window.localStorage.getItem(`workspace-guide-complete:${tenantSlug}`) !== "true";
+  return (
+    window.localStorage.getItem(`workspace-guide-complete:${tenantSlug}`) !==
+    "true"
+  );
 }
 
 export function TenantDashboardShell({
@@ -39,14 +42,8 @@ export function TenantDashboardShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const {
-    token,
-    admin,
-    tenant,
-    membership,
-    organizations,
-    hasHydrated,
-  } = useAuthStore();
+  const { token, admin, tenant, membership, organizations, hasHydrated } =
+    useAuthStore();
 
   const currentRef = useMemo(() => {
     if (typeof window === "undefined") {
@@ -156,7 +153,9 @@ export function TenantDashboardShell({
                       Review your workspace before inviting your team
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Start with settings to confirm participant structure, then check billing and publish your first session.
+                      Start with settings to confirm student structure, then
+                      review your application status and publish your first
+                      session.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -166,23 +165,38 @@ export function TenantDashboardShell({
                         Open settings
                       </Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" data-tour="tenant-guide-billing">
-                      <Link href="/dashboard/billing">
-                        <CreditCard className="mr-2 size-4" />
-                        Billing
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      data-tour="tenant-guide-application"
+                    >
+                      <Link href="/dashboard/application">
+                        <Building2 className="mr-2 size-4" />
+                        Application
                       </Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" data-tour="tenant-guide-sessions">
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      data-tour="tenant-guide-sessions"
+                    >
                       <Link href="/dashboard/sessions">
                         <Vote className="mr-2 size-4" />
                         Sessions
                       </Link>
                     </Button>
                     {structureEnabled ? (
-                      <Button asChild size="sm" variant="outline" data-tour="tenant-guide-structure">
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        data-tour="tenant-guide-structure"
+                      >
                         <Link href="/dashboard/structure/colleges">
                           <Building2 className="mr-2 size-4" />
-                          Structure
+                          Colleges
                         </Link>
                       </Button>
                     ) : null}

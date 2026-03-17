@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle2,
-  CreditCard,
   FileText,
   Layers3,
   LifeBuoy,
@@ -17,7 +16,6 @@ import {
   Trash2,
 } from "lucide-react";
 import {
-  usePlatformBillingOverviewQuery,
   useCreatePlatformBiometricProviderMutation,
   useDeletePlatformBiometricProviderMutation,
   usePlatformOverviewQuery,
@@ -30,10 +28,22 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSettingsStore } from "@/lib/store/useSettingsStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -48,39 +58,45 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const workspaceLinks = [
   {
-    href: "/super-admin/billing",
-    label: "Billing controls",
-    description: "Review recurring revenue, invoice posture, and tenant subscription state.",
-    icon: CreditCard,
+    href: "/super-admin/onboarding",
+    label: "Application verification",
+    description:
+      "Review university onboarding status, moderation notes, and activation progress.",
+    icon: Rocket,
   },
   {
     href: "/super-admin/onboarding",
     label: "Onboarding queue",
-    description: "Move new institutions from payment to provisioning and activation.",
+    description:
+      "Move new institutions from payment to provisioning and activation.",
     icon: Rocket,
   },
   {
     href: "/super-admin/testimonials",
     label: "Testimonials",
-    description: "Moderate marketing proof points and publish approved stories.",
+    description:
+      "Moderate marketing proof points and publish approved stories.",
     icon: Layers3,
   },
   {
     href: "/super-admin/notifications",
     label: "Notifications",
-    description: "Track system notices, support escalation, and tenant lifecycle alerts.",
+    description:
+      "Track system notices, support escalation, and tenant lifecycle alerts.",
     icon: Bell,
   },
   {
     href: "/super-admin/system-health",
     label: "System health",
-    description: "Inspect health metrics, infra posture, and platform readiness.",
+    description:
+      "Inspect health metrics, infra posture, and platform readiness.",
     icon: ShieldCheck,
   },
   {
     href: "/super-admin/audit-logs",
     label: "Audit logs",
-    description: "Inspect privileged actions across tenants, billing, and platform operations.",
+    description:
+      "Inspect privileged actions across tenants and platform operations.",
     icon: FileText,
   },
 ];
@@ -95,14 +111,12 @@ export default function PlatformSettingsPage() {
     changePassword,
   } = useSettingsStore();
   const overviewQuery = usePlatformOverviewQuery();
-  const billingQuery = usePlatformBillingOverviewQuery();
   const onboardingQuery = usePlatformTenantsQuery({
     status: "pending_approval",
     limit: 1,
   });
 
   const overview = overviewQuery.data?.overview;
-  const billing = billingQuery.data?.metrics;
   const settingsQuery = usePlatformSettingsQuery();
   const updateSettings = useUpdatePlatformSettingsMutation();
   const createBiometricProvider = useCreatePlatformBiometricProviderMutation();
@@ -110,13 +124,16 @@ export default function PlatformSettingsPage() {
   const testBiometrics = useTestPlatformBiometricsMutation();
   const biometrics = settingsQuery.data?.biometrics;
   const facepp = settingsQuery.data?.biometrics.providers.facepp;
-  const awsRekognition = settingsQuery.data?.biometrics.providers.aws_rekognition;
+  const awsRekognition =
+    settingsQuery.data?.biometrics.providers.aws_rekognition;
   const azureFace = settingsQuery.data?.biometrics.providers.azure_face;
   const googleVision = settingsQuery.data?.biometrics.providers.google_vision;
   const [activeProvider, setActiveProvider] = useState("facepp");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const [baseUrl, setBaseUrl] = useState("https://api-us.faceplusplus.com/facepp/v3");
+  const [baseUrl, setBaseUrl] = useState(
+    "https://api-us.faceplusplus.com/facepp/v3",
+  );
   const [threshold, setThreshold] = useState("80");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [awsAccessKeyId, setAwsAccessKeyId] = useState("");
@@ -199,7 +216,10 @@ export default function PlatformSettingsPage() {
 
   const providerCatalog = biometrics?.provider_catalog || {};
   const providerEntries = Object.entries(providerCatalog);
-  const providerRecords = (biometrics?.providers || {}) as Record<string, Record<string, unknown>>;
+  const providerRecords = (biometrics?.providers || {}) as Record<
+    string,
+    Record<string, unknown>
+  >;
   const activeProviderSettings = providerRecords[activeProvider] || {};
 
   useEffect(() => {
@@ -354,7 +374,11 @@ export default function PlatformSettingsPage() {
       });
       toast.success(result.message || "Biometric settings updated");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update biometric settings");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update biometric settings",
+      );
     } finally {
       setProviderAction((current) =>
         current?.providerKey === activeProvider && current.action === "save"
@@ -376,7 +400,9 @@ export default function PlatformSettingsPage() {
       toast.success(result.message || "Biometric provider created");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create biometric provider",
+        error instanceof Error
+          ? error.message
+          : "Failed to create biometric provider",
       );
     } finally {
       setProviderAction((current) =>
@@ -400,7 +426,9 @@ export default function PlatformSettingsPage() {
       toast.success(result.message || "Biometric provider removed");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to remove biometric provider",
+        error instanceof Error
+          ? error.message
+          : "Failed to remove biometric provider",
       );
     } finally {
       setProviderAction((current) =>
@@ -421,7 +449,9 @@ export default function PlatformSettingsPage() {
       setLastBiometricTest(result);
       toast.success(`Provider test succeeded with ${result.provider}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Provider test failed");
+      toast.error(
+        error instanceof Error ? error.message : "Provider test failed",
+      );
     } finally {
       setProviderAction((current) =>
         current?.providerKey === activeProvider && current.action === "test"
@@ -436,13 +466,16 @@ export default function PlatformSettingsPage() {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
+      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
         <div className="space-y-2">
-          <h1 className="text-lg font-semibold sm:text-xl">Platform Settings</h1>
+          <h1 className="text-lg font-semibold sm:text-xl">
+            Platform Settings
+          </h1>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Use this workspace as the operating hub for platform-wide controls, tenant lifecycle
-            supervision, and operational follow-up. Critical actions still live in their dedicated
-            pages, but this gives super admins one clean control surface.
+            Use this workspace as the operating hub for platform-wide controls,
+            tenant lifecycle supervision, and operational follow-up. Critical
+            actions still live in their dedicated pages, but this gives super
+            admins one clean control surface.
           </p>
         </div>
       </section>
@@ -463,14 +496,14 @@ export default function PlatformSettingsPage() {
         </Card>
         <Card className="border-border/70 shadow-none">
           <CardHeader className="pb-2">
-            <CardDescription>Recurring revenue</CardDescription>
+            <CardDescription>Total tenants</CardDescription>
             <CardTitle className="text-lg sm:text-xl">
-              {billing ? `N${billing.monthly_recurring_revenue_ngn.toLocaleString()}` : "--"}
+              {overview ? overview.total_tenants : "--"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Current monthly recurring revenue across active subscriptions.
+              Total institutions provisioned on the Univote platform.
             </p>
           </CardContent>
         </Card>
@@ -483,20 +516,21 @@ export default function PlatformSettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Tenants that cleared payment and are waiting on platform activation review.
+              Tenants that cleared payment and are waiting on platform
+              activation review.
             </p>
           </CardContent>
         </Card>
         <Card id="security" className="border-border/70 shadow-none">
           <CardHeader className="pb-2">
-            <CardDescription>Scheduled downgrades</CardDescription>
+            <CardDescription>Suspended tenants</CardDescription>
             <CardTitle className="text-lg sm:text-xl">
-              {billing ? billing.scheduled_downgrades : "--"}
+              {overview ? overview.suspended_tenants : "--"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Plan changes queued for the end of the current tenant billing cycle.
+              Institutions currently suspended from platform access.
             </p>
           </CardContent>
         </Card>
@@ -507,7 +541,8 @@ export default function PlatformSettingsPage() {
           <CardHeader>
             <CardTitle>Profile</CardTitle>
             <CardDescription>
-              Update your super-admin identity, contact email, and the account details used across platform operations.
+              Update your super-admin identity, contact email, and the account
+              details used across platform operations.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -531,9 +566,13 @@ export default function PlatformSettingsPage() {
               </div>
             </div>
             <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">{profile?.role || admin?.role || "super_admin"}</p>
+              <p className="font-medium text-foreground">
+                {profile?.role || admin?.role || "super_admin"}
+              </p>
               <p className="mt-1">
-                Changes here update the identity shown in platform notifications, audit logs, announcements, and administrative activity.
+                Changes here update the identity shown in platform
+                notifications, audit logs, announcements, and administrative
+                activity.
               </p>
             </div>
             {profileMessage ? (
@@ -541,8 +580,15 @@ export default function PlatformSettingsPage() {
                 <AlertDescription>{profileMessage}</AlertDescription>
               </Alert>
             ) : null}
-            <Button onClick={() => void handleSaveProfile()} disabled={profileSaving}>
-              {profileSaving ? <LoadingButtonContent label="Saving profile..." /> : "Save profile changes"}
+            <Button
+              onClick={() => void handleSaveProfile()}
+              disabled={profileSaving}
+            >
+              {profileSaving ? (
+                <LoadingButtonContent label="Saving profile..." />
+              ) : (
+                "Save profile changes"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -551,12 +597,15 @@ export default function PlatformSettingsPage() {
           <CardHeader>
             <CardTitle>Security</CardTitle>
             <CardDescription>
-              Rotate your password without leaving the platform settings workspace.
+              Rotate your password without leaving the platform settings
+              workspace.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="super-admin-current-password">Current password</Label>
+              <Label htmlFor="super-admin-current-password">
+                Current password
+              </Label>
               <Input
                 id="super-admin-current-password"
                 type="password"
@@ -575,7 +624,9 @@ export default function PlatformSettingsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="super-admin-confirm-password">Confirm new password</Label>
+                <Label htmlFor="super-admin-confirm-password">
+                  Confirm new password
+                </Label>
                 <Input
                   id="super-admin-confirm-password"
                   type="password"
@@ -589,8 +640,16 @@ export default function PlatformSettingsPage() {
                 <AlertDescription>{securityMessage}</AlertDescription>
               </Alert>
             ) : null}
-            <Button variant="outline" onClick={() => void handleChangePassword()} disabled={securitySaving}>
-              {securitySaving ? <LoadingButtonContent label="Updating password..." /> : "Change password"}
+            <Button
+              variant="outline"
+              onClick={() => void handleChangePassword()}
+              disabled={securitySaving}
+            >
+              {securitySaving ? (
+                <LoadingButtonContent label="Updating password..." />
+              ) : (
+                "Change password"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -600,7 +659,8 @@ export default function PlatformSettingsPage() {
         <CardHeader>
           <CardTitle>Biometric provider</CardTitle>
           <CardDescription>
-            Create, configure, activate, test, and retire biometric providers from one managed catalog.
+            Create, configure, activate, test, and retire biometric providers
+            from one managed catalog.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -627,14 +687,19 @@ export default function PlatformSettingsPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold">{catalog.label}</p>
+                            <p className="text-sm font-semibold">
+                              {catalog.label}
+                            </p>
                             {isActive ? <Badge>Active</Badge> : null}
                             <Badge variant="outline">
-                              {catalog.implemented ? "Implemented" : "Catalog only"}
+                              {catalog.implemented
+                                ? "Implemented"
+                                : "Catalog only"}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {catalog.description || "Managed biometric provider option."}
+                            {catalog.description ||
+                              "Managed biometric provider option."}
                           </p>
                         </div>
                         {isConfigured ? (
@@ -658,7 +723,9 @@ export default function PlatformSettingsPage() {
                       </div>
 
                       <div className="mt-3 rounded-xl border border-border/60 bg-background/70 p-3 text-sm text-muted-foreground">
-                        Add this provider slot to the platform catalog now, then complete its credentials and testing before making it active for tenant workflows.
+                        Add this provider slot to the platform catalog now, then
+                        complete its credentials and testing before making it
+                        active for tenant workflows.
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -670,11 +737,15 @@ export default function PlatformSettingsPage() {
                         >
                           {providerAction?.providerKey === providerKey &&
                           providerAction.action === "create" ? (
-                            <LoadingButtonContent label={isEnabled ? "Updating..." : "Creating..."} />
+                            <LoadingButtonContent
+                              label={isEnabled ? "Updating..." : "Creating..."}
+                            />
                           ) : (
                             <>
                               <Plus className="mr-2 h-4 w-4" />
-                              {isEnabled ? "Re-save provider" : "Create provider"}
+                              {isEnabled
+                                ? "Re-save provider"
+                                : "Create provider"}
                             </>
                           )}
                         </Button>
@@ -715,7 +786,10 @@ export default function PlatformSettingsPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="active-provider">Active provider</Label>
-                      <Select value={activeProvider} onValueChange={setActiveProvider}>
+                      <Select
+                        value={activeProvider}
+                        onValueChange={setActiveProvider}
+                      >
                         <SelectTrigger id="active-provider">
                           <SelectValue placeholder="Select provider" />
                         </SelectTrigger>
@@ -731,14 +805,18 @@ export default function PlatformSettingsPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline">{providerCatalog[activeProvider]?.label || activeProvider}</Badge>
+                    <Badge variant="outline">
+                      {providerCatalog[activeProvider]?.label || activeProvider}
+                    </Badge>
                     <Badge variant="outline">
                       {providerCatalog[activeProvider]?.implemented
                         ? "Implemented"
                         : "Configuration ready"}
                     </Badge>
                     <Badge variant="outline">
-                      {activeProviderSettings.configured ? "Configured" : "Not configured"}
+                      {activeProviderSettings.configured
+                        ? "Configured"
+                        : "Not configured"}
                     </Badge>
                   </div>
 
@@ -751,7 +829,8 @@ export default function PlatformSettingsPage() {
                         "Configure this provider with the required credentials and thresholds."}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Configure the active provider here, or switch to another provider slot before saving.
+                      Configure the active provider here, or switch to another
+                      provider slot before saving.
                     </p>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -762,17 +841,28 @@ export default function PlatformSettingsPage() {
                             <Input
                               id="facepp-api-key"
                               value={apiKey}
-                              onChange={(event) => setApiKey(event.target.value)}
-                              placeholder={facepp?.api_key_masked || "Paste Face++ API key"}
+                              onChange={(event) =>
+                                setApiKey(event.target.value)
+                              }
+                              placeholder={
+                                facepp?.api_key_masked || "Paste Face++ API key"
+                              }
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="facepp-api-secret">API secret</Label>
+                            <Label htmlFor="facepp-api-secret">
+                              API secret
+                            </Label>
                             <Input
                               id="facepp-api-secret"
                               value={apiSecret}
-                              onChange={(event) => setApiSecret(event.target.value)}
-                              placeholder={facepp?.api_secret_masked || "Paste Face++ API secret"}
+                              onChange={(event) =>
+                                setApiSecret(event.target.value)
+                              }
+                              placeholder={
+                                facepp?.api_secret_masked ||
+                                "Paste Face++ API secret"
+                              }
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -780,18 +870,24 @@ export default function PlatformSettingsPage() {
                             <Input
                               id="facepp-base-url"
                               value={baseUrl}
-                              onChange={(event) => setBaseUrl(event.target.value)}
+                              onChange={(event) =>
+                                setBaseUrl(event.target.value)
+                              }
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="facepp-threshold">Confidence threshold</Label>
+                            <Label htmlFor="facepp-threshold">
+                              Confidence threshold
+                            </Label>
                             <Input
                               id="facepp-threshold"
                               type="number"
                               min="1"
                               max="100"
                               value={threshold}
-                              onChange={(event) => setThreshold(event.target.value)}
+                              onChange={(event) =>
+                                setThreshold(event.target.value)
+                              }
                             />
                           </div>
                         </>
@@ -801,19 +897,56 @@ export default function PlatformSettingsPage() {
                         <>
                           <div className="space-y-1.5">
                             <Label htmlFor="aws-region">Region</Label>
-                            <Input id="aws-region" value={awsRegion} onChange={(event) => setAwsRegion(event.target.value)} />
+                            <Input
+                              id="aws-region"
+                              value={awsRegion}
+                              onChange={(event) =>
+                                setAwsRegion(event.target.value)
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="aws-access-key">Access key</Label>
-                            <Input id="aws-access-key" value={awsAccessKeyId} onChange={(event) => setAwsAccessKeyId(event.target.value)} placeholder={awsRekognition?.access_key_id_masked || "Paste AWS access key"} />
+                            <Input
+                              id="aws-access-key"
+                              value={awsAccessKeyId}
+                              onChange={(event) =>
+                                setAwsAccessKeyId(event.target.value)
+                              }
+                              placeholder={
+                                awsRekognition?.access_key_id_masked ||
+                                "Paste AWS access key"
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="aws-secret">Secret key</Label>
-                            <Input id="aws-secret" value={awsSecretAccessKey} onChange={(event) => setAwsSecretAccessKey(event.target.value)} placeholder={awsRekognition?.secret_access_key_masked || "Paste AWS secret key"} />
+                            <Input
+                              id="aws-secret"
+                              value={awsSecretAccessKey}
+                              onChange={(event) =>
+                                setAwsSecretAccessKey(event.target.value)
+                              }
+                              placeholder={
+                                awsRekognition?.secret_access_key_masked ||
+                                "Paste AWS secret key"
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="aws-threshold">Similarity threshold</Label>
-                            <Input id="aws-threshold" type="number" min="1" max="100" value={awsThreshold} onChange={(event) => setAwsThreshold(event.target.value)} />
+                            <Label htmlFor="aws-threshold">
+                              Similarity threshold
+                            </Label>
+                            <Input
+                              id="aws-threshold"
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={awsThreshold}
+                              onChange={(event) =>
+                                setAwsThreshold(event.target.value)
+                              }
+                            />
                           </div>
                         </>
                       ) : null}
@@ -822,15 +955,43 @@ export default function PlatformSettingsPage() {
                         <>
                           <div className="space-y-1.5">
                             <Label htmlFor="azure-endpoint">Endpoint</Label>
-                            <Input id="azure-endpoint" value={azureEndpoint} onChange={(event) => setAzureEndpoint(event.target.value)} placeholder={azureFace?.endpoint || "https://..."} />
+                            <Input
+                              id="azure-endpoint"
+                              value={azureEndpoint}
+                              onChange={(event) =>
+                                setAzureEndpoint(event.target.value)
+                              }
+                              placeholder={azureFace?.endpoint || "https://..."}
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="azure-api-key">API key</Label>
-                            <Input id="azure-api-key" value={azureApiKey} onChange={(event) => setAzureApiKey(event.target.value)} placeholder={azureFace?.api_key_masked || "Paste Azure API key"} />
+                            <Input
+                              id="azure-api-key"
+                              value={azureApiKey}
+                              onChange={(event) =>
+                                setAzureApiKey(event.target.value)
+                              }
+                              placeholder={
+                                azureFace?.api_key_masked ||
+                                "Paste Azure API key"
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="azure-threshold">Confidence threshold</Label>
-                            <Input id="azure-threshold" type="number" min="1" max="100" value={azureThreshold} onChange={(event) => setAzureThreshold(event.target.value)} />
+                            <Label htmlFor="azure-threshold">
+                              Confidence threshold
+                            </Label>
+                            <Input
+                              id="azure-threshold"
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={azureThreshold}
+                              onChange={(event) =>
+                                setAzureThreshold(event.target.value)
+                              }
+                            />
                           </div>
                         </>
                       ) : null}
@@ -838,16 +999,48 @@ export default function PlatformSettingsPage() {
                       {activeProvider === "google_vision" ? (
                         <>
                           <div className="space-y-1.5">
-                            <Label htmlFor="google-project-id">Project ID</Label>
-                            <Input id="google-project-id" value={googleProjectId} onChange={(event) => setGoogleProjectId(event.target.value)} placeholder={googleVision?.project_id || "project-id"} />
+                            <Label htmlFor="google-project-id">
+                              Project ID
+                            </Label>
+                            <Input
+                              id="google-project-id"
+                              value={googleProjectId}
+                              onChange={(event) =>
+                                setGoogleProjectId(event.target.value)
+                              }
+                              placeholder={
+                                googleVision?.project_id || "project-id"
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="google-api-key">API key</Label>
-                            <Input id="google-api-key" value={googleApiKey} onChange={(event) => setGoogleApiKey(event.target.value)} placeholder={googleVision?.api_key_masked || "Paste Google API key"} />
+                            <Input
+                              id="google-api-key"
+                              value={googleApiKey}
+                              onChange={(event) =>
+                                setGoogleApiKey(event.target.value)
+                              }
+                              placeholder={
+                                googleVision?.api_key_masked ||
+                                "Paste Google API key"
+                              }
+                            />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="google-threshold">Confidence threshold</Label>
-                            <Input id="google-threshold" type="number" min="1" max="100" value={googleThreshold} onChange={(event) => setGoogleThreshold(event.target.value)} />
+                            <Label htmlFor="google-threshold">
+                              Confidence threshold
+                            </Label>
+                            <Input
+                              id="google-threshold"
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={googleThreshold}
+                              onChange={(event) =>
+                                setGoogleThreshold(event.target.value)
+                              }
+                            />
                           </div>
                         </>
                       ) : null}
@@ -859,15 +1052,18 @@ export default function PlatformSettingsPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-semibold">Setup checklist</p>
                     <p className="text-sm text-muted-foreground">
-                      Add the credentials below before activating this provider for tenant workflows.
+                      Add the credentials below before activating this provider
+                      for tenant workflows.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {(providerCatalog[activeProvider]?.requirements || []).map((item) => (
-                      <Badge key={item} variant="secondary">
-                        {item}
-                      </Badge>
-                    ))}
+                    {(providerCatalog[activeProvider]?.requirements || []).map(
+                      (item) => (
+                        <Badge key={item} variant="secondary">
+                          {item}
+                        </Badge>
+                      ),
+                    )}
                   </div>
                   <Button
                     className="w-full"
@@ -896,10 +1092,10 @@ export default function PlatformSettingsPage() {
                             : "Creating provider..."
                         }
                       />
+                    ) : Boolean(activeProviderSettings.enabled) ? (
+                      "Re-save provider"
                     ) : (
-                      Boolean(activeProviderSettings.enabled)
-                        ? "Re-save provider"
-                        : "Create or enable provider"
+                      "Create or enable provider"
                     )}
                   </Button>
                   <Button
@@ -934,7 +1130,10 @@ export default function PlatformSettingsPage() {
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Run a live readiness check for {providerCatalog[activeProvider]?.label || activeProvider} and inspect the structured response before relying on production verification.
+                    Run a live readiness check for{" "}
+                    {providerCatalog[activeProvider]?.label || activeProvider}{" "}
+                    and inspect the structured response before relying on
+                    production verification.
                   </p>
                   <Button
                     variant="outline"
@@ -953,9 +1152,12 @@ export default function PlatformSettingsPage() {
 
                 <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold">Professional test response</p>
+                    <p className="text-sm font-semibold">
+                      Professional test response
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Readiness, provider status, and the latest structured response are shown here after each test.
+                      Readiness, provider status, and the latest structured
+                      response are shown here after each test.
                     </p>
                   </div>
 
@@ -966,14 +1168,19 @@ export default function PlatformSettingsPage() {
                           <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                             Provider
                           </p>
-                          <p className="mt-1 text-sm font-semibold">{lastBiometricTest.provider}</p>
+                          <p className="mt-1 text-sm font-semibold">
+                            {lastBiometricTest.provider}
+                          </p>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                           <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                             Detection
                           </p>
                           <p className="mt-1 text-sm font-semibold">
-                            {String(lastBiometricTest.summary?.detection || "Completed")}
+                            {String(
+                              lastBiometricTest.summary?.detection ||
+                                "Completed",
+                            )}
                           </p>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
@@ -981,7 +1188,10 @@ export default function PlatformSettingsPage() {
                             Image
                           </p>
                           <p className="mt-1 truncate text-sm font-semibold">
-                            {String(lastBiometricTest.summary?.image_checked || testImageUrl)}
+                            {String(
+                              lastBiometricTest.summary?.image_checked ||
+                                testImageUrl,
+                            )}
                           </p>
                         </div>
                       </div>
@@ -992,7 +1202,11 @@ export default function PlatformSettingsPage() {
                             Provider status
                           </p>
                           <pre className="mt-2 overflow-x-auto text-xs text-muted-foreground">
-                            {JSON.stringify(lastBiometricTest.provider_status || {}, null, 2)}
+                            {JSON.stringify(
+                              lastBiometricTest.provider_status || {},
+                              null,
+                              2,
+                            )}
                           </pre>
                         </div>
                         <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
@@ -1000,7 +1214,11 @@ export default function PlatformSettingsPage() {
                             Provider response
                           </p>
                           <pre className="mt-2 overflow-x-auto text-xs text-muted-foreground">
-                            {JSON.stringify(lastBiometricTest.provider_response || {}, null, 2)}
+                            {JSON.stringify(
+                              lastBiometricTest.provider_response || {},
+                              null,
+                              2,
+                            )}
                           </pre>
                         </div>
                       </div>
@@ -1010,14 +1228,19 @@ export default function PlatformSettingsPage() {
                           Detection payload
                         </p>
                         <pre className="mt-2 overflow-x-auto text-xs text-muted-foreground">
-                          {JSON.stringify(lastBiometricTest.result || {}, null, 2)}
+                          {JSON.stringify(
+                            lastBiometricTest.result || {},
+                            null,
+                            2,
+                          )}
                         </pre>
                       </div>
                     </div>
                   ) : (
                     <Alert>
                       <AlertDescription>
-                        No biometric test has been run yet. Execute a provider test to inspect the latest structured response.
+                        No biometric test has been run yet. Execute a provider
+                        test to inspect the latest structured response.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -1033,7 +1256,8 @@ export default function PlatformSettingsPage() {
           <DialogHeader>
             <DialogTitle>Edit {activeProviderLabel} configuration</DialogTitle>
             <DialogDescription>
-              Update credentials, activation posture, and readiness settings for the current biometric provider from one modal workspace.
+              Update credentials, activation posture, and readiness settings for
+              the current biometric provider from one modal workspace.
             </DialogDescription>
           </DialogHeader>
 
@@ -1055,16 +1279,23 @@ export default function PlatformSettingsPage() {
                           id="modal-facepp-api-key"
                           value={apiKey}
                           onChange={(event) => setApiKey(event.target.value)}
-                          placeholder={facepp?.api_key_masked || "Paste Face++ API key"}
+                          placeholder={
+                            facepp?.api_key_masked || "Paste Face++ API key"
+                          }
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="modal-facepp-api-secret">API secret</Label>
+                        <Label htmlFor="modal-facepp-api-secret">
+                          API secret
+                        </Label>
                         <Input
                           id="modal-facepp-api-secret"
                           value={apiSecret}
                           onChange={(event) => setApiSecret(event.target.value)}
-                          placeholder={facepp?.api_secret_masked || "Paste Face++ API secret"}
+                          placeholder={
+                            facepp?.api_secret_masked ||
+                            "Paste Face++ API secret"
+                          }
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -1076,7 +1307,9 @@ export default function PlatformSettingsPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="modal-facepp-threshold">Confidence threshold</Label>
+                        <Label htmlFor="modal-facepp-threshold">
+                          Confidence threshold
+                        </Label>
                         <Input
                           id="modal-facepp-threshold"
                           type="number"
@@ -1104,7 +1337,9 @@ export default function PlatformSettingsPage() {
                         <Input
                           id="modal-aws-access-key"
                           value={awsAccessKeyId}
-                          onChange={(event) => setAwsAccessKeyId(event.target.value)}
+                          onChange={(event) =>
+                            setAwsAccessKeyId(event.target.value)
+                          }
                           placeholder={
                             awsRekognition?.access_key_id_masked ||
                             "Paste AWS access key"
@@ -1135,7 +1370,9 @@ export default function PlatformSettingsPage() {
                           min="1"
                           max="100"
                           value={awsThreshold}
-                          onChange={(event) => setAwsThreshold(event.target.value)}
+                          onChange={(event) =>
+                            setAwsThreshold(event.target.value)
+                          }
                         />
                       </div>
                     </>
@@ -1148,7 +1385,9 @@ export default function PlatformSettingsPage() {
                         <Input
                           id="modal-azure-endpoint"
                           value={azureEndpoint}
-                          onChange={(event) => setAzureEndpoint(event.target.value)}
+                          onChange={(event) =>
+                            setAzureEndpoint(event.target.value)
+                          }
                           placeholder={azureFace?.endpoint || "https://..."}
                         />
                       </div>
@@ -1157,7 +1396,9 @@ export default function PlatformSettingsPage() {
                         <Input
                           id="modal-azure-api-key"
                           value={azureApiKey}
-                          onChange={(event) => setAzureApiKey(event.target.value)}
+                          onChange={(event) =>
+                            setAzureApiKey(event.target.value)
+                          }
                           placeholder={
                             azureFace?.api_key_masked || "Paste Azure API key"
                           }
@@ -1173,7 +1414,9 @@ export default function PlatformSettingsPage() {
                           min="1"
                           max="100"
                           value={azureThreshold}
-                          onChange={(event) => setAzureThreshold(event.target.value)}
+                          onChange={(event) =>
+                            setAzureThreshold(event.target.value)
+                          }
                         />
                       </div>
                     </>
@@ -1182,11 +1425,15 @@ export default function PlatformSettingsPage() {
                   {activeProvider === "google_vision" ? (
                     <>
                       <div className="space-y-1.5">
-                        <Label htmlFor="modal-google-project-id">Project ID</Label>
+                        <Label htmlFor="modal-google-project-id">
+                          Project ID
+                        </Label>
                         <Input
                           id="modal-google-project-id"
                           value={googleProjectId}
-                          onChange={(event) => setGoogleProjectId(event.target.value)}
+                          onChange={(event) =>
+                            setGoogleProjectId(event.target.value)
+                          }
                           placeholder={googleVision?.project_id || "project-id"}
                         />
                       </div>
@@ -1195,7 +1442,9 @@ export default function PlatformSettingsPage() {
                         <Input
                           id="modal-google-api-key"
                           value={googleApiKey}
-                          onChange={(event) => setGoogleApiKey(event.target.value)}
+                          onChange={(event) =>
+                            setGoogleApiKey(event.target.value)
+                          }
                           placeholder={
                             googleVision?.api_key_masked ||
                             "Paste Google API key"
@@ -1212,7 +1461,9 @@ export default function PlatformSettingsPage() {
                           min="1"
                           max="100"
                           value={googleThreshold}
-                          onChange={(event) => setGoogleThreshold(event.target.value)}
+                          onChange={(event) =>
+                            setGoogleThreshold(event.target.value)
+                          }
                         />
                       </div>
                     </>
@@ -1224,11 +1475,14 @@ export default function PlatformSettingsPage() {
                 <div className="space-y-1">
                   <p className="text-sm font-semibold">Live provider test</p>
                   <p className="text-sm text-muted-foreground">
-                    Run a readiness check before saving this provider to production workflows.
+                    Run a readiness check before saving this provider to
+                    production workflows.
                   </p>
                 </div>
                 <div className="mt-4 space-y-1.5">
-                  <Label htmlFor="modal-provider-test-image">Test image URL</Label>
+                  <Label htmlFor="modal-provider-test-image">
+                    Test image URL
+                  </Label>
                   <Input
                     id="modal-provider-test-image"
                     value={testImageUrl}
@@ -1257,15 +1511,18 @@ export default function PlatformSettingsPage() {
               <div className="space-y-1">
                 <p className="text-sm font-semibold">Setup checklist</p>
                 <p className="text-sm text-muted-foreground">
-                  Add everything required before enabling this provider for tenant workflows.
+                  Add everything required before enabling this provider for
+                  tenant workflows.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {(providerCatalog[activeProvider]?.requirements || []).map((item) => (
-                  <Badge key={item} variant="secondary">
-                    {item}
-                  </Badge>
-                ))}
+                {(providerCatalog[activeProvider]?.requirements || []).map(
+                  (item) => (
+                    <Badge key={item} variant="secondary">
+                      {item}
+                    </Badge>
+                  ),
+                )}
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
                 {Boolean(activeProviderSettings.enabled)
@@ -1310,7 +1567,8 @@ export default function PlatformSettingsPage() {
                 className="w-full text-destructive"
                 onClick={() => void handleDeleteProvider(activeProvider)}
                 disabled={
-                  Boolean(providerAction) || !Boolean(activeProviderSettings.enabled)
+                  Boolean(providerAction) ||
+                  !Boolean(activeProviderSettings.enabled)
                 }
               >
                 {providerAction?.providerKey === activeProvider &&
@@ -1363,7 +1621,9 @@ export default function PlatformSettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold">{item.label}</h2>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
                 <div className="mt-auto">
                   <Button variant="outline" asChild>
@@ -1380,14 +1640,15 @@ export default function PlatformSettingsPage() {
         <CardHeader>
           <CardTitle>Support posture</CardTitle>
           <CardDescription>
-            Centralize communication and escalation handling without leaving the super-admin shell.
+            Centralize communication and escalation handling without leaving the
+            super-admin shell.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              Use the support console for live queue inspection, then review notifications and audit
-              logs for the wider operational context.
+              Use the support console for live queue inspection, then review
+              notifications and audit logs for the wider operational context.
             </p>
           </div>
           <Button asChild>

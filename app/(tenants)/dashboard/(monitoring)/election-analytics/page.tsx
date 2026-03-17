@@ -4,11 +4,9 @@ import { useState } from "react";
 import { PieChart } from "lucide-react";
 import {
   useAdminAdvancedSessionAnalyticsQuery,
-  useAdminBillingSummaryQuery,
   useAdminSessionsQuery,
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { PlanFeatureGate } from "@/components/tenants/billing/plan-feature-gate";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -17,26 +15,19 @@ import { getTenantParticipantLabels } from "@/lib/tenant-config";
 export default function ElectionAnalyticsPage() {
   const { tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
-  const billingQuery = useAdminBillingSummaryQuery();
   const sessionsQuery = useAdminSessionsQuery({ page: 1, limit: 50 });
   const [manualSelectedSessionId, setManualSelectedSessionId] = useState("");
   const sessions = sessionsQuery.data?.sessions || [];
   const selectedSessionId = manualSelectedSessionId || sessions[0]?._id || "";
-  const advancedAnalyticsEnabled =
-    billingQuery.data?.capabilities.features.advanced_analytics ?? false;
 
   const sessionStatsQuery = useAdminAdvancedSessionAnalyticsQuery(
     selectedSessionId,
     {
-      enabled:
-        !billingQuery.isLoading &&
-        advancedAnalyticsEnabled &&
-        Boolean(selectedSessionId),
+      enabled: Boolean(selectedSessionId),
     },
   );
 
   if (
-    billingQuery.isLoading ||
     sessionsQuery.isLoading ||
     (selectedSessionId && sessionStatsQuery.isLoading)
   ) {
@@ -51,21 +42,11 @@ export default function ElectionAnalyticsPage() {
     );
   }
 
-  if (!billingQuery.data?.capabilities.features.advanced_analytics) {
-    return (
-      <PlanFeatureGate
-        title="Election Analytics"
-        description="Inspect turnout, candidate performance, and rejection patterns for individual sessions."
-        featureLabel="Advanced analytics"
-        requiredPlanLabel="Pro Plus"
-      />
-    );
-  }
   const stats = sessionStatsQuery.data;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
+      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl border bg-muted p-3">
             <PieChart className="h-5 w-5" />
@@ -116,13 +97,23 @@ export default function ElectionAnalyticsPage() {
                     value: stats.stats.eligible_students,
                   },
                   { label: "Valid votes", value: stats.stats.total_votes },
-                  { label: "Duplicate attempts", value: stats.stats.duplicate_attempts },
-                  { label: "Rejected votes", value: stats.stats.rejected_votes },
+                  {
+                    label: "Duplicate attempts",
+                    value: stats.stats.duplicate_attempts,
+                  },
+                  {
+                    label: "Rejected votes",
+                    value: stats.stats.rejected_votes,
+                  },
                 ].map((item) => (
                   <Card key={item.label} className="border shadow-none">
                     <CardContent className="p-5">
-                      <p className="text-sm text-muted-foreground">{item.label}</p>
-                      <p className="mt-2 text-3xl font-semibold text-foreground">{item.value}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.label}
+                      </p>
+                      <p className="mt-2 text-3xl font-semibold text-foreground">
+                        {item.value}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
@@ -130,16 +121,23 @@ export default function ElectionAnalyticsPage() {
 
               <Card className="border shadow-none">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Candidate snapshot</CardTitle>
+                  <CardTitle className="text-base">
+                    Candidate snapshot
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3 md:grid-cols-2">
                   {stats.candidates.map((candidate) => (
-                    <div key={candidate._id} className="rounded-2xl border bg-muted/20 p-4">
+                    <div
+                      key={candidate._id}
+                      className="rounded-2xl border bg-muted/20 p-4"
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-semibold text-foreground">
                           {candidate.name}
                         </p>
-                        <Badge variant="outline">{candidate.vote_count} votes</Badge>
+                        <Badge variant="outline">
+                          {candidate.vote_count} votes
+                        </Badge>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {candidate.position}

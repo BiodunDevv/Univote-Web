@@ -6,7 +6,7 @@ export default function ContentSection() {
     <section id="universities" className="py-16 md:py-24">
       <div className="mx-auto max-w-5xl space-y-6 px-2 sm:px-6 md:space-y-8">
         <h2 className="relative z-10 max-w-xl text-lg font-semibold sm:text-xl">
-          Built for instutions of all sizes, from small student organizations to large universities.
+          Built for Universities
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
           <div className="relative space-y-4">

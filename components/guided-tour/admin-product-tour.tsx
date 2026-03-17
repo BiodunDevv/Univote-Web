@@ -34,11 +34,11 @@ export function AdminProductTour({ scope }: AdminProductTourProps) {
               },
             },
             {
-              element: "[data-tour='tenant-guide-billing']",
+              element: "[data-tour='tenant-guide-application']",
               popover: {
-                title: "Confirm your plan",
+                title: "Review application status",
                 description:
-                  "Open billing to confirm your active plan, limits, and any pending payment or upgrade work.",
+                  "Open the application panel to track moderation status, review notes, and activation milestones.",
                 side: "bottom" as const,
               },
             },
@@ -87,8 +87,7 @@ export function AdminProductTour({ scope }: AdminProductTourProps) {
           description:
             scope === "tenant"
               ? "Switch between organisations here when your account belongs to more than one workspace."
-              : "This area changes based on the current platform section and keeps key admin actions close."
-              ,
+              : "This area changes based on the current platform section and keeps key admin actions close.",
           side: "bottom" as const,
         },
       },

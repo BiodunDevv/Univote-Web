@@ -16,19 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const INITIAL_FORM = {
   name: "",
   slug: "",
   primary_domain: "",
-  plan_code: "pro" as "pro" | "pro_plus" | "enterprise",
   contact_name: "",
   contact_email: "",
 };
@@ -53,7 +45,9 @@ export function CreateTenantDialog() {
       setOpen(false);
       setFormData(INITIAL_FORM);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create tenant");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create tenant",
+      );
     }
   };
 
@@ -69,7 +63,8 @@ export function CreateTenantDialog() {
         <DialogHeader>
           <DialogTitle>Create Tenant</DialogTitle>
           <DialogDescription>
-            Provision a new tenant workspace and initialize its billing posture.
+            Provision a new tenant workspace and initialize its onboarding
+            profile.
           </DialogDescription>
         </DialogHeader>
 
@@ -121,27 +116,6 @@ export function CreateTenantDialog() {
                 }
                 placeholder="bowen.univote.app"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Starting plan</Label>
-              <Select
-                value={formData.plan_code}
-                onValueChange={(value) =>
-                  setFormData((current) => ({
-                    ...current,
-                    plan_code: value as typeof current.plan_code,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="pro_plus">Pro Plus</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

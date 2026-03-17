@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { usePlatformOverviewQuery, usePlatformTenantsQuery } from "@/lib/queries/platform";
+import {
+  usePlatformOverviewQuery,
+  usePlatformTenantsQuery,
+} from "@/lib/queries/platform";
 
 const metricCards = [
   { key: "total_tenants", label: "Total Tenants", icon: Building2 },
@@ -39,7 +42,7 @@ export default function SuperAdminOverviewPage() {
         messages={[
           "Loading platform overview...",
           "Checking tenant lifecycle health...",
-          "Preparing billing and support insights...",
+          "Preparing operations and support insights...",
         ]}
       />
     );
@@ -73,35 +76,42 @@ export default function SuperAdminOverviewPage() {
               <Link href="/super-admin/tenants">Open tenant directory</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/super-admin/onboarding">Review onboarding queue</Link>
+              <Link href="/super-admin/onboarding">
+                Review onboarding queue
+              </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/super-admin/testimonials">Moderate testimonials</Link>
+              <Link href="/super-admin/testimonials">
+                Moderate testimonials
+              </Link>
             </Button>
           </div>
         }
         stats={[
           { label: "Tenants", value: overview?.total_tenants ?? "--" },
           { label: "Active", value: overview?.active_tenants ?? "--" },
-          { label: "Grace period", value: overview?.grace_period_tenants ?? "--" },
-          { label: "Admin seats", value: overview?.active_tenant_admins ?? "--" },
+          {
+            label: "Grace period",
+            value: overview?.grace_period_tenants ?? "--",
+          },
+          {
+            label: "Admin seats",
+            value: overview?.active_tenant_admins ?? "--",
+          },
         ]}
       />
 
-     
       <div className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
         <AdminChatOverviewCard supportPath="/super-admin/support" showTenant />
         <TenantSectionCard
           title="Newest tenants"
-          description="Inspect subscription posture, onboarding progress, and open each tenant for deeper operational review."
+          description="Inspect access posture, onboarding progress, and open each tenant for deeper operational review."
         >
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Subscription</TableHead>
                 <TableHead className="text-right">Manage</TableHead>
               </TableRow>
             </TableHeader>
@@ -109,28 +119,31 @@ export default function SuperAdminOverviewPage() {
               {tenants.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
-                    <div className="font-medium text-foreground">{tenant.name}</div>
-                    <div className="text-xs text-muted-foreground">{tenant.slug}</div>
+                    <div className="font-medium text-foreground">
+                      {tenant.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {tenant.slug}
+                    </div>
                   </TableCell>
-                  <TableCell className="uppercase">{tenant.plan_code || "pro"}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{tenant.status || "draft"}</Badge>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {tenant.subscription_status || "trial"}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="outline" asChild>
-                      <Link href={`/super-admin/tenants/${tenant.id}`}>Open</Link>
+                      <Link href={`/super-admin/tenants/${tenant.id}`}>
+                        Open
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
               {tenants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={3}
+                    className="h-24 text-center text-muted-foreground"
+                  >
                     No tenants created yet.
                   </TableCell>
                 </TableRow>

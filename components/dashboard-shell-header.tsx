@@ -4,14 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
@@ -51,7 +43,6 @@ const segmentLabels: Record<string, string> = {
   "election-analytics": "Election Analytics",
   "system-health": "System Health",
   tenants: "Tenants",
-  plans: "Plans",
   onboarding: "Onboarding",
   testimonials: "Testimonials",
 };
@@ -88,7 +79,8 @@ export function DashboardShellHeader({
   const pathname = usePathname();
   const { admin, organizations, tenant, membership } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
-  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
+  const { data: unreadNotifications = 0 } =
+    useNotificationSummaryQuery("admin");
   const segments = pathname.split("/").filter(Boolean);
   const dashboardIndex = segments.indexOf(rootSegment);
   const trail =
@@ -98,7 +90,10 @@ export function DashboardShellHeader({
       return participantLabels.plural;
     }
 
-    if (segment === "edit" && (previous === "students" || previous === "participants")) {
+    if (
+      segment === "edit" &&
+      (previous === "students" || previous === "participants")
+    ) {
       return `Edit ${participantLabels.singular}`;
     }
 
@@ -112,18 +107,19 @@ export function DashboardShellHeader({
     return titleFromSegment(segment, previous);
   };
   const currentSegment = trail[trail.length - 1] ?? rootSegment;
-  const currentTitle = getTrailLabel(
-    currentSegment,
-    trail[trail.length - 2],
-  );
+  const currentTitle = getTrailLabel(currentSegment, trail[trail.length - 2]);
   const showTenantSwitcher =
     rootSegment === "dashboard" &&
     admin?.role !== "super_admin" &&
     Boolean(tenant || organizations.length > 0);
   const notificationsPath =
-    rootSegment === "super-admin" ? "/super-admin/notifications" : "/dashboard/notifications";
+    rootSegment === "super-admin"
+      ? "/super-admin/notifications"
+      : "/dashboard/notifications";
   const supportPath =
-    rootSegment === "super-admin" ? "/super-admin/support" : "/dashboard/support";
+    rootSegment === "super-admin"
+      ? "/super-admin/support"
+      : "/dashboard/support";
   const permissions = React.useMemo(
     () =>
       new Set([
@@ -145,7 +141,7 @@ export function DashboardShellHeader({
           visible: true,
         },
         {
-          value: "/dashboard/participants",
+          value: "/dashboard/students",
           label: participantLabels.plural,
           match: (path: string) =>
             path.startsWith("/dashboard/participants") ||
@@ -154,12 +150,23 @@ export function DashboardShellHeader({
         },
         {
           value: "/dashboard/structure/colleges",
-          label: "Structure",
+          label: "Colleges",
           match: (path: string) =>
-            path.startsWith("/dashboard/structure") ||
-            path.startsWith("/dashboard/colleges") ||
+            path.startsWith("/dashboard/structure/colleges") ||
+            path.startsWith("/dashboard/colleges"),
+          visible:
+            structureEnabled &&
+            isTenantParticipantFieldEnabled(tenant, "college"),
+        },
+        {
+          value: "/dashboard/structure/departments",
+          label: "Departments",
+          match: (path: string) =>
+            path.startsWith("/dashboard/structure/departments") ||
             path.startsWith("/dashboard/departments"),
-          visible: structureEnabled,
+          visible:
+            structureEnabled &&
+            isTenantParticipantFieldEnabled(tenant, "department"),
         },
         {
           value: "/dashboard/sessions",
@@ -178,7 +185,7 @@ export function DashboardShellHeader({
         },
         {
           value: "/dashboard/analytics",
-          label: "Monitoring",
+          label: "Analytics",
           match: (path: string) =>
             path.startsWith("/dashboard/analytics") ||
             path.startsWith("/dashboard/reports") ||
@@ -192,7 +199,7 @@ export function DashboardShellHeader({
         },
         {
           value: "/dashboard/settings",
-          label: "Configuration",
+          label: "Settings",
           match: (path: string) =>
             path.startsWith("/dashboard/settings") ||
             path.startsWith("/dashboard/notifications") ||
@@ -215,17 +222,19 @@ export function DashboardShellHeader({
           visible: true,
         },
         {
-          value: "/dashboard/billing",
-          label: "Billing",
-          match: (path: string) => path.startsWith("/dashboard/billing"),
-          visible:
-            permissions.size === 0 ||
-            permissions.has("tenant.billing.manage") ||
-            permissions.has("billing.manage") ||
-            permissions.has("tenant.manage"),
+          value: "/dashboard/application",
+          label: "Application",
+          match: (path: string) => path.startsWith("/dashboard/application"),
+          visible: permissions.size === 0 || permissions.has("tenant.manage"),
         },
       ].filter((tab) => tab.visible),
-    [participantLabels.plural, permissions, structureEnabled, supportPath, tenant?.entitlements],
+    [
+      participantLabels.plural,
+      permissions,
+      structureEnabled,
+      supportPath,
+      tenant,
+    ],
   );
   const superAdminTabs = React.useMemo(
     () => [
@@ -238,13 +247,6 @@ export function DashboardShellHeader({
         value: "/super-admin/tenants",
         label: "Tenants",
         match: (path: string) => path.startsWith("/super-admin/tenants"),
-      },
-      {
-        value: "/super-admin/plans",
-        label: "Plans",
-        match: (path: string) =>
-          path.startsWith("/super-admin/plans") ||
-          path.startsWith("/super-admin/billing"),
       },
       {
         value: "/super-admin/onboarding",
@@ -276,12 +278,24 @@ export function DashboardShellHeader({
         label: "Notifications",
         match: (path: string) => path.startsWith("/super-admin/notifications"),
       },
+      {
+        value: "/super-admin/support",
+        label: "Support",
+        match: (path: string) => path.startsWith("/super-admin/support"),
+      },
+      {
+        value: "/super-admin/audit-logs",
+        label: "Audit Logs",
+        match: (path: string) => path.startsWith("/super-admin/audit-logs"),
+      },
     ],
     [],
   );
   const navTabs = rootSegment === "super-admin" ? superAdminTabs : tenantTabs;
   const activeTab =
-    navTabs.find((tab) => tab.match(pathname))?.value ?? navTabs[0]?.value ?? `/${rootSegment}`;
+    navTabs.find((tab) => tab.match(pathname))?.value ??
+    navTabs[0]?.value ??
+    `/${rootSegment}`;
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
@@ -294,7 +308,9 @@ export function DashboardShellHeader({
                 {currentTitle}
               </p>
               <p className="hidden text-xs font-medium text-muted-foreground md:block">
-                {rootSegment === "super-admin" ? "Platform operations" : "Tenant operations"}
+                {rootSegment === "super-admin"
+                  ? "Platform operations"
+                  : "Tenant operations"}
               </p>
               <p className="hidden truncate text-sm font-semibold text-foreground md:block">
                 {currentTitle}
@@ -304,7 +320,10 @@ export function DashboardShellHeader({
 
           <div className="flex shrink-0 items-center justify-end gap-2">
             {showTenantSwitcher ? (
-              <div className="hidden md:block" data-tour="admin-workspace-switcher">
+              <div
+                className="hidden md:block"
+                data-tour="admin-workspace-switcher"
+              >
                 <TenantHeaderSwitcher />
               </div>
             ) : null}
@@ -312,7 +331,12 @@ export function DashboardShellHeader({
               supportPath={supportPath}
               showTenant={rootSegment === "super-admin"}
             />
-            <Button variant="outline" asChild className="relative" data-tour="admin-notifications">
+            <Button
+              variant="outline"
+              asChild
+              className="relative"
+              data-tour="admin-notifications"
+            >
               <Link href={notificationsPath}>
                 <Bell className="h-4 w-4" />
                 <span className="hidden lg:inline">Notifications</span>
@@ -361,37 +385,6 @@ export function DashboardShellHeader({
             ))}
           </TabsList>
         </Tabs>
-
-        {trail.length > 1 ? (
-          <div className="hidden md:block">
-            <Breadcrumb>
-              <BreadcrumbList>
-                {trail.map((segment, index) => {
-                  const href = `/${trail.slice(0, index + 1).join("/")}`;
-                  const label = getTrailLabel(segment, trail[index - 1]);
-                  const isLast = index === trail.length - 1;
-
-                  return (
-                    <React.Fragment key={href}>
-                      <BreadcrumbItem>
-                        {isLast ? (
-                          <BreadcrumbPage>{label}</BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink asChild>
-                            <Link href={href}>{label}</Link>
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                      {!isLast && (
-                        <BreadcrumbSeparator className="hidden md:block" />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        ) : null}
       </div>
     </header>
   );

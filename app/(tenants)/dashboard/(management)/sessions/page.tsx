@@ -9,15 +9,14 @@ import {
   Eye,
   MapPin,
   Plus,
+  Search,
   Trash2,
   Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -26,6 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
   useAdminSessionSummaryQuery,
@@ -57,28 +64,55 @@ export default function SessionsPage() {
   const router = useRouter();
   const { token, hasHydrated } = useAuthStore();
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const isAuthorized = hasHydrated && Boolean(token);
-  const filters = useMemo(
-    () => ({
-      page,
-      limit: 20,
-      status: statusFilter !== "all" ? statusFilter : undefined,
-    }),
-    [page, statusFilter],
+  const sessionsQuery = useAdminSessionsQuery(
+    { page: 1, limit: 500 },
+    {
+      enabled: isAuthorized,
+    },
   );
-  const sessionsQuery = useAdminSessionsQuery(filters, { enabled: isAuthorized });
   const sessionSummaryQuery = useAdminSessionSummaryQuery({
     enabled: isAuthorized,
   });
   const deleteSession = useDeleteSessionMutation();
   const sessions = sessionsQuery.data?.sessions ?? [];
-  const pagination = sessionsQuery.data?.pagination ?? {
-    total: 0,
-    page,
-    limit: 20,
-    pages: 1,
-  };
+  const filteredSessions = useMemo(() => {
+    const term = debouncedSearch.toLowerCase();
+    return sessions.filter((session) => {
+      if (statusFilter !== "all" && session.status !== statusFilter) {
+        return false;
+      }
+      if (!term) return true;
+      return [
+        session.title,
+        session.description,
+        session.location?.name,
+        session.location?.address,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
+    });
+  }, [debouncedSearch, sessions, statusFilter]);
+  const pageSize = 20;
+  const pagination = useMemo(() => {
+    const total = filteredSessions.length;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    return {
+      total,
+      pages,
+      page: Math.min(page, pages),
+      limit: pageSize,
+    };
+  }, [filteredSessions.length, page]);
+  const visibleSessions = useMemo(() => {
+    const start = (pagination.page - 1) * pageSize;
+    return filteredSessions.slice(start, start + pageSize);
+  }, [filteredSessions, pagination.page]);
   const sessionSummary = sessionSummaryQuery.data?.summary;
 
   useEffect(() => {
@@ -88,6 +122,21 @@ export default function SessionsPage() {
       router.replace("/auth/signin");
     }
   }, [hasHydrated, router, token]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    if (page > pagination.pages) {
+      setPage(pagination.pages);
+    }
+  }, [page, pagination.pages]);
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete \"${title}\"?`)) return;
@@ -164,7 +213,7 @@ export default function SessionsPage() {
 
   const isFirstLoad =
     (sessionsQuery.isLoading || sessionSummaryQuery.isLoading) &&
-    sessions.length === 0;
+    visibleSessions.length === 0;
   const refetching =
     (sessionsQuery.isFetching || sessionSummaryQuery.isFetching) &&
     !isFirstLoad;
@@ -234,12 +283,18 @@ export default function SessionsPage() {
 
       <TenantSectionCard
         title="Filter sessions"
-        description="Toggle the operational view by lifecycle state before drilling into the session cards."
+        description="Search and filter by lifecycle state without triggering a server refresh on every change."
       >
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Status:
-          </label>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative w-full md:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search sessions by title, description, or location"
+              className="h-9 pl-8 text-sm"
+            />
+          </div>
           <Select
             value={statusFilter}
             onValueChange={(value) => {
@@ -247,7 +302,7 @@ export default function SessionsPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 w-[190px] text-sm">
+            <SelectTrigger className="h-9 w-full text-sm md:w-[190px]">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -264,7 +319,7 @@ export default function SessionsPage() {
         <ChangingLoadingState messages={INITIAL_LOADING_MESSAGES} />
       ) : (
         <>
-          {refetching && sessions.length > 0 && (
+          {refetching && visibleSessions.length > 0 && (
             <ChangingLoadingState
               messages={REFETCH_LOADING_MESSAGES}
               className="min-h-[140px]"
@@ -273,128 +328,156 @@ export default function SessionsPage() {
 
           <TenantSectionCard
             title="Session registry"
-            description="Operational cards for every configured session, including lifecycle state, turnout snapshot, location, and candidate setup."
-            contentClassName="space-y-4"
+            description="Table view for lifecycle state, schedule, turnout snapshot, location, and candidate setup."
+            contentClassName="space-y-4 overflow-hidden"
           >
-            <div className="grid gap-3 xl:grid-cols-2">
-              {sessions.map((session) => (
+            <div className="w-full min-w-0 max-w-full overflow-hidden">
+              <div className="hidden w-full max-w-full overflow-x-auto rounded-lg border md:block">
+                <Table className="min-w-[1100px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Session</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Window</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Turnout</TableHead>
+                      <TableHead>Setup</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visibleSessions.map((session) => (
+                      <TableRow key={session._id}>
+                        <TableCell>
+                          <p className="text-sm font-semibold">
+                            {session.title}
+                          </p>
+                          <p className="line-clamp-1 text-xs text-muted-foreground">
+                            {session.description || "No description"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={getStatusColor(session.status)}
+                          >
+                            {session.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-xs">
+                            {formatSessionDateTime(session.start_time)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            to {formatSessionDateTime(session.end_time)}
+                          </p>
+                        </TableCell>
+                        <TableCell className="max-w-[220px] truncate text-xs">
+                          {formatLocation(session.location)}
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm font-medium">
+                            {(session.students_voted || 0).toLocaleString()}{" "}
+                            voted
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {(session.total_votes || 0).toLocaleString()}{" "}
+                            ballots
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {(session.categories?.length || 0).toLocaleString()}{" "}
+                          categories
+                          <br />
+                          {(
+                            session.candidates?.length || 0
+                          ).toLocaleString()}{" "}
+                          candidates
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/sessions/${session._id}`,
+                                )
+                              }
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {session.status !== "active" ? (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    router.push(
+                                      `/dashboard/sessions/${session._id}/edit`,
+                                    )
+                                  }
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleDelete(session._id, session.title)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:hidden">
+              {visibleSessions.map((session) => (
                 <div
                   key={session._id}
-                  className="rounded-2xl border border-border/70 bg-background p-3 shadow-none"
+                  className="rounded-2xl border border-border/70 bg-background p-3"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {session.title}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold">{session.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatSessionDate(session.start_time)}
                       </p>
-                      {session.description ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {session.description}
-                        </p>
-                      ) : null}
                     </div>
-                    <Badge variant="outline" className={getStatusColor(session.status)}>
+                    <Badge
+                      variant="outline"
+                      className={getStatusColor(session.status)}
+                    >
                       {session.status}
                     </Badge>
                   </div>
-
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Window
-                      </p>
-                      <div className="mt-1 space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>{formatSessionDateTime(session.start_time)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ChevronRight className="h-3.5 w-3.5" />
-                          <span>{formatSessionDateTime(session.end_time)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Location
-                      </p>
-                      <div className="mt-1 flex items-start gap-2 text-xs text-muted-foreground">
-                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>{formatLocation(session.location)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Participation
-                      </p>
-                      <p className="mt-1 text-sm font-semibold">
-                        {(session.students_voted || 0).toLocaleString()} voted
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {(session.total_votes || 0).toLocaleString()} accepted ballots
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                        Structure
-                      </p>
-                      <p className="mt-1 text-sm font-semibold">
-                        {(session.categories?.length || 0).toLocaleString()} categories
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {(session.candidates?.length || 0).toLocaleString()} candidates
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    <Badge variant="secondary">
-                      Starts {formatSessionDate(session.start_time)}
-                    </Badge>
-                    <Badge variant="secondary">
-                      Ends {formatSessionDate(session.end_time)}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/dashboard/sessions/${session._id}`)}
+                      onClick={() =>
+                        router.push(`/dashboard/sessions/${session._id}`)
+                      }
                     >
-                      <Eye className="mr-2 h-3.5 w-3.5" />
+                      <Eye className="mr-2 h-4 w-4" />
                       View
                     </Button>
-                    {session.status !== "active" ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/dashboard/sessions/${session._id}/edit`)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(session._id, session.title)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </Button>
-                      </>
-                    ) : null}
                   </div>
                 </div>
               ))}
             </div>
           </TenantSectionCard>
 
-          {!sessionsQuery.isLoading && sessions.length === 0 && (
+          {!sessionsQuery.isLoading && filteredSessions.length === 0 && (
             <TenantEmptyState
               icon={Calendar}
               title={

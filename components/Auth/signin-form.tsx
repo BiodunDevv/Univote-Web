@@ -22,10 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  type AuthSessionData,
-  useAuthStore,
-} from "@/lib/store/useAuthStore";
+import { type AuthSessionData, useAuthStore } from "@/lib/store/useAuthStore";
 import { isApiError } from "@/lib/api/client";
 import {
   buildTenantAuthAcceptUrl,
@@ -33,7 +30,14 @@ import {
   isTenantHost,
 } from "@/lib/tenant";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, Building2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Building2,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+} from "lucide-react";
 import { LogoIcon } from "@/components/logo";
 
 type TenantChoice = {
@@ -42,8 +46,6 @@ type TenantChoice = {
   slug: string;
   role: string;
   status?: string;
-  plan_code?: string;
-  subscription_status?: string;
   primary_domain?: string | null;
 };
 
@@ -178,15 +180,17 @@ export function LoginForm({
                   <Alert>
                     <Building2 className="h-4 w-4" />
                     <AlertDescription>
-                      Tenant workspace detected: <span className="font-medium">{hostTenantSlug}</span>
+                      Tenant workspace detected:{" "}
+                      <span className="font-medium">{hostTenantSlug}</span>
                     </AlertDescription>
                   </Alert>
                 ) : (
                   <Alert>
                     <Building2 className="h-4 w-4" />
                     <AlertDescription>
-                      Root sign-in is enabled. Univote will detect the tenant workspace from your
-                      account and redirect you automatically after login.
+                      Root sign-in is enabled. Univote will detect the tenant
+                      workspace from your account and redirect you automatically
+                      after login.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -268,8 +272,8 @@ export function LoginForm({
           <DialogHeader>
             <DialogTitle>Select your workspace</DialogTitle>
             <DialogDescription>
-              This admin account belongs to multiple tenant workspaces. Choose where you want to
-              continue.
+              This admin account belongs to multiple tenant workspaces. Choose
+              where you want to continue.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -291,11 +295,10 @@ export function LoginForm({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{tenantChoice.name}</span>
-                        <span className="rounded-full border px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                          {tenantChoice.plan_code?.replace(/_/g, " ") || "plan"}
-                        </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{tenantChoice.slug}.localhost</p>
+                      <p className="text-sm text-muted-foreground">
+                        {tenantChoice.slug}.localhost
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         Role: {formatRoleLabel(tenantChoice.role)}
                         {tenantChoice.primary_domain

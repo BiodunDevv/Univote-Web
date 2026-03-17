@@ -1,23 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  CreditCard,
-  FileCheck2,
-  TicketPercent,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, CheckCircle2, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useCouponValidationQuery,
   useSubmitTenantApplicationMutation,
   useUpdateTenantApplicationMutation,
 } from "@/lib/queries/public";
 import type {
-  PublicBillingPlan,
   TenantApplicationPayload,
   TenantApplicationResponse,
 } from "@/types/landing";
@@ -34,14 +25,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
 const STORAGE_KEY = "tenant-application-draft-v1";
@@ -50,50 +33,22 @@ const DEFAULT_FORM: TenantApplicationPayload = {
   institution_name: "",
   slug: "",
   primary_domain: "",
-  plan_code: "pro_plus",
   contact_name: "",
   contact_email: "",
   contact_phone: "",
-  institution_type: "organization",
+  institution_type: "university",
   student_count_estimate: 5000,
   admin_count_estimate: 5,
-  participant_structure: {
-    uses_college: false,
-    uses_department: false,
-    uses_level: false,
-    requires_photo: false,
-    requires_face_verification: false,
-  },
-  identity_preferences: {
-    primary_identifier: "email",
-    recovery_identifiers: ["email"],
-  },
-  coupon_code: "",
   notes: "",
   demo_requested: true,
 };
 
-const STEPS = [
-  "Organization",
-  "Contact",
-  "Structure",
-  "Plan",
-  "Billing",
-  "Review",
-] as const;
+const STEPS = ["University", "Contact", "Capacity"] as const;
 
 type DraftState = {
   reference?: string | null;
   formData: TenantApplicationPayload;
 };
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-}
 
 function saveDraftState(value: DraftState) {
   if (typeof window === "undefined") return;
@@ -126,40 +81,19 @@ function suggestDomain(slug: string): string {
   return `${slug}.${hostname}`;
 }
 
-function enforceEmailIdentityPreferences(
-  identity?: TenantApplicationPayload["identity_preferences"],
-): NonNullable<TenantApplicationPayload["identity_preferences"]> {
-  return {
-    ...(identity || {}),
-    primary_identifier: "email",
-    recovery_identifiers: ["email"],
-  };
-}
-
-export function TenantApplicationSection({
-  plans,
-}: {
-  plans: PublicBillingPlan[];
-}) {
+export function TenantApplicationSection() {
   const createMutation = useSubmitTenantApplicationMutation();
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [applicationReference, setApplicationReference] = useState<
     string | null
   >(null);
   const [step, setStep] = useState(0);
-  const [couponLookupCode, setCouponLookupCode] = useState("");
   const [submitted, setSubmitted] = useState<TenantApplicationResponse | null>(
     null,
   );
 
   const updateMutation = useUpdateTenantApplicationMutation(
     applicationReference || "",
-  );
-  const couponQuery = useCouponValidationQuery(
-    couponLookupCode,
-    formData.plan_code,
-    formData.contact_email || "",
-    Boolean(couponLookupCode),
   );
 
   useEffect(() => {
@@ -169,9 +103,7 @@ export function TenantApplicationSection({
     setFormData({
       ...DEFAULT_FORM,
       ...draft.formData,
-      identity_preferences: enforceEmailIdentityPreferences(
-        draft.formData.identity_preferences,
-      ),
+      institution_type: "university",
     });
     setApplicationReference(draft.reference || null);
   }, []);
@@ -183,39 +115,15 @@ export function TenantApplicationSection({
     });
   }, [applicationReference, formData]);
 
-  useEffect(() => {
-    if (couponQuery.data?.coupon && couponLookupCode) {
-      toast.success(`Coupon ${couponQuery.data.coupon.code} applied`);
-    }
-  }, [couponLookupCode, couponQuery.data?.coupon]);
-
-  useEffect(() => {
-    if (couponQuery.error) {
-      toast.error(couponQuery.error.message || "Coupon validation failed");
-    }
-  }, [couponQuery.error]);
-
-  const selectedPlan = useMemo(
-    () => plans.find((plan) => plan.code === formData.plan_code) || null,
-    [formData.plan_code, plans],
-  );
-
-  const couponSummary = couponQuery.data?.coupon || null;
-  const baseAmount = selectedPlan?.monthly_price_ngn || 0;
-  const payableAmount = couponSummary?.final_amount_ngn ?? baseAmount;
-
   const isSavingDraft = createMutation.isPending || updateMutation.isPending;
 
   async function persistApplication(submit = false) {
     const payload = {
       ...formData,
-      identity_preferences: enforceEmailIdentityPreferences(
-        formData.identity_preferences,
-      ),
+      institution_type: "university" as const,
       primary_domain: formData.primary_domain || undefined,
       contact_phone: formData.contact_phone || undefined,
       notes: formData.notes || undefined,
-      coupon_code: formData.coupon_code || undefined,
       submit,
     };
 
@@ -247,25 +155,12 @@ export function TenantApplicationSection({
     }
   }
 
-  function updateStructureField(
-    key: keyof NonNullable<TenantApplicationPayload["participant_structure"]>,
-    value: boolean,
-  ) {
-    setFormData((current) => ({
-      ...current,
-      participant_structure: {
-        ...current.participant_structure,
-        [key]: value,
-      },
-    }));
-  }
-
   function renderStepContent() {
     if (step === 0) {
       return (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="institution-name">Organization name</Label>
+            <Label htmlFor="institution-name">University name</Label>
             <Input
               id="institution-name"
               value={formData.institution_name}
@@ -320,31 +215,11 @@ export function TenantApplicationSection({
             />
           </div>
           <div className="space-y-2">
-            <Label>Organization type</Label>
-            <Select
-              value={formData.institution_type}
-              onValueChange={(value) =>
-                setFormData((current) => ({
-                  ...current,
-                  institution_type:
-                    value as TenantApplicationPayload["institution_type"],
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="organization">Organization</SelectItem>
-                <SelectItem value="university">University</SelectItem>
-                <SelectItem value="college">College</SelectItem>
-                <SelectItem value="polytechnic">Polytechnic</SelectItem>
-                <SelectItem value="faculty">Faculty</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Institution type</Label>
+            <Input value="University" disabled />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Onboarding note</Label>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="notes">Application note (optional)</Label>
             <Textarea
               id="notes"
               value={formData.notes}
@@ -354,7 +229,7 @@ export function TenantApplicationSection({
                   notes: event.target.value,
                 }))
               }
-              placeholder="Tell us about rollout timing, special requirements, or target launch period."
+              placeholder="Tell us your rollout period, election timeline, or any special compliance needs."
               rows={4}
             />
           </div>
@@ -436,9 +311,7 @@ export function TenantApplicationSection({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="participants-estimate">
-                Expected participants
-              </Label>
+              <Label htmlFor="participants-estimate">Expected students</Label>
               <Input
                 id="participants-estimate"
                 type="number"
@@ -470,263 +343,48 @@ export function TenantApplicationSection({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["uses_college", "Use college/grouping layer"],
-              ["uses_department", "Use department/unit layer"],
-              ["uses_level", "Use level/class/year layer"],
-              ["requires_photo", "Collect participant photo"],
-              ["requires_face_verification", "Require biometric verification"],
-            ].map(([key, label]) => (
-              <div
-                key={key}
-                className="flex items-center gap-3 rounded-2xl border p-4"
-              >
-                <Checkbox
-                  id={key}
-                  checked={Boolean(
-                    formData.participant_structure?.[
-                      key as keyof typeof formData.participant_structure
-                    ],
-                  )}
-                  onCheckedChange={(checked) =>
-                    updateStructureField(
-                      key as keyof NonNullable<
-                        TenantApplicationPayload["participant_structure"]
-                      >,
-                      checked === true,
-                    )
-                  }
-                />
-                <Label htmlFor={key}>{label}</Label>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Primary login identifier</Label>
-              <Select value="email" disabled>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="rounded-2xl border bg-muted/25 p-4">
+              <p className="text-sm font-semibold">
+                University structure is fixed
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Colleges, departments, and levels are enabled by default for
+                every new university workspace.
+              </p>
             </div>
-            <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-              These settings seed the initial tenant configuration and can still
-              be refined later from the admin settings workspace.
+            <div className="rounded-2xl border bg-muted/25 p-4">
+              <p className="text-sm font-semibold">
+                Face verification is mandatory
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Face verification and photo requirements are automatically
+                enforced for all tenants.
+              </p>
             </div>
           </div>
         </div>
       );
     }
 
-    if (step === 3) {
-      return (
-        <div className="grid gap-4 lg:grid-cols-3">
-          {plans.map((plan) => {
-            const active = formData.plan_code === plan.code;
-            return (
-              <button
-                type="button"
-                key={plan.code}
-                className={`rounded-3xl border p-5 text-left transition ${
-                  active
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-border bg-card"
-                }`}
-                onClick={() =>
-                  setFormData((current) => ({
-                    ...current,
-                    plan_code: plan.code,
-                  }))
-                }
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold">{plan.name}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatMoney(plan.monthly_price_ngn)} / month
-                    </p>
-                  </div>
-                  {active ? <Badge>Selected</Badge> : null}
-                </div>
-                <div className="mt-4 space-y-1 text-xs text-muted-foreground">
-                  <p>{plan.support_sla} support SLA</p>
-                  <p>{plan.limits.admins.toLocaleString()} admins</p>
-                  <p>{plan.limits.students.toLocaleString()} participants</p>
-                  <p>
-                    {plan.limits.active_sessions.toLocaleString()} active
-                    sessions
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      );
-    }
-
-    if (step === 4) {
-      return (
-        <div className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <div className="space-y-2">
-              <Label htmlFor="coupon-code">Coupon code</Label>
-              <Input
-                id="coupon-code"
-                value={formData.coupon_code}
-                onChange={(event) =>
-                  setFormData((current) => ({
-                    ...current,
-                    coupon_code: event.target.value.toUpperCase(),
-                  }))
-                }
-                placeholder="SPRING100"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCouponLookupCode(formData.coupon_code || "")}
-                disabled={!formData.coupon_code}
-              >
-                <TicketPercent className="mr-2 size-4" />
-                Apply
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border bg-muted/20 p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Billing summary</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {selectedPlan?.name || "Selected plan"} onboarding starts
-                  after payment and platform review.
-                </p>
-              </div>
-              <CreditCard className="size-5 text-primary" />
-            </div>
-            <Separator className="my-4" />
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Plan amount</span>
-                <span className="font-medium">{formatMoney(baseAmount)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Coupon discount</span>
-                <span className="font-medium text-emerald-600">
-                  -{formatMoney(couponSummary?.discount_amount_ngn || 0)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-t pt-3 text-base">
-                <span className="font-semibold">Payable now</span>
-                <span className="font-semibold">
-                  {formatMoney(payableAmount)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Application review</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>
-                <span className="text-muted-foreground">Organization:</span>{" "}
-                {formData.institution_name}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Workspace:</span>{" "}
-                {formData.slug}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Contact:</span>{" "}
-                {formData.contact_name} · {formData.contact_email}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Plan:</span>{" "}
-                {selectedPlan?.name}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Operational setup</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>
-                <span className="text-muted-foreground">Photo required:</span>{" "}
-                {formData.participant_structure?.requires_photo ? "Yes" : "No"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">
-                  Face verification:
-                </span>{" "}
-                {formData.participant_structure?.requires_face_verification
-                  ? "Yes"
-                  : "No"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Hierarchy:</span>{" "}
-                {[
-                  formData.participant_structure?.uses_college
-                    ? "College"
-                    : null,
-                  formData.participant_structure?.uses_department
-                    ? "Department"
-                    : null,
-                  formData.participant_structure?.uses_level ? "Level" : null,
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "Flat participant structure"}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Initial payment:</span>{" "}
-                {formatMoney(payableAmount)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="rounded-3xl border border-dashed p-4 text-sm text-muted-foreground">
-          Once submitted, you will receive a reference, a payment link if
-          required, and a public status page where you can monitor approval and
-          retry payment if needed.
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <section id="apply" className="py-20">
+    <section className="py-20">
       <div className="mx-auto max-w-5xl px-4 lg:px-0">
         <div className="mx-auto mb-10 max-w-2xl text-center">
           <Badge
             variant="outline"
             className="rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
           >
-            Tenant onboarding
+            University onboarding
           </Badge>
           <h2 className="mt-4 text-balance text-xl font-semibold sm:text-2xl">
-            Launch a workspace with a guided, billing-aware application flow.
+            Apply in three focused steps.
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Save your draft, review structure and identity preferences, apply
-            coupons, and track approval from a dedicated status page after
-            submission.
+            No billing setup, no identifier selection, and no structure toggles.
+            University defaults are applied automatically.
           </p>
         </div>
 
@@ -738,7 +396,7 @@ export function TenantApplicationSection({
                 <CardDescription>
                   {applicationReference
                     ? `Draft reference: ${applicationReference}`
-                    : "A draft reference is generated automatically once you start."}
+                    : "A draft reference is generated automatically as soon as you start."}
                 </CardDescription>
               </div>
               <Badge variant="secondary">
@@ -746,7 +404,7 @@ export function TenantApplicationSection({
               </Badge>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-6">
+            <div className="grid gap-3 md:grid-cols-3">
               {STEPS.map((label, index) => (
                 <button
                   type="button"
@@ -791,29 +449,13 @@ export function TenantApplicationSection({
                 </div>
 
                 <div className="space-y-3 rounded-3xl border p-5">
-                  {submitted.next_steps.map((item) => (
-                    <div
-                      key={item}
-                      className="flex gap-3 text-sm text-muted-foreground"
-                    >
-                      <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
+                  <p className="text-sm text-muted-foreground">
+                    Your application is in the review queue. Track its progress
+                    using the link below.
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  {submitted.checkout_url ? (
-                    <Button asChild>
-                      <a
-                        href={submitted.checkout_url}
-                        target="_self"
-                        rel="noreferrer"
-                      >
-                        Continue payment
-                      </a>
-                    </Button>
-                  ) : null}
                   <Button variant="outline" asChild>
                     <Link
                       href={`/application-status?reference=${encodeURIComponent(
@@ -846,11 +488,16 @@ export function TenantApplicationSection({
               <>
                 {renderStepContent()}
 
+                <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                  Submission enables university defaults automatically: college,
+                  department, level, photo requirement, and compulsory face
+                  verification.
+                </div>
+
                 <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-muted-foreground">
-                    {step === STEPS.length - 1
-                      ? "Submitting will create or continue billing and move the application into review."
-                      : "Your draft is saved as you continue through each step."}
+                    Submitting will move the application into super-admin
+                    verification.
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Button variant="ghost" asChild>

@@ -2,11 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -15,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { useUpdateStudentMutation } from "@/lib/queries/admin";
 import {
   getTenantParticipantLabels,
@@ -63,7 +72,9 @@ export function ParticipantEditDialog({
   const [college, setCollege] = useState("none");
   const [department, setDepartment] = useState("none");
   const [level, setLevel] = useState("none");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   useEffect(() => {
     if (!student) return;
@@ -72,6 +83,7 @@ export function ParticipantEditDialog({
     setCollege(student.college || "none");
     setDepartment(student.department || "none");
     setLevel(student.level || "none");
+    setPhotoUrl(student.photo_url || "");
     setIsActive(Boolean(student.is_active));
   }, [student]);
 
@@ -79,7 +91,9 @@ export function ParticipantEditDialog({
   const departmentOptions = useMemo(() => {
     if (!showDepartment) return [];
     if (college !== "none") {
-      return collegeOptions.find((item) => item.name === college)?.departments || [];
+      return (
+        collegeOptions.find((item) => item.name === college)?.departments || []
+      );
     }
     return collegeOptions.flatMap((item) => item.departments);
   }, [college, collegeOptions, showDepartment]);
@@ -98,6 +112,7 @@ export function ParticipantEditDialog({
             : department
           : undefined,
         level: showLevel ? (level === "none" ? "" : level) : undefined,
+        photo_url: photoUrl || "",
         is_active: isActive,
       });
       await onUpdated();
@@ -112,20 +127,35 @@ export function ParticipantEditDialog({
     }
   };
 
+  const handlePhotoUpload = async (file?: File | null) => {
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    try {
+      const url = await uploadImageToCloudinary(file, "univote/students");
+      setPhotoUrl(url);
+      toast.success("Photo uploaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle className="text-sm font-semibold">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle className="text-sm font-semibold">
             Edit {participantLabels.singular}
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Update profile details and access state without leaving the registry.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetTitle>
+          <SheetDescription className="text-xs">
+            Update profile details and access state without leaving the
+            registry.
+          </SheetDescription>
+        </SheetHeader>
 
         {student ? (
-          <div className="grid gap-3">
+          <div className="grid gap-3 overflow-y-auto px-3 pb-3">
             <div className="space-y-1.5">
               <Label htmlFor="participant-full-name" className="text-xs">
                 Full name
@@ -150,7 +180,47 @@ export function ParticipantEditDialog({
               </div>
             ) : null}
 
-            {(showCollege || showDepartment || showLevel) ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Profile image</Label>
+              <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border bg-muted/20">
+                  {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoUrl}
+                      alt={fullName || "Student photo"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      No image
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    value={photoUrl}
+                    onChange={(event) => setPhotoUrl(event.target.value.trim())}
+                    placeholder="Paste image URL"
+                  />
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted/20">
+                    <Upload className="h-3.5 w-3.5" />
+                    {isUploadingPhoto ? "Uploading..." : "Upload image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingPhoto}
+                      onChange={(event) =>
+                        void handlePhotoUpload(event.target.files?.[0] || null)
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {showCollege || showDepartment || showLevel ? (
               <div className="grid gap-3 sm:grid-cols-3">
                 {showCollege ? (
                   <div className="space-y-1.5">
@@ -225,21 +295,29 @@ export function ParticipantEditDialog({
               Active account
             </label>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <SheetFooter className="px-0 sm:flex-row">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
-              <Button size="sm" onClick={() => void handleSubmit()} disabled={updateParticipant.isPending}>
+              <Button
+                size="sm"
+                onClick={() => void handleSubmit()}
+                disabled={updateParticipant.isPending || isUploadingPhoto}
+              >
                 {updateParticipant.isPending ? (
                   <LoadingButtonContent label="Saving changes..." />
                 ) : (
                   "Save changes"
                 )}
               </Button>
-            </div>
+            </SheetFooter>
           </div>
         ) : null}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

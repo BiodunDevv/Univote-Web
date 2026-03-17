@@ -19,7 +19,6 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useAdminStudentDetailQuery } from "@/lib/queries/admin";
 import {
   formatParticipantIdentifier,
-  getTenantParticipantLabels,
   isTenantParticipantFieldEnabled,
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
@@ -37,10 +36,10 @@ export default function StudentDetailPage() {
   const params = useParams<{ studentId: string }>();
   const searchParams = useSearchParams();
   const studentId = params.studentId;
-  const backRef = searchParams.get("ref") || "/dashboard/participants";
+  const backRef = searchParams.get("ref") || "/dashboard/students";
 
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
+  const participantLabels = { singular: "Student", plural: "Students" };
   const photoEnabled = isTenantParticipantFieldEnabled(tenant, "photo_url");
   const isAuthorized = hasHydrated && Boolean(token);
   const canManageStudent =
@@ -65,7 +64,7 @@ export default function StudentDetailPage() {
 
   if (!hasHydrated || studentDetailQuery.isLoading) {
     return (
-        <ChangingLoadingState
+      <ChangingLoadingState
         fullHeight
         messages={[
           `Loading ${participantLabels.singular.toLowerCase()} workspace...`,
@@ -130,7 +129,7 @@ export default function StudentDetailPage() {
               className="h-10"
               onClick={() =>
                 router.push(
-                  `/dashboard/participants/${studentId}/edit?ref=${encodeURIComponent(backRef)}`,
+                  `/dashboard/students/${studentId}/edit?ref=${encodeURIComponent(backRef)}`,
                 )
               }
             >
@@ -199,8 +198,7 @@ export default function StudentDetailPage() {
                 formatParticipantIdentifier(
                   currentStudent as unknown as Record<string, unknown>,
                   tenant,
-                ) ||
-                "Not set"
+                ) || "Not set"
               }
               icon={<User className="h-4 w-4" />}
               breakWords

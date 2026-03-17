@@ -370,7 +370,7 @@ export default function EditDepartmentPage() {
               </div>
               <div>
                 <Label className="text-xs uppercase font-semibold text-muted-foreground">
-                  Participants enrolled
+                  Students enrolled
                 </Label>
                 <p className="text-2xl font-semibold text-foreground mt-1">
                   {department.student_count}
@@ -384,7 +384,9 @@ export default function EditDepartmentPage() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => router.push(`/dashboard/structure/colleges/${collegeId}`)}
+              onClick={() =>
+                router.push(`/dashboard/structure/colleges/${collegeId}`)
+              }
               disabled={loading}
               className="hover:bg-accent"
             >

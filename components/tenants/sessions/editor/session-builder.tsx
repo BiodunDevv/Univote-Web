@@ -81,7 +81,8 @@ export function SessionBuilder({
   );
   const [error, setError] = useState<string | null>(null);
   const [stepIssues, setStepIssues] = useState<string[]>([]);
-  const [formData, setFormData] = useState<SessionCreationFormData>(initialData);
+  const [formData, setFormData] =
+    useState<SessionCreationFormData>(initialData);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<SessionCreationStep[]>(
     [],
@@ -120,16 +121,17 @@ export function SessionBuilder({
   const normalizedFormData = useMemo(
     () => ({
       ...formData,
-      eligible_college: collegeEligibilityEnabled ? formData.eligible_college : null,
+      eligible_college: collegeEligibilityEnabled
+        ? formData.eligible_college
+        : null,
       eligible_departments: departmentEligibilityEnabled
         ? formData.eligible_departments
         : [],
-      eligible_levels:
-        levelEligibilityEnabled
-          ? formData.eligible_levels.filter((level) =>
-              availableLevels.includes(level),
-            )
-          : [],
+      eligible_levels: levelEligibilityEnabled
+        ? formData.eligible_levels.filter((level) =>
+            availableLevels.includes(level),
+          )
+        : [],
     }),
     [
       availableLevels,
@@ -155,7 +157,9 @@ export function SessionBuilder({
     ],
   );
 
-  const updateFormData = (updater: (current: SessionCreationFormData) => SessionCreationFormData) => {
+  const updateFormData = (
+    updater: (current: SessionCreationFormData) => SessionCreationFormData,
+  ) => {
     setFormData((current) => updater(current));
     clearMessages();
   };
@@ -203,7 +207,8 @@ export function SessionBuilder({
     if (!departmentEligibilityEnabled) {
       updateFormData((prev) => ({
         ...prev,
-        eligible_college: prev.eligible_college === collegeId ? null : collegeId,
+        eligible_college:
+          prev.eligible_college === collegeId ? null : collegeId,
       }));
       return;
     }
@@ -211,7 +216,9 @@ export function SessionBuilder({
     const college = colleges.find((item) => item._id === collegeId);
     if (!college) return;
 
-    const collegeDepartmentIds = college.departments.map((department) => department._id);
+    const collegeDepartmentIds = college.departments.map(
+      (department) => department._id,
+    );
     const allSelected = collegeDepartmentIds.every((departmentId) =>
       formData.eligible_departments.includes(departmentId),
     );
@@ -313,7 +320,9 @@ export function SessionBuilder({
       );
       if (firstInvalidStep) {
         setCurrentStepIndex(
-          SESSION_CREATION_STEPS.findIndex((step) => step.id === firstInvalidStep.id),
+          SESSION_CREATION_STEPS.findIndex(
+            (step) => step.id === firstInvalidStep.id,
+          ),
         );
       }
       return;
@@ -400,18 +409,18 @@ export function SessionBuilder({
     return (
       <ReviewSubmitStep
         formData={normalizedFormData}
-          participantPluralLabel={participantLabels.plural}
-          eligibleCollegesCount={eligibleCollegeIds.length}
-          collegeEligibilityEnabled={collegeEligibilityEnabled}
-          departmentEligibilityEnabled={departmentEligibilityEnabled}
-          levelEligibilityEnabled={levelEligibilityEnabled}
-          validationIssues={fullValidationIssues}
+        participantPluralLabel={participantLabels.plural}
+        eligibleCollegesCount={eligibleCollegeIds.length}
+        collegeEligibilityEnabled={collegeEligibilityEnabled}
+        departmentEligibilityEnabled={departmentEligibilityEnabled}
+        levelEligibilityEnabled={levelEligibilityEnabled}
+        validationIssues={fullValidationIssues}
       />
     );
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-2 p-0">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 p-0">
       <div className="rounded-xl border bg-card/60 p-4 shadow-none">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -419,6 +428,9 @@ export function SessionBuilder({
               {title}
             </h1>
             <p className="text-sm text-muted-foreground">{description}</p>
+            <div className="mt-2 inline-flex items-center rounded-full border bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+              Smart flow: Basics | Schedule | Eligibility | Ballot | Review
+            </div>
           </div>
           <Button
             variant="outline"
@@ -432,7 +444,7 @@ export function SessionBuilder({
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-2 py-4 sm:px-4">
+      <div className="mx-auto w-full px-1 py-1 sm:px-0">
         <form onSubmit={handleSubmit} className="space-y-3">
           <SessionCreationStepper
             currentStep={currentStep}
@@ -448,7 +460,9 @@ export function SessionBuilder({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {error ? <p className="text-xs text-destructive">{error}</p> : null}
+                {error ? (
+                  <p className="text-xs text-destructive">{error}</p>
+                ) : null}
                 {stepIssues.length > 0 ? (
                   <ul className="list-disc space-y-1 pl-4 text-xs text-destructive">
                     {stepIssues.map((issue) => (

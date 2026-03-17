@@ -9,20 +9,15 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
-  CreditCard,
   Mail,
   Loader2,
   Receipt,
   RefreshCcw,
   ShieldCheck,
   Sparkles,
-  XCircle,
 } from "lucide-react";
-import { toast } from "sonner";
-import {
-  useRetryTenantApplicationCheckoutMutation,
-  useTenantApplicationStatusQuery,
-} from "@/lib/queries/public";
+import { Logo } from "@/components/logo";
+import { useTenantApplicationStatusQuery } from "@/lib/queries/public";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,45 +66,11 @@ function getApplicationStatusTone(status?: string) {
     };
   }
 
-  if (status === "pending_payment") {
-    return {
-      icon: CreditCard,
-      label: "Awaiting payment",
-      description:
-        "Billing must be completed before platform review can continue.",
-      className: "text-primary",
-    };
-  }
-
   return {
     icon: Clock3,
     label: "In review",
     description:
-      "Payment is complete and the application is waiting for platform approval.",
-    className: "text-primary",
-  };
-}
-
-function getInvoiceTone(status?: string) {
-  if (status === "paid") {
-    return {
-      icon: CheckCircle2,
-      label: "Payment confirmed",
-      className: "text-emerald-600",
-    };
-  }
-
-  if (status === "failed") {
-    return {
-      icon: XCircle,
-      label: "Payment failed",
-      className: "text-destructive",
-    };
-  }
-
-  return {
-    icon: Loader2,
-    label: "Payment pending",
+      "Application has been submitted and is waiting for super-admin verification.",
     className: "text-primary",
   };
 }
@@ -128,54 +89,22 @@ export default function ApplicationStatusClientPage() {
   );
 
   const application = statusQuery.data?.application;
-  const invoice = statusQuery.data?.invoice;
-  const effectiveReference = application?.reference || reference;
-  const retryMutation =
-    useRetryTenantApplicationCheckoutMutation(effectiveReference);
-
-  async function handlePayNow() {
-    try {
-      const response = await retryMutation.mutateAsync();
-      if (response.checkout_url) {
-        window.location.assign(response.checkout_url);
-        return;
-      }
-      toast.success(response.message);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to initiate checkout",
-      );
-    }
-  }
   const statusTone = getApplicationStatusTone(application?.status);
-  const invoiceTone = getInvoiceTone(invoice?.status);
   const timeline = useMemo(
     () => application?.status_timeline || [],
     [application?.status_timeline],
   );
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background px-4 py-10 sm:px-6 lg:px-8">
+    <main className="relative min-h-screen overflow-hidden bg-background px-4 pb-10 pt-24 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/10 to-transparent" />
 
       <div className="relative mx-auto w-full max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/">
-              <ArrowLeft className="mr-2 size-4" />
-              Back to home
-            </Link>
-          </Button>
-          <Badge variant="outline" className="rounded-full px-3 py-1">
-            Tenant onboarding tracker
-          </Badge>
-        </div>
-
         <Card className="border-border/70 shadow-none">
           <CardHeader className="space-y-4">
             <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="size-3.5" />
-              Real-time status + payment continuation
+              Real-time onboarding verification status
             </div>
             <div>
               <CardTitle className="text-2xl">Track your application</CardTitle>
@@ -263,8 +192,7 @@ export default function ApplicationStatusClientPage() {
                         {application.name}
                       </CardTitle>
                       <CardDescription>
-                        {application.reference || "Reference pending"} ·{" "}
-                        {toTitleCase(application.plan_code)}
+                        {application.reference || "Reference pending"}
                       </CardDescription>
                     </div>
                     <Badge variant="outline" className="capitalize">
@@ -285,41 +213,13 @@ export default function ApplicationStatusClientPage() {
                     </div>
                   </div>
 
-                  {application.status === "pending_payment" ? (
-                    <Button
-                      size="lg"
-                      className="w-full gap-2"
-                      disabled={retryMutation.isPending || !effectiveReference}
-                      onClick={handlePayNow}
-                    >
-                      <CreditCard className="size-4" />
-                      {retryMutation.isPending
-                        ? "Preparing checkout…"
-                        : "Complete payment"}
-                    </Button>
-                  ) : null}
-
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2 text-sm">
-                      <p>
-                        <span className="text-muted-foreground">Plan:</span>{" "}
-                        {toTitleCase(application.plan_code)}
-                      </p>
-                      <p>
-                        <span className="text-muted-foreground">
-                          Payment state:
-                        </span>{" "}
-                        {toTitleCase(application.payment_status)}
-                      </p>
                       <p>
                         <span className="text-muted-foreground">
                           Submitted email:
                         </span>{" "}
                         {application.contact_email || "Not available"}
-                      </p>
-                      <p>
-                        <span className="text-muted-foreground">Coupon:</span>{" "}
-                        {application.coupon_code || "No coupon applied"}
                       </p>
                     </div>
                     <div className="space-y-2 text-sm">
@@ -350,22 +250,20 @@ export default function ApplicationStatusClientPage() {
 
               <Card className="shadow-none">
                 <CardHeader>
-                  <CardTitle>Payment snapshot</CardTitle>
+                  <CardTitle>Verification snapshot</CardTitle>
                   <CardDescription>
-                    Continue checkout if billing is still pending.
+                    Review the current review flow and available actions.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4">
-                    <invoiceTone.icon
-                      className={`mt-0.5 size-5 ${invoiceTone.className} ${invoice?.status === "pending" ? "animate-spin" : ""}`}
-                    />
+                    <Clock3 className="mt-0.5 size-5 text-primary" />
                     <div>
-                      <p className="font-medium">{invoiceTone.label}</p>
+                      <p className="font-medium">Application in workflow</p>
                       <p className="text-sm text-muted-foreground">
-                        {invoice
-                          ? `${invoice.invoice_number} · NGN ${invoice.amount_ngn.toLocaleString()}`
-                          : "No invoice has been generated yet."}
+                        {application.rejection_reason
+                          ? "Updates are required before approval."
+                          : "Application is being reviewed by super admin."}
                       </p>
                     </div>
                   </div>
@@ -388,35 +286,6 @@ export default function ApplicationStatusClientPage() {
                           </a>
                         </Button>
                       ))}
-
-                    {invoice &&
-                    ["pending", "failed"].includes(invoice.status) ? (
-                      <Button
-                        variant="outline"
-                        disabled={retryMutation.isPending}
-                        className="w-full justify-start"
-                        onClick={async () => {
-                          try {
-                            const response = await retryMutation.mutateAsync();
-                            if (response.checkout_url) {
-                              window.location.assign(response.checkout_url);
-                              return;
-                            }
-                            toast.success(response.message);
-                          } catch (error) {
-                            toast.error(
-                              error instanceof Error
-                                ? error.message
-                                : "Failed to retry checkout",
-                            );
-                          }
-                        }}
-                      >
-                        {retryMutation.isPending
-                          ? "Preparing checkout..."
-                          : "Retry payment"}
-                      </Button>
-                    ) : null}
                   </div>
                 </CardContent>
               </Card>

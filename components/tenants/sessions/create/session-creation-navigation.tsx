@@ -69,7 +69,7 @@ export function SessionCreationNavigation({
               onClick={onNext}
               disabled={isSubmitting}
             >
-              Next
+              Continue
               <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           )}

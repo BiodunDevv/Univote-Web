@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
@@ -12,7 +13,13 @@ import {
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +34,58 @@ import {
 type TenantRole = "owner" | "admin" | "support" | "analyst";
 type AdminRole = "admin" | "super_admin" | TenantRole;
 
+const PERMISSION_DESCRIPTIONS: Record<string, string> = {
+  "tenant.manage": "Full tenant administration access.",
+  "tenant.settings.manage": "Manage tenant settings and operational defaults.",
+  "tenant.identity.manage":
+    "Configure identifiers and sign-in identity policy.",
+  "tenant.labels.manage": "Customize participant labels and terminology.",
+  "tenant.auth-policy.manage": "Control authentication and account policy.",
+  "tenant.roles.manage": "Manage tenant admin roles and permission templates.",
+  "students.manage": "Create, update, and deactivate participant records.",
+  "participants.manage": "Manage participant records in unified views.",
+  "participants.view": "Read-only participant access.",
+  "sessions.manage": "Create and manage voting sessions and ballots.",
+  "support.manage": "Access and manage support desk tickets.",
+  "analytics.view": "View analytics and monitoring dashboards.",
+  "admins.manage": "Invite and manage tenant administrators.",
+  "reports.export": "Export reports and compliance data.",
+};
+
+function toPermissionLabel(permission: string) {
+  return permission
+    .replace(/[._-]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+async function fetchOnboardingDetails() {
+  const response = await fetch("/api/admin/admin-users/onboarding", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch onboarding details");
+  }
+
+  const data = await response.json();
+  return data.onboarding || {};
+}
+
 export default function CreateAdminPage() {
   const router = useRouter();
   const { admin, hasHydrated } = useAuthStore();
   const isSuperAdmin = admin?.role === "super_admin";
+
   const roleCatalogQuery = useTenantRoleCatalogQuery({
     enabled: hasHydrated && !isSuperAdmin,
+  });
+
+  const onboardingQuery = useQuery({
+    queryKey: ["admin:onboarding"],
+    queryFn: fetchOnboardingDetails,
+    enabled: hasHydrated && !isSuperAdmin,
+    staleTime: 5 * 60 * 1000,
   });
   const createGlobalAdmin = useCreateGlobalAdminMutation();
   const createTenantAdmin = useCreateTenantAdminUserMutation();
@@ -74,10 +127,30 @@ export default function CreateAdminPage() {
 
   const availablePermissions = useMemo(() => {
     if (isSuperAdmin) return [];
+
     return Array.from(
-      new Set((roleCatalogQuery.data?.roles || []).flatMap((role) => role.permissions)),
+      new Set(
+        (roleCatalogQuery.data?.roles || []).flatMap(
+          (role) => role.permissions,
+        ),
+      ),
     );
   }, [isSuperAdmin, roleCatalogQuery.data?.roles]);
+
+  const handleAutoFillFromOnboarding = () => {
+    if (!onboardingQuery.data) {
+      toast.error("No onboarding details available");
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      full_name: onboardingQuery.data.contact_name || current.full_name,
+      email: onboardingQuery.data.contact_email || current.email,
+    }));
+
+    toast.success("Filled with application contact details");
+  };
 
   const handlePermissionToggle = (permission: string, checked: boolean) => {
     setFormData((current) => ({
@@ -112,7 +185,9 @@ export default function CreateAdminPage() {
       toast.success("Admin created successfully");
       router.push("/dashboard/admins");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create admin");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create admin",
+      );
     }
   };
 
@@ -134,15 +209,21 @@ export default function CreateAdminPage() {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
         <section className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">Invite Tenant Admin</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Invite Tenant Admin
+          </h1>
           <p className="text-sm text-muted-foreground">
-            The tenant role catalog is unavailable right now, so admin creation is temporarily blocked.
+            The tenant role catalog is unavailable right now, so admin creation
+            is temporarily blocked.
           </p>
         </section>
 
         <Card className="border-destructive/40 shadow-none">
           <CardContent className="flex flex-col gap-4 p-6 text-sm text-muted-foreground">
-            <p>{roleCatalogQuery.error?.message || "No tenant roles were returned by the API."}</p>
+            <p>
+              {roleCatalogQuery.error?.message ||
+                "No tenant roles were returned by the API."}
+            </p>
             <div>
               <Button variant="outline" asChild>
                 <Link href="/dashboard/admins">Back to admins</Link>
@@ -184,6 +265,21 @@ export default function CreateAdminPage() {
               : "Tenant admin users are bound to the active tenant only."}
           </CardDescription>
         </CardHeader>
+
+        {!isSuperAdmin && onboardingQuery.data?.contact_name ? (
+          <div className="border-b px-6 py-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAutoFillFromOnboarding}
+              disabled={onboardingQuery.isLoading}
+            >
+              Use application contact details
+            </Button>
+          </div>
+        ) : null}
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -235,7 +331,7 @@ export default function CreateAdminPage() {
                 />
                 {!isSuperAdmin ? (
                   <p className="text-xs text-muted-foreground">
-                    Default tenant admin password is prefilled as <code>123456</code>.
+                    Default tenant admin password is prefilled as 123456.
                   </p>
                 ) : null}
               </div>
@@ -277,14 +373,15 @@ export default function CreateAdminPage() {
                 <div>
                   <h2 className="text-sm font-medium">Permissions</h2>
                   <p className="text-sm text-muted-foreground">
-                    Adjust the default permission set for this tenant admin.
+                    Pick what this admin can do. Labels are grouped by
+                    capability and each code remains visible.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {availablePermissions.map((permission) => (
                     <label
                       key={permission}
-                      className="flex items-center gap-3 rounded-xl border p-3 text-sm"
+                      className="flex items-start gap-3 rounded-xl border p-3 text-sm"
                     >
                       <Checkbox
                         checked={formData.permissions.includes(permission)}
@@ -292,7 +389,18 @@ export default function CreateAdminPage() {
                           handlePermissionToggle(permission, Boolean(checked))
                         }
                       />
-                      <span>{permission}</span>
+                      <span className="space-y-1">
+                        <span className="block font-medium text-foreground">
+                          {toPermissionLabel(permission)}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {PERMISSION_DESCRIPTIONS[permission] ||
+                            "Tenant permission for this admin role."}
+                        </span>
+                        <span className="block font-mono text-[11px] text-muted-foreground">
+                          {permission}
+                        </span>
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -302,7 +410,9 @@ export default function CreateAdminPage() {
             <div className="flex gap-3">
               <Button
                 type="submit"
-                disabled={createGlobalAdmin.isPending || createTenantAdmin.isPending}
+                disabled={
+                  createGlobalAdmin.isPending || createTenantAdmin.isPending
+                }
               >
                 Create admin
               </Button>

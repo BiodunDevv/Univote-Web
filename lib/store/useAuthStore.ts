@@ -162,19 +162,26 @@ export const useAuthStore = create<AuthState>()(
         syncSharedAdminContext(session);
       },
 
-      login: async (email: string, password: string, tenantSlug?: string | null) => {
+      login: async (
+        email: string,
+        password: string,
+        tenantSlug?: string | null,
+      ) => {
         set({ isLoading: true, error: null });
         try {
           const requestedTenantSlug = normalizeTenantSlug(tenantSlug);
-          const data = await apiRequest<AuthSessionData>("/api/auth/admin-login", {
-            method: "POST",
-            data: { email, password },
-            headers: requestedTenantSlug
-              ? { "X-Tenant-Slug": requestedTenantSlug }
-              : undefined,
-            auth: "optional",
-            redirectOnAuthError: false,
-          });
+          const data = await apiRequest<AuthSessionData>(
+            "/api/auth/admin-login",
+            {
+              method: "POST",
+              data: { email, password },
+              headers: requestedTenantSlug
+                ? { "X-Tenant-Slug": requestedTenantSlug }
+                : undefined,
+              auth: "optional",
+              redirectOnAuthError: false,
+            },
+          );
 
           set((state) => ({
             token: data.token,
@@ -206,21 +213,21 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-      switchOrganization: async (
-        tenantSlug: string,
-        persistSession = true,
-      ) => {
+      switchOrganization: async (tenantSlug: string, persistSession = true) => {
         set({ isLoading: true, error: null });
         try {
           const requestedTenantSlug = normalizeTenantSlug(tenantSlug);
-          const data = await apiRequest<AuthSessionData>("/api/auth/switch-tenant", {
-            method: "POST",
-            data: {
-              tenant_slug: requestedTenantSlug,
+          const data = await apiRequest<AuthSessionData>(
+            "/api/auth/switch-tenant",
+            {
+              method: "POST",
+              data: {
+                tenant_slug: requestedTenantSlug,
+              },
+              auth: "admin",
+              redirectOnAuthError: false,
             },
-            auth: "admin",
-            redirectOnAuthError: false,
-          });
+          );
 
           if (persistSession) {
             set((state) => ({
@@ -234,7 +241,9 @@ export const useAuthStore = create<AuthState>()(
               hasHydrated: state.hasHydrated,
             }));
             setTenantSlugOverride(
-              data.admin.role === "super_admin" ? null : (data.tenant?.slug ?? null),
+              data.admin.role === "super_admin"
+                ? null
+                : (data.tenant?.slug ?? null),
             );
             syncSharedAdminContext(data);
           } else {
@@ -249,7 +258,9 @@ export const useAuthStore = create<AuthState>()(
               hasHydrated: state.hasHydrated,
             }));
             setTenantSlugOverride(
-              data.admin.role === "super_admin" ? null : (data.tenant?.slug ?? null),
+              data.admin.role === "super_admin"
+                ? null
+                : (data.tenant?.slug ?? null),
             );
             syncSharedAdminContext(data);
           }
@@ -274,20 +285,20 @@ export const useAuthStore = create<AuthState>()(
       ) => {
         set({ isLoading: true, error: null });
         try {
-          const data = await apiRequest<{ message: string; organizations: TenantOrganization[] }>(
-            "/api/auth/link-organization",
-            {
-              method: "POST",
-              auth: "admin",
-              data: {
-                tenant_slug: normalizeTenantSlug(tenantSlug),
-                email,
-                password,
-                label,
-              },
-              redirectOnAuthError: false,
+          const data = await apiRequest<{
+            message: string;
+            organizations: TenantOrganization[];
+          }>("/api/auth/link-organization", {
+            method: "POST",
+            auth: "admin",
+            data: {
+              tenant_slug: normalizeTenantSlug(tenantSlug),
+              email,
+              password,
+              label,
             },
-          );
+            redirectOnAuthError: false,
+          });
 
           set((state) => {
             if (state.token && state.admin) {
@@ -322,17 +333,17 @@ export const useAuthStore = create<AuthState>()(
       unlinkOrganization: async (tenantSlug: string) => {
         set({ isLoading: true, error: null });
         try {
-          const data = await apiRequest<{ message: string; organizations: TenantOrganization[] }>(
-            "/api/auth/unlink-organization",
-            {
-              method: "POST",
-              auth: "admin",
-              data: {
-                tenant_slug: normalizeTenantSlug(tenantSlug),
-              },
-              redirectOnAuthError: false,
+          const data = await apiRequest<{
+            message: string;
+            organizations: TenantOrganization[];
+          }>("/api/auth/unlink-organization", {
+            method: "POST",
+            auth: "admin",
+            data: {
+              tenant_slug: normalizeTenantSlug(tenantSlug),
             },
-          );
+            redirectOnAuthError: false,
+          });
 
           set((state) => {
             if (state.token && state.admin) {
@@ -378,27 +389,27 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-	      updateAdmin: (updatedAdmin: Partial<AuthAdmin>) => {
-	        set((state) => {
-	          const nextAdmin = state.admin
-	            ? { ...state.admin, ...updatedAdmin }
-	            : null;
+      updateAdmin: (updatedAdmin: Partial<AuthAdmin>) => {
+        set((state) => {
+          const nextAdmin = state.admin
+            ? { ...state.admin, ...updatedAdmin }
+            : null;
 
-	          if (state.token && nextAdmin) {
-	            syncSharedAdminContext({
-	              token: state.token,
-	              admin: nextAdmin,
-	              tenant: state.tenant,
-	              organizations: state.organizations,
-	              membership: state.membership,
-	            });
-	          }
+          if (state.token && nextAdmin) {
+            syncSharedAdminContext({
+              token: state.token,
+              admin: nextAdmin,
+              tenant: state.tenant,
+              organizations: state.organizations,
+              membership: state.membership,
+            });
+          }
 
-	          return {
-	            admin: nextAdmin,
-	          };
-	        });
-	      },
+          return {
+            admin: nextAdmin,
+          };
+        });
+      },
 
       forgotPassword: async (email: string, tenantSlug?: string | null) => {
         set({ isLoading: true, error: null });
@@ -472,18 +483,18 @@ export const useAuthStore = create<AuthState>()(
         organizations: state.organizations,
         membership: state.membership,
       }),
-	      onRehydrateStorage: () => (state) => {
-	        if (state?.token && state.admin) {
-	          syncSharedAdminContext({
-	            token: state.token,
-	            admin: state.admin,
-	            tenant: state.tenant,
-	            organizations: state.organizations,
-	            membership: state.membership,
-	          });
-	        }
-	        state?.setHasHydrated(true);
-	      },
+      onRehydrateStorage: () => (state) => {
+        if (state?.token && state.admin) {
+          syncSharedAdminContext({
+            token: state.token,
+            admin: state.admin,
+            tenant: state.tenant,
+            organizations: state.organizations,
+            membership: state.membership,
+          });
+        }
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

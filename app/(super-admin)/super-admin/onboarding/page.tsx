@@ -4,13 +4,10 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
-  CreditCard,
   FilePenLine,
+  FileSearch,
   Mail,
   PhoneCall,
-  Receipt,
-  TicketPercent,
-  Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -49,25 +46,24 @@ import {
 } from "@/components/ui/select";
 
 const tabConfig = {
-  pending_payment: {
-    label: "Pending Payment",
+  draft: {
+    label: "Draft Applications",
     description:
-      "Applications waiting on billing activation before platform review can continue.",
-    icon: CreditCard,
+      "Submitted tenant records that still need application details or moderation actions.",
+    icon: FileSearch,
   },
   pending_approval: {
     label: "Pending Approval",
     description:
-      "Paid tenants ready for provisioning review, approval, and activation.",
+      "University applications ready for provisioning review, approval, and activation.",
     icon: BadgeCheck,
   },
 } as const;
 
 export default function PlatformOnboardingPage() {
-  const [status, setStatus] =
-    useState<keyof typeof tabConfig>("pending_payment");
-  const pendingPaymentQuery = usePlatformTenantsQuery({
-    status: "pending_payment",
+  const [status, setStatus] = useState<keyof typeof tabConfig>("draft");
+  const draftQuery = usePlatformTenantsQuery({
+    status: "draft",
     limit: 1,
   });
   const pendingApprovalQuery = usePlatformTenantsQuery({
@@ -81,7 +77,7 @@ export default function PlatformOnboardingPage() {
 
   const tenants = data?.tenants || [];
   const summary = {
-    pending_payment: pendingPaymentQuery.data?.total || 0,
+    draft: draftQuery.data?.total || 0,
     pending_approval: pendingApprovalQuery.data?.total || 0,
   };
 
@@ -96,14 +92,12 @@ export default function PlatformOnboardingPage() {
               Tenant Onboarding
             </h1>
             <p className="text-sm text-muted-foreground">
-              Track organization applications from billing activation through
-              platform approval.
+              Track university applications from submission through platform
+              approval.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
-            <Badge variant="secondary">
-              {summary.pending_payment} pending payment
-            </Badge>
+            <Badge variant="secondary">{summary.draft} drafts</Badge>
             <Badge variant="outline">
               {summary.pending_approval} pending approval
             </Badge>
@@ -129,7 +123,7 @@ export default function PlatformOnboardingPage() {
             }
           >
             <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="pending_payment">Pending payment</TabsTrigger>
+              <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="pending_approval">
                 Pending approval
               </TabsTrigger>
@@ -170,19 +164,10 @@ function OnboardingTenantCard({
   >["tenants"][number];
 }) {
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
-  const latestInvoice = tenant.billing?.invoices?.[0] ?? null;
-  const amountLabel =
-    latestInvoice && Number.isFinite(latestInvoice.amount_ngn)
-      ? `NGN ${latestInvoice.amount_ngn.toLocaleString()}`
-      : null;
-  const paymentStateLabel =
+  const reviewStateLabel =
     tenant.status === "pending_approval"
-      ? "Payment received"
-      : tenant.onboarding?.payment_required === false
-        ? "No payment required"
-        : latestInvoice?.status
-          ? latestInvoice.status.replace(/_/g, " ")
-          : "Awaiting payment";
+      ? "Ready for decision"
+      : "Draft in progress";
 
   return (
     <Card className="overflow-hidden border-border/60 shadow-none">
@@ -212,26 +197,16 @@ function OnboardingTenantCard({
           className="flex flex-wrap gap-2 text-xs"
           title={tenant.application_reference || undefined}
         >
-          <Badge variant="outline" className="uppercase">
-            {tenant.plan_code || "pro"}
-          </Badge>
+          <Badge variant="outline">University</Badge>
+          <Badge variant="outline">{reviewStateLabel}</Badge>
           <Badge variant="outline">
-            {tenant.onboarding?.institution_type || "organization"}
-          </Badge>
-          <Badge variant="outline">{paymentStateLabel}</Badge>
-          <Badge variant="outline">
-            {tenant.onboarding?.student_count_estimate || 0} participants
+            {tenant.onboarding?.student_count_estimate || 0} students
           </Badge>
           <Badge variant="outline">
             {tenant.onboarding?.admin_count_estimate || 0} admins
           </Badge>
           {tenant.application_reference ? (
             <Badge variant="outline">Ref {tenant.application_reference}</Badge>
-          ) : null}
-          {tenant.onboarding?.coupon_code ? (
-            <Badge variant="outline">
-              Coupon {tenant.onboarding.coupon_code}
-            </Badge>
           ) : null}
         </div>
       </CardHeader>
@@ -291,32 +266,12 @@ function OnboardingTenantCard({
           </div>
           <div className="min-w-0 rounded-xl bg-muted/50 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Billing
+              Application
             </p>
             <p className="mt-1 font-medium">
-              {amountLabel || "Awaiting invoice"}
+              {tenant.application_reference || "Reference pending"}
             </p>
-            <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-              <Wallet className="size-3.5" />
-              <span>{paymentStateLabel}</span>
-            </div>
-            {latestInvoice?.payment_reference ? (
-              <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-                <Receipt className="size-3.5" />
-                <span
-                  className="min-w-0 truncate"
-                  title={latestInvoice.payment_reference}
-                >
-                  {latestInvoice.payment_reference}
-                </span>
-              </div>
-            ) : null}
-            {tenant.onboarding?.coupon_code ? (
-              <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-                <TicketPercent className="size-3.5" />
-                <span>{tenant.onboarding.coupon_code}</span>
-              </div>
-            ) : null}
+            <div className="mt-2 text-muted-foreground">{reviewStateLabel}</div>
           </div>
         </div>
 
@@ -333,7 +288,7 @@ function OnboardingTenantCard({
 
         {tenant.onboarding?.rejection_reason ? (
           <div className="rounded-xl border border-amber-300/40 bg-amber-500/5 p-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Rejection note:</span>{" "}
+            <span className="font-medium text-foreground">Review note:</span>{" "}
             <span
               className="wrap-break-word"
               title={tenant.onboarding.rejection_reason}
@@ -355,7 +310,6 @@ function OnboardingTenantCard({
                   try {
                     await updateMutation.mutateAsync({
                       status: "active",
-                      subscription_status: "active",
                     });
                     toast.success("Tenant approved successfully");
                   } catch (error) {
@@ -372,7 +326,7 @@ function OnboardingTenantCard({
               </Button>
             ) : null}
             {tenant.status === "pending_approval" ||
-            tenant.status === "pending_payment" ? (
+            tenant.status === "draft" ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -418,11 +372,10 @@ function ApplicationReviewDialog({
 }) {
   const [open, setOpen] = useState(false);
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
-  const latestInvoice = tenant.billing?.invoices?.[0] ?? null;
   const [form, setForm] = useState({
     contact_name: tenant.onboarding?.contact_name || "",
     contact_email: tenant.onboarding?.contact_email || "",
-    institution_type: tenant.onboarding?.institution_type || "organization",
+    institution_type: "university",
     student_count_estimate:
       tenant.onboarding?.student_count_estimate !== undefined &&
       tenant.onboarding?.student_count_estimate !== null
@@ -435,11 +388,8 @@ function ApplicationReviewDialog({
         : "",
     notes: tenant.onboarding?.notes || "",
     demo_requested: Boolean(tenant.onboarding?.demo_requested),
-    payment_required: tenant.onboarding?.payment_required !== false,
     rejection_reason: tenant.onboarding?.rejection_reason || "",
     status: tenant.status || "draft",
-    subscription_status: tenant.subscription_status || "trial",
-    plan_code: tenant.plan_code || "pro",
   });
 
   useEffect(() => {
@@ -447,7 +397,7 @@ function ApplicationReviewDialog({
     setForm({
       contact_name: tenant.onboarding?.contact_name || "",
       contact_email: tenant.onboarding?.contact_email || "",
-      institution_type: tenant.onboarding?.institution_type || "organization",
+      institution_type: "university",
       student_count_estimate:
         tenant.onboarding?.student_count_estimate !== undefined &&
         tenant.onboarding?.student_count_estimate !== null
@@ -460,11 +410,8 @@ function ApplicationReviewDialog({
           : "",
       notes: tenant.onboarding?.notes || "",
       demo_requested: Boolean(tenant.onboarding?.demo_requested),
-      payment_required: tenant.onboarding?.payment_required !== false,
       rejection_reason: tenant.onboarding?.rejection_reason || "",
       status: tenant.status || "draft",
-      subscription_status: tenant.subscription_status || "trial",
-      plan_code: tenant.plan_code || "pro",
     });
   }, [open, tenant]);
 
@@ -481,21 +428,12 @@ function ApplicationReviewDialog({
         : null,
       notes: form.notes,
       demo_requested: form.demo_requested,
-      payment_required: form.payment_required,
       rejection_reason: form.rejection_reason,
       status: form.status as
         | "draft"
-        | "pending_payment"
         | "pending_approval"
         | "active"
         | "suspended",
-      subscription_status: form.subscription_status as
-        | "trial"
-        | "active"
-        | "grace"
-        | "expired"
-        | "suspended",
-      plan_code: form.plan_code as "pro" | "pro_plus" | "enterprise",
     });
   };
 
@@ -529,21 +467,18 @@ function ApplicationReviewDialog({
               </div>
               <div className="rounded-xl border p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Invoice status
+                  Application status
                 </p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  {latestInvoice?.status || tenant.status}
+                  {tenant.status}
                 </p>
               </div>
               <div className="rounded-xl border p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Payable amount
+                  Review note
                 </p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  NGN{" "}
-                  {tenant.onboarding?.billing_snapshot?.payable_amount_ngn?.toLocaleString?.() ??
-                    latestInvoice?.amount_ngn?.toLocaleString?.() ??
-                    0}
+                  {tenant.onboarding?.rejection_reason || "No review note"}
                 </p>
               </div>
             </div>
@@ -579,30 +514,11 @@ function ApplicationReviewDialog({
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Organization type</Label>
-                  <Select
-                    value={form.institution_type}
-                    onValueChange={(value) =>
-                      setForm((current) => ({
-                        ...current,
-                        institution_type: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="organization">Organization</SelectItem>
-                      <SelectItem value="university">University</SelectItem>
-                      <SelectItem value="college">College</SelectItem>
-                      <SelectItem value="polytechnic">Polytechnic</SelectItem>
-                      <SelectItem value="faculty">Faculty</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Institution type</Label>
+                  <Input value="University" disabled />
                 </div>
                 <div className="space-y-2">
-                  <Label>Participant estimate</Label>
+                  <Label>Student estimate</Label>
                   <Input
                     type="number"
                     min="0"
@@ -631,25 +547,7 @@ function ApplicationReviewDialog({
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Plan</Label>
-                  <Select
-                    value={form.plan_code}
-                    onValueChange={(value) =>
-                      setForm((current) => ({ ...current, plan_code: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="pro_plus">Pro Plus</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Application status</Label>
                   <Select
@@ -663,36 +561,10 @@ function ApplicationReviewDialog({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending_payment">
-                        Pending payment
-                      </SelectItem>
                       <SelectItem value="pending_approval">
                         Pending approval
                       </SelectItem>
                       <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Subscription</Label>
-                  <Select
-                    value={form.subscription_status}
-                    onValueChange={(value) =>
-                      setForm((current) => ({
-                        ...current,
-                        subscription_status: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="grace">Grace</SelectItem>
-                      <SelectItem value="expired">Expired</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
                     </SelectContent>
                   </Select>
@@ -714,23 +586,6 @@ function ApplicationReviewDialog({
                       setForm((current) => ({
                         ...current,
                         demo_requested: checked,
-                      }))
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-                  <div className="space-y-1">
-                    <span className="font-medium">Payment required</span>
-                    <p className="text-xs text-muted-foreground">
-                      Disable only when the application should bypass billing.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={form.payment_required}
-                    onCheckedChange={(checked) =>
-                      setForm((current) => ({
-                        ...current,
-                        payment_required: checked,
                       }))
                     }
                   />
@@ -769,26 +624,18 @@ function ApplicationReviewDialog({
           <div className="space-y-4">
             <div className="rounded-2xl border p-4">
               <p className="text-sm font-medium text-foreground">
-                Payment context
+                Application context
               </p>
               <dl className="mt-3 space-y-2 text-sm text-muted-foreground">
                 <div className="flex justify-between gap-3">
-                  <dt>Latest invoice</dt>
-                  <dd className="font-medium text-foreground">
-                    {latestInvoice?.invoice_number || "Not issued"}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
                   <dt>Reference</dt>
-                  <dd className="max-w-56 truncate font-medium text-foreground">
-                    {latestInvoice?.payment_reference || "Not available"}
+                  <dd className="font-medium text-foreground">
+                    {tenant.application_reference || "Not assigned"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt>Coupon</dt>
-                  <dd className="font-medium text-foreground">
-                    {tenant.onboarding?.coupon_code || "None"}
-                  </dd>
+                  <dt>Institution</dt>
+                  <dd className="font-medium text-foreground">University</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt>Submitted</dt>
@@ -848,7 +695,6 @@ function ApplicationReviewDialog({
               try {
                 await updateMutation.mutateAsync({
                   status: "active",
-                  subscription_status: "active",
                 });
                 toast.success("Tenant approved successfully");
                 setOpen(false);

@@ -7,7 +7,6 @@ import {
   BarChart3,
   Bell,
   Building2,
-  CreditCard,
   FileBarChart,
   GraduationCap,
   LayoutDashboard,
@@ -26,7 +25,6 @@ import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { useSupportOverviewQuery } from "@/lib/queries/support";
-import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   Sidebar,
@@ -66,8 +64,8 @@ const adminNavMain: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Participants",
-    url: "/dashboard/participants",
+    title: "Students",
+    url: "/dashboard/students",
     icon: GraduationCap,
   },
   {
@@ -84,10 +82,11 @@ const adminNavMain: NavItem[] = [
     title: "Colleges",
     url: "/dashboard/structure/colleges",
     icon: Building2,
-    items: [
-      { title: "All Colleges", url: "/dashboard/structure/colleges" },
-      { title: "Departments", url: "/dashboard/structure/departments" },
-    ],
+  },
+  {
+    title: "Departments",
+    url: "/dashboard/structure/departments",
+    icon: Building2,
   },
   {
     title: "Admin Users",
@@ -120,7 +119,6 @@ const adminNavMain: NavItem[] = [
 ];
 
 const adminNavProjects = [
-  { name: "Billing", url: "/dashboard/billing", icon: CreditCard },
   { name: "Announcements", url: "/dashboard/announcements", icon: Megaphone },
   { name: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { name: "Support", url: "/dashboard/support", icon: LifeBuoy },
@@ -132,7 +130,10 @@ function hasAnyPermission(permissions: string[], required: string[]) {
   return required.some((permission) => permissions.includes(permission));
 }
 
-function buildSearchItems(navMain: NavItem[], navProjects: typeof adminNavProjects): SearchItem[] {
+function buildSearchItems(
+  navMain: NavItem[],
+  navProjects: typeof adminNavProjects,
+): SearchItem[] {
   const results: SearchItem[] = [];
 
   navMain.forEach((item) => {
@@ -165,10 +166,12 @@ function buildSearchItems(navMain: NavItem[], navProjects: typeof adminNavProjec
   return results;
 }
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AdminSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const { admin, tenant, membership, organizations } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
-  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
+  const { data: unreadNotifications = 0 } =
+    useNotificationSummaryQuery("admin");
   const supportOverviewQuery = useSupportOverviewQuery("admin");
   const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
   const membershipPermissions = membership?.permissions || [];
@@ -188,51 +191,29 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
     "analytics.view",
     "tenant.manage",
   ]);
-  const canManageBilling = hasAnyPermission(membershipPermissions, [
-    "billing.manage",
-    "tenant.manage",
-  ]);
   const canManageSupport = hasAnyPermission(membershipPermissions, [
     "support.manage",
     "tenant.manage",
   ]);
-  const advancedAnalyticsEnabled = tenant?.entitlements?.advanced_analytics !== false;
-  const advancedReportsEnabled = tenant?.entitlements?.advanced_reports !== false;
+  const advancedAnalyticsEnabled =
+    tenant?.entitlements?.advanced_analytics !== false;
+  const advancedReportsEnabled =
+    tenant?.entitlements?.advanced_reports !== false;
   const structureEnabled =
     isTenantParticipantFieldEnabled(tenant, "college") ||
     isTenantParticipantFieldEnabled(tenant, "department");
   const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
-  const departmentEnabled = isTenantParticipantFieldEnabled(tenant, "department");
+  const departmentEnabled = isTenantParticipantFieldEnabled(
+    tenant,
+    "department",
+  );
   const canViewStructure =
-    structureEnabled && (canManageStudents || canManageSessions || canManageAdmins);
+    structureEnabled &&
+    (canManageStudents || canManageSessions || canManageAdmins);
 
   const navMain = React.useMemo(
     () =>
       adminNavMain
-        .map((item) =>
-          item.title === "Colleges"
-            ? {
-                ...item,
-                title: "Structure",
-                url: collegeEnabled
-                  ? "/dashboard/structure/colleges"
-                  : "/dashboard/structure/departments",
-                items: [
-                  ...(collegeEnabled
-                    ? [{ title: "All Groups", url: "/dashboard/structure/colleges" }]
-                    : []),
-                  ...(departmentEnabled
-                    ? [
-                        {
-                          title: collegeEnabled ? "Sub-groups" : "All Groups",
-                          url: "/dashboard/structure/departments",
-                        },
-                      ]
-                    : []),
-                ],
-              }
-            : item,
-        )
         .map((item) =>
           item.title === "Sessions" && !advancedAnalyticsEnabled
             ? {
@@ -244,25 +225,26 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
             : item,
         )
         .filter((item) => {
-        switch (item.title) {
-          case "Participants":
-            return canManageStudents;
-          case "Sessions":
-          case "Candidates":
-            return canManageSessions;
-          case "Colleges":
-          case "Structure":
-            return canViewStructure;
-          case "Admin Users":
-            return canManageAdmins;
-          case "Analytics":
-            return canViewAnalytics && advancedAnalyticsEnabled;
-          case "Reports":
-            return canViewAnalytics && advancedReportsEnabled;
-          default:
-            return true;
-        }
-      }),
+          switch (item.title) {
+            case "Students":
+              return canManageStudents;
+            case "Sessions":
+            case "Candidates":
+              return canManageSessions;
+            case "Colleges":
+              return canViewStructure && collegeEnabled;
+            case "Departments":
+              return canViewStructure && departmentEnabled;
+            case "Admin Users":
+              return canManageAdmins;
+            case "Analytics":
+              return canViewAnalytics && advancedAnalyticsEnabled;
+            case "Reports":
+              return canViewAnalytics && advancedReportsEnabled;
+            default:
+              return true;
+          }
+        }),
     [
       advancedAnalyticsEnabled,
       advancedReportsEnabled,
@@ -278,45 +260,34 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
 
   const navProjects = React.useMemo(
     () =>
-      adminNavProjects.filter((item) => {
-        if (item.name === "Billing") return canManageBilling;
-        if (item.name === "Support") return canManageSupport;
-        if (item.name === "Reports") return advancedReportsEnabled;
-        return true;
-      }).map((item) =>
-        item.name === "Notifications"
-          ? {
-              ...item,
-              badge: unreadNotifications > 0 ? unreadNotifications : null,
-            }
-          : item.name === "Support"
+      adminNavProjects
+        .filter((item) => {
+          if (item.name === "Support") return canManageSupport;
+          if (item.name === "Reports") return advancedReportsEnabled;
+          return true;
+        })
+        .map((item) =>
+          item.name === "Notifications"
             ? {
                 ...item,
-                badge: unreadSupport > 0 ? unreadSupport : null,
+                badge: unreadNotifications > 0 ? unreadNotifications : null,
               }
-          : item,
-      ),
+            : item.name === "Support"
+              ? {
+                  ...item,
+                  badge: unreadSupport > 0 ? unreadSupport : null,
+                }
+              : item,
+        ),
     [
       advancedReportsEnabled,
-      canManageBilling,
       canManageSupport,
       unreadNotifications,
       unreadSupport,
     ],
   );
 
-  const localizedNavMain = React.useMemo(
-    () =>
-      navMain.map((item) =>
-        item.title === "Participants"
-          ? {
-              ...item,
-              title: participantLabels.plural,
-            }
-          : item,
-      ),
-    [navMain, participantLabels.plural],
-  );
+  const localizedNavMain = navMain;
 
   const teams = React.useMemo(
     () =>
@@ -326,9 +297,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
             slug: organization.slug,
             logo: UnivoteLogo,
             active: organization.slug === tenant?.slug,
-            plan: organization.plan_code
-              ? `Plan: ${organization.plan_code.replace(/_/g, " ")}`
-              : "Tenant Admin",
+            plan: "University workspace",
           }))
         : [
             {
@@ -336,9 +305,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
               slug: tenant?.slug || "tenant",
               logo: UnivoteLogo,
               active: true,
-              plan: tenant?.plan_code
-                ? `Plan: ${tenant.plan_code.replace(/_/g, " ")}`
-                : "Tenant Admin",
+              plan: "University workspace",
             },
           ],
     [organizations, tenant],

@@ -117,11 +117,19 @@ export default function CollegeDetailPage() {
     () => [
       {
         label: "Departments",
-        value: (detailStats?.total_departments ?? currentCollege?.departments.length ?? 0).toLocaleString(),
+        value: (
+          detailStats?.total_departments ??
+          currentCollege?.departments.length ??
+          0
+        ).toLocaleString(),
       },
       {
         label: participantLabels.plural,
-        value: (detailStats?.total_students ?? currentCollege?.student_count ?? 0).toLocaleString(),
+        value: (
+          detailStats?.total_students ??
+          currentCollege?.student_count ??
+          0
+        ).toLocaleString(),
       },
       {
         label: `Active ${participantLabels.plural.toLowerCase()}`,
@@ -132,7 +140,14 @@ export default function CollegeDetailPage() {
         value: currentCollege?.is_active ? "Active" : "Inactive",
       },
     ],
-    [currentCollege?.departments.length, currentCollege?.is_active, currentCollege?.student_count, detailStats?.active_students, detailStats?.total_departments, detailStats?.total_students],
+    [
+      currentCollege?.departments.length,
+      currentCollege?.is_active,
+      currentCollege?.student_count,
+      detailStats?.active_students,
+      detailStats?.total_departments,
+      detailStats?.total_students,
+    ],
   );
 
   const departmentRollup = useMemo(
@@ -230,12 +245,12 @@ export default function CollegeDetailPage() {
   return (
     <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-4 p-2">
       <TenantPageHeader
-        eyebrow="Tenant structure"
+        eyebrow="University structure"
         icon={<Building2 className="h-5 w-5" />}
         title={currentCollege.name}
         subtitle={
           currentCollege.description ||
-          `Review department coverage, dean details, and ${participantLabels.singular.toLowerCase()} distribution across this college.`
+          `Review department coverage, dean details, and student distribution across this college.`
         }
         onBack={() => router.push("/dashboard/structure/colleges")}
         badges={
@@ -262,12 +277,12 @@ export default function CollegeDetailPage() {
               className="h-10"
               onClick={() =>
                 router.push(
-                  `/dashboard/participants?college_id=${encodeURIComponent(collegeId)}&ref=${encodeURIComponent(`/dashboard/structure/colleges/${collegeId}`)}`,
+                  `/dashboard/students?college_id=${encodeURIComponent(collegeId)}&ref=${encodeURIComponent(`/dashboard/structure/colleges/${collegeId}`)}`,
                 )
               }
-              >
-                <Users className="mr-2 h-4 w-4" />
-              {`View ${participantLabels.plural}`}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              View Students
             </Button>
             {canManageCollege ? (
               <Button
@@ -325,47 +340,50 @@ export default function CollegeDetailPage() {
 
           <TenantSectionCard
             title="Distribution snapshot"
-            description={`Quick read on ${participantLabels.singular.toLowerCase()} spread across departments and levels.`}
+            description="Quick read on student spread across departments and levels."
           >
             <div className="space-y-3">
-              {(detailStats?.departments ?? []).slice(0, 4).map((department) => (
-                <div
-                  key={department.department_id}
-                  className="rounded-2xl border border-border/70 bg-muted/15 p-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {department.department_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {department.department_code} • {department.total_students.toLocaleString()} {participantLabels.plural.toLowerCase()}
-                      </p>
+              {(detailStats?.departments ?? [])
+                .slice(0, 4)
+                .map((department) => (
+                  <div
+                    key={department.department_id}
+                    className="rounded-2xl border border-border/70 bg-muted/15 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {department.department_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {department.department_code} •{" "}
+                          {department.total_students.toLocaleString()} students
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                        {department.is_active ? "Active" : "Inactive"}
+                      </span>
                     </div>
-                    <span className="rounded-full bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground">
-                      {department.is_active ? "Active" : "Inactive"}
-                    </span>
+                    {Object.keys(department.level_distribution).length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {Object.entries(department.level_distribution).map(
+                          ([level, count]) => (
+                            <span
+                              key={`${department.department_id}-${level}`}
+                              className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                            >
+                              {level}: {count}
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        No students enrolled yet.
+                      </p>
+                    )}
                   </div>
-                  {Object.keys(department.level_distribution).length ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {Object.entries(department.level_distribution).map(
-                        ([level, count]) => (
-                          <span
-                            key={`${department.department_id}-${level}`}
-                            className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-                          >
-                            {level}: {count}
-                          </span>
-                        ),
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      {`No ${participantLabels.plural.toLowerCase()} enrolled yet.`}
-                    </p>
-                  )}
-                </div>
-              ))}
+                ))}
               {detailStatsQuery.error instanceof Error ? (
                 <p className="text-xs text-muted-foreground">
                   Detailed distribution could not be loaded right now.
@@ -377,7 +395,7 @@ export default function CollegeDetailPage() {
 
         <TenantSectionCard
           title="Departments"
-          description={`Move into department-level editing and ${participantLabels.singular.toLowerCase()} drill-down without leaving the tenant shell.`}
+          description="Move into department-level editing and student drill-down without leaving the tenant shell."
           action={
             canManageCollege ? (
               <Button
@@ -393,7 +411,7 @@ export default function CollegeDetailPage() {
         >
           <div className="space-y-4">
             {showAddDepartment ? (
-              <Card className="rounded-[1.5rem] border border-border/70 bg-muted/15 shadow-none">
+              <Card className="rounded-3xl border border-border/70 bg-muted/15 shadow-none">
                 <CardContent className="p-3">
                   <form className="space-y-4" onSubmit={handleCreateDepartment}>
                     <div className="grid gap-3 md:grid-cols-2">
@@ -434,7 +452,10 @@ export default function CollegeDetailPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="department-description" className="text-xs">
+                      <Label
+                        htmlFor="department-description"
+                        className="text-xs"
+                      >
                         Description
                       </Label>
                       <Input
@@ -451,7 +472,10 @@ export default function CollegeDetailPage() {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="space-y-1.5">
-                        <Label htmlFor="department-hod-name" className="text-xs">
+                        <Label
+                          htmlFor="department-hod-name"
+                          className="text-xs"
+                        >
                           HOD name
                         </Label>
                         <Input
@@ -466,7 +490,10 @@ export default function CollegeDetailPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="department-hod-email" className="text-xs">
+                        <Label
+                          htmlFor="department-hod-email"
+                          className="text-xs"
+                        >
                           HOD email
                         </Label>
                         <Input
@@ -514,7 +541,10 @@ export default function CollegeDetailPage() {
                       >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createDepartment.isPending}>
+                      <Button
+                        type="submit"
+                        disabled={createDepartment.isPending}
+                      >
                         {createDepartment.isPending
                           ? "Adding department..."
                           : "Save Department"}
@@ -586,7 +616,8 @@ export default function CollegeDetailPage() {
                             Enrollment breakdown
                           </p>
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {Object.entries(rollup.level_distribution).length ? (
+                            {Object.entries(rollup.level_distribution)
+                              .length ? (
                               Object.entries(rollup.level_distribution).map(
                                 ([level, count]) => (
                                   <span
@@ -629,7 +660,9 @@ export default function CollegeDetailPage() {
         college={currentCollege}
         isSubmitting={updateCollege.isPending}
         submitError={
-          updateCollege.error instanceof Error ? updateCollege.error.message : null
+          updateCollege.error instanceof Error
+            ? updateCollege.error.message
+            : null
         }
         onSave={async (payload) => {
           try {
@@ -638,7 +671,9 @@ export default function CollegeDetailPage() {
             setEditModalOpen(false);
           } catch (error) {
             toast.error(
-              error instanceof Error ? error.message : "Failed to update college",
+              error instanceof Error
+                ? error.message
+                : "Failed to update college",
             );
           }
         }}

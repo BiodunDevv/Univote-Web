@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -40,10 +40,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import {
-  getTenantParticipantLabels,
-  isTenantParticipantFieldEnabled,
-} from "@/lib/tenant-config";
+import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   useActivateStudentMutation,
   useAdminStudentsOverviewQuery,
@@ -57,7 +54,7 @@ import type { StudentCSVData, UploadStudentsResponse } from "@/types/student";
 
 const studentCoverageChartConfig = {
   total: {
-    label: "Participants",
+    label: "Students",
     color: "var(--chart-1)",
   },
   active: {
@@ -70,7 +67,7 @@ export function StudentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
+  const participantLabels = { singular: "Student", plural: "Students" };
   const showCollegeField = isTenantParticipantFieldEnabled(tenant, "college");
   const showDepartmentField = isTenantParticipantFieldEnabled(
     tenant,
@@ -120,47 +117,15 @@ export function StudentsPage() {
   >(null);
   const createMode = searchParams.get("mode") === "bulk" ? "bulk" : "manual";
 
-  const studentFilters = useCallback(
-    () => ({
-      page,
-      limit: 10,
-      college_id:
-        showCollegeField && selectedCollegeId !== "all"
-          ? selectedCollegeId
-          : undefined,
-      department_id:
-        showDepartmentField && selectedDepartmentId !== "all"
-          ? selectedDepartmentId
-          : undefined,
-      level: showLevelField && level !== "all" ? level : undefined,
-      is_active:
-        status === "all" ? undefined : status === "active" ? true : false,
-      has_facial_data:
-        showFaceField
-          ? facial === "all"
-            ? undefined
-            : facial === "registered"
-              ? true
-              : false
-          : undefined,
-      search: debouncedSearch || undefined,
-    }),
-    [
-      page,
-      selectedCollegeId,
-      selectedDepartmentId,
-      level,
-      showCollegeField,
-      showDepartmentField,
-      showLevelField,
-      status,
-      facial,
-      debouncedSearch,
-    ],
+  const studentsQuery = useAdminStudentsQuery(
+    {
+      page: 1,
+      limit: 1000,
+    },
+    {
+      enabled: isAuthorized,
+    },
   );
-  const studentsQuery = useAdminStudentsQuery(studentFilters(), {
-    enabled: isAuthorized,
-  });
   const overviewQuery = useAdminStudentsOverviewQuery({
     enabled: isAuthorized,
   });
@@ -171,16 +136,104 @@ export function StudentsPage() {
   const bulkUpdateStudents = useBulkUpdateStudentsMutation();
   const isBulkUpdating = bulkUpdateStudents.isPending;
   const isCreatingStudent = uploadStudents.isPending;
-  const students = studentsQuery.data?.students ?? [];
-  const editingStudent =
-    students.find((student) => student._id === editingStudentId) || null;
+  const allStudents = studentsQuery.data?.students ?? [];
   const overview = overviewQuery.data ?? null;
-  const pagination = {
-    total: studentsQuery.data?.total ?? 0,
-    page: studentsQuery.data?.page ?? page,
-    pages: studentsQuery.data?.pages ?? 1,
-    limit: 10,
-  };
+  const filteredStudents = useMemo(() => {
+    const normalizedSearch = debouncedSearch.toLowerCase();
+    return allStudents.filter((student) => {
+      if (showCollegeField && selectedCollegeId !== "all") {
+        const selectedCollege = overview?.colleges.find(
+          (college) => college.id === selectedCollegeId,
+        );
+        if (!selectedCollege || student.college !== selectedCollege.name) {
+          return false;
+        }
+      }
+
+      if (showDepartmentField && selectedDepartmentId !== "all") {
+        const selectedDepartment = overview?.colleges
+          .flatMap((college) => college.departments)
+          .find((department) => department.id === selectedDepartmentId);
+        if (
+          !selectedDepartment ||
+          student.department !== selectedDepartment.name
+        ) {
+          return false;
+        }
+      }
+
+      if (
+        showLevelField &&
+        level !== "all" &&
+        (student.level || "") !== level
+      ) {
+        return false;
+      }
+
+      if (status !== "all") {
+        const active = status === "active";
+        if (Boolean(student.is_active) !== active) {
+          return false;
+        }
+      }
+
+      if (showFaceField && facial !== "all") {
+        const hasFace = facial === "registered";
+        if (Boolean(student.has_facial_data) !== hasFace) {
+          return false;
+        }
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const identity = [
+        student.full_name,
+        student.email,
+        student.display_identifier,
+        student.matric_no,
+        student.member_id,
+        student.employee_id,
+        student.username,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return identity.includes(normalizedSearch);
+    });
+  }, [
+    allStudents,
+    debouncedSearch,
+    facial,
+    level,
+    overview?.colleges,
+    selectedCollegeId,
+    selectedDepartmentId,
+    showCollegeField,
+    showDepartmentField,
+    showFaceField,
+    showLevelField,
+    status,
+  ]);
+  const pageSize = 20;
+  const pagination = useMemo(() => {
+    const total = filteredStudents.length;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(page, pages);
+    return {
+      total,
+      page: safePage,
+      pages,
+      limit: pageSize,
+    };
+  }, [filteredStudents.length, page]);
+  const students = useMemo(() => {
+    const start = (pagination.page - 1) * pageSize;
+    return filteredStudents.slice(start, start + pageSize);
+  }, [filteredStudents, pagination.page]);
+  const editingStudent =
+    allStudents.find((student) => student._id === editingStudentId) || null;
   const error =
     (studentsQuery.error instanceof Error
       ? studentsQuery.error.message
@@ -203,7 +256,7 @@ export function StudentsPage() {
   const initialLoadingMessages = [
     `Loading ${participantLabels.singular.toLowerCase()} registry...`,
     showCollegeField || showDepartmentField
-      ? "Compiling structure filters..."
+      ? "Compiling college and department filters..."
       : "Compiling registry filters...",
     "Preparing access records...",
   ];
@@ -231,6 +284,12 @@ export function StudentsPage() {
 
     return () => window.clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    if (page > pagination.pages) {
+      setPage(pagination.pages);
+    }
+  }, [page, pagination.pages]);
 
   useEffect(() => {
     if (!showCollegeField && selectedCollegeId !== "all") {
@@ -423,14 +482,16 @@ export function StudentsPage() {
             },
             {
               label: "Inactive",
-              value: overview?.totals.inactive_students?.toLocaleString() || "0",
+              value:
+                overview?.totals.inactive_students?.toLocaleString() || "0",
             },
             ...(showFaceField
               ? [
                   {
                     label: "Face ready",
                     value:
-                      overview?.totals.with_facial_data?.toLocaleString() || "0",
+                      overview?.totals.with_facial_data?.toLocaleString() ||
+                      "0",
                   },
                 ]
               : []),
@@ -457,56 +518,58 @@ export function StudentsPage() {
             <TenantSectionCard
               title={`${participantLabels.singular} coverage by college`}
               description={`Monitor where the largest ${participantLabels.plural.toLowerCase()} populations sit and compare total records with active access.`}
-            action={
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-                <BarChart3 className="h-3.5 w-3.5" />
-                Top colleges
-              </div>
-            }
+              action={
+                <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Top colleges
+                </div>
+              }
             >
-            {showCollegeField && studentCoverage.length > 0 ? (
-              <ChartContainer
-                config={{
-                  ...studentCoverageChartConfig,
-                  total: {
-                    ...studentCoverageChartConfig.total,
-                    label: participantLabels.plural,
-                  },
-                }}
-                className="h-[290px] w-full"
-              >
-                <BarChart accessibilityLayer data={studentCoverage}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="college"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    tickFormatter={(value) => value.slice(0, 14)}
-                  />
-                  <YAxis tickLine={false} axisLine={false} width={40} />
-                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                  <Bar
-                    dataKey="total"
-                    fill="var(--color-total)"
-                    radius={10}
-                  />
-                  <Bar
-                    dataKey="active"
-                    fill="var(--color-active)"
-                    radius={10}
-                  />
-                </BarChart>
-              </ChartContainer>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
-                {showCollegeField
-                  ? "College distribution will appear here as soon as the registry is populated."
-                  : "This tenant does not use college-based participant structure."}
-              </div>
-            )}
-          </TenantSectionCard>
-{/* 
+              {showCollegeField && studentCoverage.length > 0 ? (
+                <ChartContainer
+                  config={{
+                    ...studentCoverageChartConfig,
+                    total: {
+                      ...studentCoverageChartConfig.total,
+                      label: participantLabels.plural,
+                    },
+                  }}
+                  className="h-[290px] w-full"
+                >
+                  <BarChart accessibilityLayer data={studentCoverage}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="college"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={10}
+                      tickFormatter={(value) => value.slice(0, 14)}
+                    />
+                    <YAxis tickLine={false} axisLine={false} width={40} />
+                    <ChartTooltip
+                      content={<ChartTooltipContent indicator="dot" />}
+                    />
+                    <Bar
+                      dataKey="total"
+                      fill="var(--color-total)"
+                      radius={10}
+                    />
+                    <Bar
+                      dataKey="active"
+                      fill="var(--color-active)"
+                      radius={10}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
+                  {showCollegeField
+                    ? "College distribution will appear here as soon as the registry is populated."
+                    : "This tenant does not use college-based student structure."}
+                </div>
+              )}
+            </TenantSectionCard>
+            {/* 
           <TenantSectionCard
             title="Most populated departments"
             description={`A quick read on the departments carrying the heaviest ${participantLabels.singular.toLowerCase()} footprint.`}
@@ -538,7 +601,7 @@ export function StudentsPage() {
               <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
                 {showDepartmentField
                   ? "Department-level distribution will appear here once records are available."
-                  : "This tenant does not use department-based participant structure."}
+                  : "This tenant does not use department-based student structure."}
               </div>
             )}
           </TenantSectionCard> */}
@@ -549,7 +612,7 @@ export function StudentsPage() {
           title="Filter and act"
           description={
             showCollegeField || showDepartmentField || showLevelField
-              ? `Refine the registry by available structure fields, status${showFaceField ? ", or facial verification state" : ""}. Bulk actions stay scoped to the selected rows.`
+              ? `Refine the registry by available college, department, and level fields, status${showFaceField ? ", or facial verification state" : ""}. Bulk actions stay scoped to the selected rows.`
               : `Refine the registry by identity search and status${showFaceField ? ", with optional facial verification state" : ""}. Bulk actions stay scoped to the selected rows.`
           }
           action={
@@ -627,21 +690,21 @@ export function StudentsPage() {
         {uploadSummary && (
           <TenantSectionCard
             title="Latest upload summary"
-            description={`Created ${uploadSummary.created} of ${uploadSummary.total} submitted rows${[
-              uploadSummary.target.college,
-              uploadSummary.target.department,
-              uploadSummary.target.level,
-            ]
-              .filter(Boolean)
-              .length > 0
-              ? ` for ${[
-                  uploadSummary.target.college,
-                  uploadSummary.target.department,
-                  uploadSummary.target.level,
-                ]
-                  .filter(Boolean)
-                  .join(" / ")}`
-              : ""}.`}
+            description={`Created ${uploadSummary.created} of ${uploadSummary.total} submitted rows${
+              [
+                uploadSummary.target.college,
+                uploadSummary.target.department,
+                uploadSummary.target.level,
+              ].filter(Boolean).length > 0
+                ? ` for ${[
+                    uploadSummary.target.college,
+                    uploadSummary.target.department,
+                    uploadSummary.target.level,
+                  ]
+                    .filter(Boolean)
+                    .join(" / ")}`
+                : ""
+            }.`}
             action={
               <Button
                 variant="outline"
@@ -654,61 +717,62 @@ export function StudentsPage() {
             }
             contentClassName="space-y-4"
           >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-                  <Users className="h-3.5 w-3.5" />
-                  Upload feedback
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                Upload feedback
               </div>
+            </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-lg border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">Created</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {uploadSummary.created}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">Failed</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {uploadSummary.failed}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">Submitted</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {uploadSummary.total}
-                  </p>
-                </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground">Created</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {uploadSummary.created}
+                </p>
               </div>
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground">Failed</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {uploadSummary.failed}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground">Submitted</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {uploadSummary.total}
+                </p>
+              </div>
+            </div>
 
-              {uploadSummary.errors.length > 0 ? (
+            {uploadSummary.errors.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Row feedback
+                </p>
                 <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    Row feedback
-                  </p>
-                  <div className="space-y-2">
-                    {uploadSummary.errors.slice(0, 8).map((item, index) => (
-                      <div
-                        key={`${item.matric_no}-${index}`}
-                        className="rounded-lg border bg-muted/20 p-3"
-                      >
-                        <p className="text-sm font-medium text-foreground">
-                          {item.full_name} ({item.matric_no})
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.error || item.warning}
-                        </p>
-                      </div>
-                    ))}
-                    {uploadSummary.errors.length > 8 ? (
-                      <p className="text-xs text-muted-foreground">
-                        ...and {uploadSummary.errors.length - 8} more row messages.
+                  {uploadSummary.errors.slice(0, 8).map((item, index) => (
+                    <div
+                      key={`${item.matric_no}-${index}`}
+                      className="rounded-lg border bg-muted/20 p-3"
+                    >
+                      <p className="text-sm font-medium text-foreground">
+                        {item.full_name} ({item.matric_no})
                       </p>
-                    ) : null}
-                  </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {item.error || item.warning}
+                      </p>
+                    </div>
+                  ))}
+                  {uploadSummary.errors.length > 8 ? (
+                    <p className="text-xs text-muted-foreground">
+                      ...and {uploadSummary.errors.length - 8} more row
+                      messages.
+                    </p>
+                  ) : null}
                 </div>
-              ) : null}
+              </div>
+            ) : null}
           </TenantSectionCard>
         )}
 
@@ -726,11 +790,12 @@ export function StudentsPage() {
             <TenantSectionCard
               title={`${participantLabels.singular} registry`}
               description={`Compact ${participantLabels.singular.toLowerCase()} cards for search, review, image preview, activation changes, and direct record actions.`}
-              contentClassName="space-y-4"
+              contentClassName="space-y-4 overflow-hidden"
             >
               <div className="w-full min-w-0 max-w-full overflow-hidden">
                 <StudentsRegistryTable
                   students={students}
+                  rowStartIndex={(pagination.page - 1) * pagination.limit}
                   selectedIds={selectedIds}
                   canManageStudents={canManageStudents}
                   participantSingularLabel={participantLabels.singular}
@@ -742,29 +807,29 @@ export function StudentsPage() {
                   showPhotoField={showPhotoField}
                   onToggleAll={toggleSelectAll}
                   allVisibleSelected={allVisibleSelected}
-                onToggleOne={(studentId: string, checked: boolean) => {
-                  setSelectedIds((prev) => {
-                    if (checked) {
-                      return Array.from(new Set([...prev, studentId]));
-                    }
-                    return prev.filter((id) => id !== studentId);
-                  });
-                }}
-                onView={(studentId: string) =>
-                  router.push(`/dashboard/participants/${studentId}`)
-                }
-                onEdit={(studentId: string) => setEditingStudentId(studentId)}
-                onMarkActive={(studentId: string) =>
-                  void handleMarkActive(studentId)
-                }
-                onMarkInactive={(studentId: string) =>
-                  void handleMarkInactive(studentId)
-                }
-                onDelete={(studentId: string) =>
-                  void handleDeleteStudent(studentId)
-                }
-                onPreviewImage={setPreviewImage}
-              />
+                  onToggleOne={(studentId: string, checked: boolean) => {
+                    setSelectedIds((prev) => {
+                      if (checked) {
+                        return Array.from(new Set([...prev, studentId]));
+                      }
+                      return prev.filter((id) => id !== studentId);
+                    });
+                  }}
+                  onView={(studentId: string) =>
+                    router.push(`/dashboard/students/${studentId}`)
+                  }
+                  onEdit={(studentId: string) => setEditingStudentId(studentId)}
+                  onMarkActive={(studentId: string) =>
+                    void handleMarkActive(studentId)
+                  }
+                  onMarkInactive={(studentId: string) =>
+                    void handleMarkInactive(studentId)
+                  }
+                  onDelete={(studentId: string) =>
+                    void handleDeleteStudent(studentId)
+                  }
+                  onPreviewImage={setPreviewImage}
+                />
               </div>
 
               <Card className="border shadow-none">

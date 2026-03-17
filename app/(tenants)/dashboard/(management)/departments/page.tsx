@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Building2, Plus } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useDepartmentStore } from "@/lib/store/useDepartmentStore";
-import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   TenantPageHeader,
@@ -22,13 +21,15 @@ import {
 function DepartmentsPageContent() {
   const router = useRouter();
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
-  const departmentEnabled = isTenantParticipantFieldEnabled(tenant, "department");
+  const participantLabels = { singular: "Student", plural: "Students" };
+  const departmentEnabled = isTenantParticipantFieldEnabled(
+    tenant,
+    "department",
+  );
   const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
   const {
     departments,
     overview,
-    pagination,
     loading,
     error,
     fetchDepartments,
@@ -52,8 +53,11 @@ function DepartmentsPageContent() {
 
   useEffect(() => {
     if (!hasHydrated || !token) return;
-    void fetchOverview(token);
-  }, [hasHydrated, token, fetchOverview]);
+    void Promise.all([
+      fetchOverview(token),
+      fetchDepartments(token, { page: 1, limit: 1000 }),
+    ]);
+  }, [hasHydrated, token, fetchDepartments, fetchOverview]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -64,33 +68,60 @@ function DepartmentsPageContent() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    if (!hasHydrated || !token) return;
+  const filteredDepartments = useMemo(() => {
+    const term = debouncedSearch.toLowerCase();
+    return departments.filter((department) => {
+      if (collegeId !== "all" && department.college.id !== collegeId) {
+        return false;
+      }
+      if (status !== "all") {
+        const active = status === "active";
+        if (department.is_active !== active) {
+          return false;
+        }
+      }
 
-    void fetchDepartments(token, {
-      page,
-      limit: 10,
-      search: debouncedSearch || undefined,
-      college_id: collegeId !== "all" ? collegeId : undefined,
-      is_active:
-        status === "all" ? undefined : status === "active" ? true : false,
+      if (!term) return true;
+      return [
+        department.name,
+        department.code,
+        department.college.name,
+        department.hod_name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
     });
-  }, [
-    hasHydrated,
-    token,
-    page,
-    debouncedSearch,
-    collegeId,
-    status,
-    fetchDepartments,
-  ]);
+  }, [collegeId, debouncedSearch, departments, status]);
+
+  const pageSize = 20;
+  const pagination = useMemo(() => {
+    const total = filteredDepartments.length;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    return {
+      total,
+      pages,
+      page: Math.min(page, pages),
+      limit: pageSize,
+    };
+  }, [filteredDepartments.length, page]);
+
+  const visibleDepartments = useMemo(() => {
+    const start = (pagination.page - 1) * pageSize;
+    return filteredDepartments.slice(start, start + pageSize);
+  }, [filteredDepartments, pagination.page]);
+
+  useEffect(() => {
+    if (page > pagination.pages) {
+      setPage(pagination.pages);
+    }
+  }, [page, pagination.pages]);
 
   if (!hasHydrated || !token) {
     return (
       <ChangingLoadingState
-        messages={[
-          `Preparing ${participantLabels.singular.toLowerCase()} structure workspace...`,
-        ]}
+        messages={["Preparing student department workspace..."]}
       />
     );
   }
@@ -102,8 +133,8 @@ function DepartmentsPageContent() {
       <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-2 overflow-x-hidden">
         <div className="w-full min-w-0 space-y-3">
           <TenantSectionCard
-            title="Sub-groups are disabled"
-            description={`This tenant is not currently using sub-group structure. Enable the department field in settings if you want to organize ${participantLabels.plural.toLowerCase()} below the main group level.`}
+            title="Departments are disabled"
+            description="This university is not currently using department-level organization. Enable the department field in settings if you want to organize students below each college."
           >
             <div className="flex flex-wrap gap-2">
               <Button
@@ -117,11 +148,13 @@ function DepartmentsPageContent() {
                   router.push(
                     collegeEnabled
                       ? "/dashboard/structure/colleges"
-                      : "/dashboard/participants",
+                      : "/dashboard/students",
                   )
                 }
               >
-                {collegeEnabled ? "View groups" : `View ${participantLabels.plural}`}
+                {collegeEnabled
+                  ? "View colleges"
+                  : `View ${participantLabels.plural}`}
               </Button>
             </div>
           </TenantSectionCard>
@@ -134,10 +167,10 @@ function DepartmentsPageContent() {
     <div className="mx-auto flex min-w-0 w-full max-w-7xl flex-1 flex-col gap-2 overflow-x-hidden">
       <div className="w-full min-w-0 space-y-3">
         <TenantPageHeader
-          eyebrow="Tenant structure"
+          eyebrow="University structure"
           icon={<Building2 className="h-5 w-5" />}
-          title="Sub-group operations"
-          subtitle={`Track sub-group health${collegeEnabled ? " across groups" : ""}, review active structure, and jump directly into filtered ${participantLabels.singular.toLowerCase()} lists.`}
+          title="Department operations"
+          subtitle={`Track department health${collegeEnabled ? " across colleges" : ""}, review active structure, and jump directly into filtered ${participantLabels.singular.toLowerCase()} lists.`}
           actions={
             canManageDepartments ? (
               <Button
@@ -147,22 +180,25 @@ function DepartmentsPageContent() {
                 onClick={() => router.push("/dashboard/structure/colleges")}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Manage structure
+                Manage colleges
               </Button>
             ) : undefined
           }
           stats={[
             {
-              label: "Sub-groups",
-              value: overview?.totals.total_departments?.toLocaleString() || "0",
+              label: "Departments",
+              value:
+                overview?.totals.total_departments?.toLocaleString() || "0",
             },
             {
               label: "Active",
-              value: overview?.totals.active_departments?.toLocaleString() || "0",
+              value:
+                overview?.totals.active_departments?.toLocaleString() || "0",
             },
             {
               label: "Inactive",
-              value: overview?.totals.inactive_departments?.toLocaleString() || "0",
+              value:
+                overview?.totals.inactive_departments?.toLocaleString() || "0",
             },
             {
               label: participantLabels.plural,
@@ -171,10 +207,9 @@ function DepartmentsPageContent() {
           ]}
         />
 
-
         <TenantSectionCard
-          title="Filter sub-groups"
-          description={`Search by sub-group${collegeEnabled ? ", narrow by group," : ""} and focus on only the active structure entries you need.`}
+          title="Filter departments"
+          description={`Search by department${collegeEnabled ? ", narrow by college," : ""} and focus on only the active structure entries you need.`}
         >
           <DepartmentFilters
             search={search}
@@ -208,8 +243,8 @@ function DepartmentsPageContent() {
         {isFirstLoad ? (
           <ChangingLoadingState
             messages={[
-              "Loading sub-groups...",
-              "Building structure mappings...",
+              "Loading departments...",
+              "Building department mappings...",
               `Preparing ${participantLabels.singular.toLowerCase()} management view...`,
             ]}
           />
@@ -218,7 +253,7 @@ function DepartmentsPageContent() {
             {loading && departments.length > 0 && (
               <ChangingLoadingState
                 messages={[
-                  "Refreshing sub-groups...",
+                  "Refreshing departments...",
                   "Applying active filters...",
                 ]}
                 className="min-h-[140px]"
@@ -226,17 +261,17 @@ function DepartmentsPageContent() {
             )}
 
             <TenantSectionCard
-              title="Sub-group registry"
-              description={`Compact sub-group cards for ${participantLabels.singular.toLowerCase()} counts, ${collegeEnabled ? "group mapping, " : ""}active state, and quick drill-down actions.`}
-              contentClassName="px-0 pb-0"
+              title="Department registry"
+              description={`Compact department cards for ${participantLabels.singular.toLowerCase()} counts, ${collegeEnabled ? "college mapping, " : ""}active state, and quick drill-down actions.`}
+              contentClassName="overflow-hidden px-0 pb-0"
             >
-              <div className="w-full min-w-0 px-3 pb-3">
+              <div className="w-full min-w-0 max-w-full overflow-hidden px-3 pb-3">
                 <DepartmentTable
-                  departments={departments}
+                  departments={visibleDepartments}
                   participantPluralLabel={participantLabels.plural}
                   onViewStudents={(department) =>
                     router.push(
-                      `/dashboard/participants?college_id=${encodeURIComponent(
+                      `/dashboard/students?college_id=${encodeURIComponent(
                         department.college.id,
                       )}&search=${encodeURIComponent(
                         department.name,

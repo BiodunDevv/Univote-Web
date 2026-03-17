@@ -13,7 +13,7 @@ type MetricsGridProps = {
 
 export function MetricsGrid({
   overview,
-  participantPluralLabel = "Participants",
+  participantPluralLabel = "Students",
   showCollegeMetric = true,
   showDepartmentMetric = true,
   collegeLabel = "Colleges",

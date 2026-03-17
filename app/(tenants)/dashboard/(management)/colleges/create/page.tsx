@@ -191,7 +191,7 @@ export default function CreateCollegePage() {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-0">
       <TenantPageHeader
-        eyebrow="Tenant structure"
+        eyebrow="University structure"
         icon={<Building2 className="h-5 w-5" />}
         title="Create College"
         subtitle="Build a college in guided steps with cleaner validation, department capture, and review before submission."
@@ -219,7 +219,7 @@ export default function CreateCollegePage() {
       <form onSubmit={handleSubmit} className="space-y-3">
         <TenantSectionCard
           title="Progress"
-          description="Move through the structure setup, then review the full payload before creating the college."
+          description="Move through the university setup, then review the full payload before creating the college."
         >
           <CollegeCreationStepper
             currentStep={currentStep}

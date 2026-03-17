@@ -1,13 +1,17 @@
 "use client";
 
 import { BarChart3, Activity, Users, Vote } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
-  useAdminAnalyticsOverviewQuery,
-  useAdminBillingSummaryQuery,
-} from "@/lib/queries/admin";
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { useAdminAnalyticsOverviewQuery } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { PlanFeatureGate } from "@/components/tenants/billing/plan-feature-gate";
 import {
   TenantMetricCard,
   TenantMetricGrid,
@@ -47,14 +51,9 @@ const turnoutChartConfig = {
 export default function AnalyticsPage() {
   const { tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
-  const billingQuery = useAdminBillingSummaryQuery();
-  const advancedAnalyticsEnabled =
-    billingQuery.data?.capabilities.features.advanced_analytics ?? false;
-  const analyticsQuery = useAdminAnalyticsOverviewQuery({
-    enabled: !billingQuery.isLoading && advancedAnalyticsEnabled,
-  });
+  const analyticsQuery = useAdminAnalyticsOverviewQuery();
 
-  if (billingQuery.isLoading || analyticsQuery.isLoading) {
+  if (analyticsQuery.isLoading) {
     return (
       <ChangingLoadingState
         messages={[
@@ -62,17 +61,6 @@ export default function AnalyticsPage() {
           "Compiling session metrics...",
           "Preparing participation snapshots...",
         ]}
-      />
-    );
-  }
-
-  if (!billingQuery.data?.capabilities.features.advanced_analytics) {
-    return (
-      <PlanFeatureGate
-        title="Analytics"
-        description="High-level election performance across turnout, engagement, and recent system activity."
-        featureLabel="Advanced analytics"
-        requiredPlanLabel="Pro Plus"
       />
     );
   }
@@ -86,7 +74,8 @@ export default function AnalyticsPage() {
         description="The advanced analytics service did not return data for this tenant."
       >
         <p className="text-sm text-muted-foreground">
-          Retry in a moment or confirm the tenant still has analytics access on the active plan.
+          Retry in a moment or confirm the tenant still has analytics access on
+          the active plan.
         </p>
       </TenantSectionCard>
     );
@@ -145,12 +134,22 @@ export default function AnalyticsPage() {
           title="Vote trend"
           description="Daily voting volume across the sessions contributing to advanced analytics."
         >
-          <ChartContainer config={trendChartConfig} className="h-[280px] w-full">
+          <ChartContainer
+            config={trendChartConfig}
+            className="h-[280px] w-full"
+          >
             <AreaChart accessibilityLayer data={analytics.vote_trend}>
               <CartesianGrid vertical={false} />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+              />
               <YAxis tickLine={false} axisLine={false} width={42} />
-              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+              <ChartTooltip
+                content={<ChartTooltipContent indicator="line" />}
+              />
               <Area
                 type="monotone"
                 dataKey="votes"
@@ -167,7 +166,10 @@ export default function AnalyticsPage() {
           title="Turnout by session"
           description={`Compare turnout percentage against eligible ${participantLabels.singular.toLowerCase()} volume by session.`}
         >
-          <ChartContainer config={turnoutChartConfig} className="h-[280px] w-full">
+          <ChartContainer
+            config={turnoutChartConfig}
+            className="h-[280px] w-full"
+          >
             <BarChart accessibilityLayer data={analytics.turnout_snapshots}>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -180,7 +182,12 @@ export default function AnalyticsPage() {
               <YAxis tickLine={false} axisLine={false} width={42} />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
               <ChartLegend content={<ChartLegendContent />} />
-              <Bar dataKey="turnout_percentage" fill="var(--color-turnout)" radius={10} name="Turnout %" />
+              <Bar
+                dataKey="turnout_percentage"
+                fill="var(--color-turnout)"
+                radius={10}
+                name="Turnout %"
+              />
             </BarChart>
           </ChartContainer>
         </TenantSectionCard>
@@ -194,22 +201,32 @@ export default function AnalyticsPage() {
           <div className="space-y-3">
             {analytics.top_voters.slice(0, 6).map((voter) => (
               <div
-                key={voter.display_identifier || voter.matric_no || voter.full_name}
+                key={
+                  voter.display_identifier || voter.matric_no || voter.full_name
+                }
                 className="rounded-2xl border border-border/70 bg-muted/20 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{voter.full_name}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {voter.full_name}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {[
                         formatParticipantIdentifier(
                           voter as Record<string, unknown>,
                           tenant,
                         ),
-                        shouldShowTenantParticipantFieldInProfile(tenant, "department")
+                        shouldShowTenantParticipantFieldInProfile(
+                          tenant,
+                          "department",
+                        )
                           ? voter.department
                           : null,
-                        shouldShowTenantParticipantFieldInProfile(tenant, "college")
+                        shouldShowTenantParticipantFieldInProfile(
+                          tenant,
+                          "college",
+                        )
                           ? voter.college
                           : null,
                       ]

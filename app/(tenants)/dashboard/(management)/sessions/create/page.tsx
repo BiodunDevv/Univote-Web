@@ -34,7 +34,8 @@ export default function CreateSessionPage() {
   const createSession = useCreateSessionMutation();
 
   const colleges =
-    (collegesQuery.data?.colleges as SessionCreationCollege[] | undefined) ?? [];
+    (collegesQuery.data?.colleges as SessionCreationCollege[] | undefined) ??
+    [];
   const initialData = useMemo(() => createEmptySessionFormData(), []);
 
   useEffect(() => {
@@ -44,13 +45,17 @@ export default function CreateSessionPage() {
     }
   }, [hasHydrated, router, token]);
 
-  if (!hasHydrated || !tenantReady || (needsStructureData && collegesQuery.isLoading)) {
+  if (
+    !hasHydrated ||
+    !tenantReady ||
+    (needsStructureData && collegesQuery.isLoading)
+  ) {
     return (
       <ChangingLoadingState
         messages={[
           "Loading session setup...",
           needsStructureData
-            ? "Fetching participant structure..."
+            ? "Fetching college and department structure..."
             : "Applying tenant-wide eligibility...",
           "Preparing create workflow...",
         ]}
@@ -66,7 +71,7 @@ export default function CreateSessionPage() {
             <p className="text-sm text-muted-foreground">
               {collegesQuery.error instanceof Error
                 ? collegesQuery.error.message
-                : "Failed to load participant structure"}
+                : "Failed to load university structure"}
             </p>
             <Button
               variant="outline"
@@ -84,11 +89,11 @@ export default function CreateSessionPage() {
     <SessionBuilder
       key="create-session"
       mode="create"
-      title="Create Session Wizard"
+      title="Create Session"
       description={
         needsStructureData
-          ? "Build a complete voting session in guided steps based on this tenant's participant structure."
-          : "Build a complete voting session in guided steps. This tenant uses tenant-wide eligibility, so all eligible members will be included automatically."
+          ? "A compact, guided flow to launch a voting session fast with schedule, geofence, eligibility, and ballot setup."
+          : "A compact, guided flow to launch a session quickly. Eligibility applies tenant-wide for this workspace."
       }
       colleges={colleges}
       initialData={initialData}

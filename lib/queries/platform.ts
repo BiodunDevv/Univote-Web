@@ -296,7 +296,11 @@ export type PlatformBiometricsResponse = {
   plan_entitlements: Record<string, unknown>;
   plans: BillingPlan[];
   biometrics: {
-    active_provider: "facepp" | "aws_rekognition" | "azure_face" | "google_vision";
+    active_provider:
+      | "facepp"
+      | "aws_rekognition"
+      | "azure_face"
+      | "google_vision";
     provider_catalog: Record<
       string,
       {
@@ -363,13 +367,15 @@ export function usePlatformOverviewQuery() {
   });
 }
 
-export function usePlatformTenantsQuery(filters: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-  subscription_status?: string;
-} = {}) {
+export function usePlatformTenantsQuery(
+  filters: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    subscription_status?: string;
+  } = {},
+) {
   return useQuery({
     queryKey: queryKeys.platform.tenants(filters),
     queryFn: ({ signal }) =>
@@ -386,10 +392,13 @@ export function usePlatformTenantQuery(tenantId: string, enabled = true) {
     enabled: enabled && Boolean(tenantId),
     queryKey: queryKeys.platform.tenant(tenantId),
     queryFn: ({ signal }) =>
-      apiRequest<PlatformTenantDetailResponse>(`/api/platform/tenants/${tenantId}`, {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<PlatformTenantDetailResponse>(
+        `/api/platform/tenants/${tenantId}`,
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -397,10 +406,13 @@ export function usePlatformSettingsQuery() {
   return useQuery({
     queryKey: ["platform", "settings"],
     queryFn: ({ signal }) =>
-      apiRequest<PlatformBiometricsResponse>("/api/platform/settings/defaults", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<PlatformBiometricsResponse>(
+        "/api/platform/settings/defaults",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -408,13 +420,18 @@ export function useUpdatePlatformSettingsMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: Record<string, unknown>) =>
-      apiRequest<PlatformBiometricsResponse>("/api/platform/settings/defaults", {
-        method: "PATCH",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<PlatformBiometricsResponse>(
+        "/api/platform/settings/defaults",
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["platform", "settings"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["platform", "settings"],
+      });
     },
   });
 }
@@ -427,13 +444,18 @@ export function useCreatePlatformBiometricProviderMutation() {
       config?: Record<string, unknown>;
       set_active?: boolean;
     }) =>
-      apiRequest<PlatformBiometricsResponse>("/api/platform/settings/biometrics/providers", {
-        method: "POST",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<PlatformBiometricsResponse>(
+        "/api/platform/settings/biometrics/providers",
+        {
+          method: "POST",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["platform", "settings"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["platform", "settings"],
+      });
     },
   });
 }
@@ -450,7 +472,9 @@ export function useDeletePlatformBiometricProviderMutation() {
         },
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["platform", "settings"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["platform", "settings"],
+      });
     },
   });
 }
@@ -491,125 +515,17 @@ export function useTestPlatformBiometricsMutation() {
   });
 }
 
-export function usePlatformBillingOverviewQuery() {
-  return useQuery({
-    queryKey: queryKeys.platform.billing(),
-    queryFn: ({ signal }) =>
-      apiRequest<PlatformBillingOverviewResponse>("/api/platform/billing", {
-        auth: "admin",
-        signal,
-      }),
-  });
-}
-
-export function usePlatformPlansQuery() {
-  return useQuery({
-    queryKey: queryKeys.platform.plans(),
-    queryFn: ({ signal }) =>
-      apiRequest<{ plans: BillingPlan[] }>("/api/platform/plans", {
-        auth: "admin",
-        signal,
-      }),
-  });
-}
-
-export function usePlatformCouponsQuery(filters: { search?: string } = {}) {
-  return useQuery({
-    queryKey: queryKeys.platform.coupons(filters),
-    queryFn: ({ signal }) =>
-      apiRequest<{ coupons: PlatformCoupon[] }>("/api/platform/coupons", {
-        auth: "admin",
-        params: filters,
-        signal,
-      }),
-  });
-}
-
-export function useCreatePlatformCouponMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: Partial<PlatformCoupon>) =>
-      apiRequest<{ message: string; coupon: PlatformCoupon }>("/api/platform/coupons", {
-        method: "POST",
-        auth: "admin",
-        data: payload,
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["platform", "coupons"] });
-    },
-  });
-}
-
-export function useUpdatePlatformCouponMutation(couponId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: Partial<PlatformCoupon>) =>
-      apiRequest<{ message: string; coupon: PlatformCoupon }>(
-        `/api/platform/coupons/${couponId}`,
-        {
-          method: "PATCH",
-          auth: "admin",
-          data: payload,
-        },
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["platform", "coupons"] });
-    },
-  });
-}
-
-export function useUpdatePlatformPlanMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      code,
-      payload,
-    }: {
-      code: string;
-      payload: Partial<BillingPlan>;
-    }) =>
-      apiRequest<{ message: string; plan: BillingPlan; plans: BillingPlan[] }>(
-        `/api/platform/plans/${code}`,
-        {
-          method: "PATCH",
-          auth: "admin",
-          data: payload,
-        },
-      ),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.plans() }),
-        queryClient.invalidateQueries({ queryKey: ["platform", "settings"] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.billing() }),
-      ]);
-    },
-  });
-}
-
-export function usePlatformTenantBillingQuery(tenantId: string, enabled = true) {
-  return useQuery({
-    enabled: enabled && Boolean(tenantId),
-    queryKey: queryKeys.platform.tenantBilling(tenantId),
-    queryFn: ({ signal }) =>
-      apiRequest<PlatformTenantBillingResponse>(`/api/platform/tenants/${tenantId}/billing`, {
-        auth: "admin",
-        signal,
-      }),
-  });
-}
-
-export function usePlatformAuditLogsQuery(filters: {
-  page?: number;
-  limit?: number;
-  action?: string;
-  admin_id?: string;
-  tenant_id?: string;
-  start_date?: string;
-  end_date?: string;
-} = {}) {
+export function usePlatformAuditLogsQuery(
+  filters: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    admin_id?: string;
+    tenant_id?: string;
+    start_date?: string;
+    end_date?: string;
+  } = {},
+) {
   return useQuery({
     queryKey: queryKeys.platform.auditLogs(filters),
     queryFn: ({ signal }) =>
@@ -625,10 +541,13 @@ export function usePlatformAuditActionsQuery() {
   return useQuery({
     queryKey: queryKeys.platform.auditActions(),
     queryFn: ({ signal }) =>
-      apiRequest<PlatformAuditActionsResponse>("/api/admin/settings/audit-actions", {
-        auth: "admin",
-        signal,
-      }),
+      apiRequest<PlatformAuditActionsResponse>(
+        "/api/admin/settings/audit-actions",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
   });
 }
 
@@ -657,12 +576,14 @@ export function usePlatformDatabaseStatsQuery() {
   });
 }
 
-export function usePlatformTestimonialsQuery(filters: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-} = {}) {
+export function usePlatformTestimonialsQuery(
+  filters: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  } = {},
+) {
   return useQuery({
     queryKey: queryKeys.platform.testimonials(filters),
     queryFn: ({ signal }) =>
@@ -687,16 +608,20 @@ export function useCreatePlatformTenantMutation() {
       contact_email?: string;
       owner_admin_id?: string;
     }) =>
-      apiRequest<{ tenant: PlatformTenantDetailResponse["tenant"] }>("/api/platform/tenants", {
-        method: "POST",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<{ tenant: PlatformTenantDetailResponse["tenant"] }>(
+        "/api/platform/tenants",
+        {
+          method: "POST",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.overview() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platform.overview(),
+        }),
         queryClient.invalidateQueries({ queryKey: ["platform", "tenants"] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.billing() }),
       ]);
     },
   });
@@ -719,8 +644,18 @@ export function useUpdatePlatformTenantMutation(tenantId: string) {
       demo_requested?: boolean;
       payment_required?: boolean;
       plan_code?: "pro" | "pro_plus" | "enterprise";
-      status?: "draft" | "pending_payment" | "pending_approval" | "active" | "suspended";
-      subscription_status?: "trial" | "active" | "grace" | "expired" | "suspended";
+      status?:
+        | "draft"
+        | "pending_payment"
+        | "pending_approval"
+        | "active"
+        | "suspended";
+      subscription_status?:
+        | "trial"
+        | "active"
+        | "grace"
+        | "expired"
+        | "suspended";
       is_active?: boolean;
       rejection_reason?: string;
     }) =>
@@ -734,11 +669,13 @@ export function useUpdatePlatformTenantMutation(tenantId: string) {
       ),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.overview() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platform.overview(),
+        }),
         queryClient.invalidateQueries({ queryKey: ["platform", "tenants"] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenant(tenantId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenantBilling(tenantId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.billing() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.platform.tenant(tenantId),
+        }),
       ]);
     },
   });
@@ -762,7 +699,9 @@ export function useCleanupPlatformAuditLogsMutation() {
       }),
     onSuccess: async (_data, variables) => {
       if (!variables.preview) {
-        await queryClient.invalidateQueries({ queryKey: ["platform", "audit-logs"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["platform", "audit-logs"],
+        });
       }
     },
   });
@@ -784,16 +723,23 @@ export function useCreatePlatformTestimonialMutation() {
       highlighted?: boolean;
       sort_order?: number;
     }) =>
-      apiRequest<{ testimonial: LandingTestimonial }>("/api/platform/testimonials", {
-        method: "POST",
-        auth: "admin",
-        data: payload,
-      }),
+      apiRequest<{ testimonial: LandingTestimonial }>(
+        "/api/platform/testimonials",
+        {
+          method: "POST",
+          auth: "admin",
+          data: payload,
+        },
+      ),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["platform", "testimonials"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["platform", "testimonials"],
+        }),
         queryClient.invalidateQueries({ queryKey: queryKeys.public.landing() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.public.testimonials() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.public.testimonials(),
+        }),
       ]);
     },
   });
@@ -824,9 +770,13 @@ export function useUpdatePlatformTestimonialMutation(testimonialId: string) {
       ),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["platform", "testimonials"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["platform", "testimonials"],
+        }),
         queryClient.invalidateQueries({ queryKey: queryKeys.public.landing() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.public.testimonials() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.public.testimonials(),
+        }),
       ]);
     },
   });
