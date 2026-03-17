@@ -105,7 +105,8 @@ export default function SuperAdminOverviewPage() {
         {metricCards.map((metric) => {
           const Icon = metric.icon;
           const value =
-            overview?.[metric.key as keyof NonNullable<typeof overview>] ?? "--";
+            overview?.[metric.key as keyof NonNullable<typeof overview>] ??
+            "--";
 
           return (
             <TenantMetricCard
@@ -146,7 +147,9 @@ export default function SuperAdminOverviewPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{tenant.status || "draft"}</Badge>
+                      <Badge variant="outline">
+                        {tenant.status || "draft"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" asChild>

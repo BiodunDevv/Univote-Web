@@ -11,7 +11,13 @@ import {
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -52,7 +58,9 @@ export default function PlatformAuditLogsPage() {
       });
       toast.info(result.message);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to preview cleanup");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to preview cleanup",
+      );
     }
   };
 
@@ -63,7 +71,9 @@ export default function PlatformAuditLogsPage() {
       });
       toast.success(result.message);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to cleanup audit logs");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cleanup audit logs",
+      );
     }
   };
 
@@ -82,9 +92,12 @@ export default function PlatformAuditLogsPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:p-6">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Platform Audit Logs</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Platform Audit Logs
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review cross-tenant administrative activity, platform mutations, and cleanup posture.
+          Review cross-tenant administrative activity, platform mutations, and
+          cleanup posture.
         </p>
       </section>
 
@@ -102,7 +115,8 @@ export default function PlatformAuditLogsPage() {
             <div>
               <CardTitle>Activity stream</CardTitle>
               <CardDescription>
-                Latest platform and tenant-admin operations recorded by the audit pipeline.
+                Latest platform and tenant-admin operations recorded by the
+                audit pipeline.
               </CardDescription>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -140,7 +154,9 @@ export default function PlatformAuditLogsPage() {
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{log.action}</Badge>
-                      {log.tenant ? <Badge variant="secondary">{log.tenant.slug}</Badge> : null}
+                      {log.tenant ? (
+                        <Badge variant="secondary">{log.tenant.slug}</Badge>
+                      ) : null}
                     </div>
                     <div>
                       <p className="font-medium">
@@ -158,7 +174,9 @@ export default function PlatformAuditLogsPage() {
                   </div>
                   <div className="shrink-0 space-y-1 text-left text-xs text-muted-foreground lg:text-right">
                     <p>{formatDate(log.timestamp)}</p>
-                    <p className="break-all">{log.ip_address || "No IP recorded"}</p>
+                    <p className="break-all">
+                      {log.ip_address || "No IP recorded"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -198,12 +216,17 @@ export default function PlatformAuditLogsPage() {
               >
                 Preview cleanup
               </Button>
-              <Button className="w-full" onClick={handleCleanup} disabled={cleanupMutation.isPending}>
+              <Button
+                className="w-full"
+                onClick={handleCleanup}
+                disabled={cleanupMutation.isPending}
+              >
                 Delete old logs
               </Button>
             </div>
             <div className="rounded-xl border border-dashed p-4 text-xs text-muted-foreground">
-              Cleanup is permanent. Preview first if you need a safe count before deletion.
+              Cleanup is permanent. Preview first if you need a safe count
+              before deletion.
             </div>
           </CardContent>
         </Card>
