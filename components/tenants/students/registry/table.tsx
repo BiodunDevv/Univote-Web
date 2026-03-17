@@ -79,7 +79,7 @@ export function StudentsRegistryTable({
       </div>
 
       {students.length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {students.map((student, index) => {
             const initials = student.full_name
               .split(" ")
@@ -91,9 +91,9 @@ export function StudentsRegistryTable({
             return (
               <Card
                 key={student._id}
-                className="rounded-xl border border-border/70 shadow-none"
+                className="h-full rounded-xl border border-border/70 shadow-none"
               >
-                <CardContent className="space-y-3 p-3">
+                <CardContent className="flex h-full flex-col space-y-3 p-3 sm:p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="inline-flex items-center gap-1.5">
                       <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border/70 bg-muted/20 px-1.5 text-xs font-medium text-muted-foreground">
@@ -158,14 +158,14 @@ export function StudentsRegistryTable({
                   </div>
 
                   <div className="space-y-1.5 text-xs text-muted-foreground">
-                    <p className="truncate">{student.email}</p>
+                    <p className="break-all">{student.email}</p>
                     {showCollegeField ? (
-                      <p className="truncate">
+                      <p className="line-clamp-2 wrap-break-word">
                         College: {student.college || "Not used"}
                       </p>
                     ) : null}
                     {showDepartmentField ? (
-                      <p className="truncate">
+                      <p className="line-clamp-2 wrap-break-word">
                         Department: {student.department || "Not used"}
                       </p>
                     ) : null}
@@ -191,10 +191,11 @@ export function StudentsRegistryTable({
                     ) : null}
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="mt-auto grid grid-cols-2 gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full"
                       onClick={() => onView(student._id)}
                     >
                       <IconEye className="mr-2 h-4 w-4" />
@@ -205,6 +206,7 @@ export function StudentsRegistryTable({
                         <Button
                           variant="outline"
                           size="sm"
+                          className="w-full"
                           onClick={() => onEdit(student._id)}
                         >
                           <IconEdit className="mr-2 h-4 w-4" />
@@ -214,6 +216,7 @@ export function StudentsRegistryTable({
                           <Button
                             variant="outline"
                             size="sm"
+                            className="w-full"
                             onClick={() => onMarkInactive(student._id)}
                           >
                             <IconUserX className="mr-2 h-4 w-4" />
@@ -223,6 +226,7 @@ export function StudentsRegistryTable({
                           <Button
                             variant="outline"
                             size="sm"
+                            className="w-full"
                             onClick={() => onMarkActive(student._id)}
                           >
                             <IconUserCheck className="mr-2 h-4 w-4" />
@@ -232,6 +236,7 @@ export function StudentsRegistryTable({
                         <Button
                           variant="outline"
                           size="sm"
+                          className="w-full"
                           onClick={() => onDelete(student._id)}
                         >
                           <IconTrash className="mr-2 h-4 w-4" />

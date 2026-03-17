@@ -45,7 +45,7 @@ export function TenantPageHeader({
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[2rem] border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0%,transparent_42%),linear-gradient(135deg,hsl(var(--card))_0%,hsl(var(--card))_55%,hsl(var(--muted)/0.22)_100%)] shadow-none py-2 p-2",
+        "overflow-hidden rounded-[2rem] border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0%,transparent_42%),linear-gradient(135deg,hsl(var(--card))_0%,hsl(var(--card))_55%,hsl(var(--muted)/0.22)_100%)] shadow-none p-1 px-1",
         className,
       )}
     >

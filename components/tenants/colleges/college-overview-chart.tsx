@@ -49,15 +49,19 @@ export function CollegeOverviewChart({
           label: participantPluralLabel,
         },
       }}
-      className="h-[300px] w-full"
+      className="h-60 w-full sm:h-72"
     >
-      <BarChart accessibilityLayer data={data}>
+      <BarChart
+        accessibilityLayer
+        data={data}
+        margin={{ left: 0, right: 8, top: 8 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="name"
           tickLine={false}
           axisLine={false}
-          tickMargin={10}
+          tickMargin={8}
           tickFormatter={(value) => value.slice(0, 12)}
         />
         <YAxis tickLine={false} axisLine={false} width={40} />

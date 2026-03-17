@@ -64,7 +64,7 @@ export default function SuperAdminOverviewPage() {
   const tenants = tenantsQuery.data?.tenants || [];
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 px-1 sm:px-0">
       <TenantPageHeader
         eyebrow="Platform operations"
         icon={<Building2 className="h-5 w-5" />}
@@ -101,55 +101,75 @@ export default function SuperAdminOverviewPage() {
         ]}
       />
 
+      <TenantMetricGrid columns={4}>
+        {metricCards.map((metric) => {
+          const Icon = metric.icon;
+          const value =
+            overview?.[metric.key as keyof NonNullable<typeof overview>] ?? "--";
+
+          return (
+            <TenantMetricCard
+              key={metric.key}
+              label={metric.label}
+              value={typeof value === "number" ? value.toLocaleString() : value}
+              icon={<Icon className="h-4 w-4" />}
+            />
+          );
+        })}
+      </TenantMetricGrid>
+
       <div className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
         <AdminChatOverviewCard supportPath="/super-admin/support" showTenant />
         <TenantSectionCard
           title="Newest tenants"
           description="Inspect access posture, onboarding progress, and open each tenant for deeper operational review."
+          contentClassName="px-0 pb-2 pt-0 sm:px-3 sm:pb-3"
         >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Manage</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tenants.map((tenant) => (
-                <TableRow key={tenant.id}>
-                  <TableCell>
-                    <div className="font-medium text-foreground">
-                      {tenant.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {tenant.slug}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{tenant.status || "draft"}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" asChild>
-                      <Link href={`/super-admin/tenants/${tenant.id}`}>
-                        Open
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {tenants.length === 0 ? (
+          <div className="w-full overflow-x-auto px-3 sm:px-0">
+            <Table className="min-w-xl">
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={3}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No tenants created yet.
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Manage</TableHead>
                 </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tenants.map((tenant) => (
+                  <TableRow key={tenant.id}>
+                    <TableCell>
+                      <div className="font-medium text-foreground">
+                        {tenant.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {tenant.slug}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{tenant.status || "draft"}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" asChild>
+                        <Link href={`/super-admin/tenants/${tenant.id}`}>
+                          Open
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {tenants.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No tenants created yet.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
         </TenantSectionCard>
       </div>
     </div>

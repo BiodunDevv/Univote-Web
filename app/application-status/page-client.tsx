@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -30,6 +30,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  clearTrackedTenantApplication,
+  readTrackedTenantApplication,
+  shouldKeepTrackedApplication,
+  writeTrackedTenantApplication,
+} from "@/lib/tenant-application-tracker";
 
 function toTitleCase(value?: string | null) {
   if (!value) return "Not available";
@@ -77,14 +83,20 @@ function getApplicationStatusTone(status?: string) {
 
 export default function ApplicationStatusClientPage() {
   const searchParams = useSearchParams();
-  const [reference, setReference] = useState(
-    searchParams.get("reference") || "",
-  );
-  const [email, setEmail] = useState(searchParams.get("email") || "");
-  const [submitted, setSubmitted] = useState(Boolean(email));
+  const [reference, setReference] = useState("");
+  const [email, setEmail] = useState("");
+  const [lookupReference, setLookupReference] = useState("");
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [trackedSummary, setTrackedSummary] = useState<{
+    reference: string;
+    email: string;
+    name?: string | null;
+    status?: string | null;
+  } | null>(null);
   const statusQuery = useTenantApplicationStatusQuery(
-    email,
-    reference,
+    lookupEmail,
+    lookupReference,
     submitted,
   );
 
@@ -94,6 +106,46 @@ export default function ApplicationStatusClientPage() {
     () => application?.status_timeline || [],
     [application?.status_timeline],
   );
+
+  useEffect(() => {
+    const queryEmail = (searchParams.get("email") || "").trim().toLowerCase();
+    const queryReference = (searchParams.get("reference") || "")
+      .trim()
+      .toUpperCase();
+    const tracked = readTrackedTenantApplication();
+
+    const initialEmail = queryEmail || tracked?.email || "";
+    const initialReference = queryReference || tracked?.reference || "";
+
+    if (initialEmail) {
+      setLookupEmail(initialEmail);
+      setLookupReference(initialReference);
+      setSubmitted(true);
+    }
+
+    if (tracked && shouldKeepTrackedApplication(tracked.status)) {
+      setTrackedSummary(tracked);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!application) return;
+
+    if (shouldKeepTrackedApplication(application.status)) {
+      const nextTracked = {
+        reference: application.reference || lookupReference,
+        email: application.contact_email || lookupEmail,
+        name: application.name,
+        status: application.status,
+      };
+      setTrackedSummary(nextTracked);
+      writeTrackedTenantApplication(nextTracked);
+      return;
+    }
+
+    clearTrackedTenantApplication();
+    setTrackedSummary(null);
+  }, [application, lookupEmail, lookupReference]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background px-4 pb-10 pt-24 sm:px-6 lg:px-8">
@@ -120,6 +172,8 @@ export default function ApplicationStatusClientPage() {
               className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
               onSubmit={(event) => {
                 event.preventDefault();
+                setLookupEmail(email.trim().toLowerCase());
+                setLookupReference(reference.trim().toUpperCase());
                 setSubmitted(true);
               }}
             >
@@ -163,6 +217,46 @@ export default function ApplicationStatusClientPage() {
                 </Button>
               </div>
             </form>
+            {trackedSummary ? (
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Tracked application</p>
+                  <p className="text-sm text-muted-foreground">
+                    {trackedSummary.name || "University application"} •{" "}
+                    {trackedSummary.reference}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setLookupEmail(trackedSummary.email);
+                      setLookupReference(trackedSummary.reference);
+                      setSubmitted(true);
+                    }}
+                  >
+                    Open tracked application
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      clearTrackedTenantApplication();
+                      setTrackedSummary(null);
+                      setLookupEmail("");
+                      setLookupReference("");
+                      setSubmitted(false);
+                      window.history.replaceState(
+                        {},
+                        "",
+                        "/application-status",
+                      );
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -332,6 +426,21 @@ export default function ApplicationStatusClientPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Button variant="outline" asChild>
                 <Link href="/">Back to home</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  clearTrackedTenantApplication();
+                  setTrackedSummary(null);
+                  setLookupEmail("");
+                  setLookupReference("");
+                  setSubmitted(false);
+                  setEmail("");
+                  setReference("");
+                  window.history.replaceState({}, "", "/application-status");
+                }}
+              >
+                Clear tracked application
               </Button>
               <Separator
                 orientation="vertical"

@@ -46,16 +46,16 @@ export function DepartmentTable({
       </div>
 
       {departments.length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {departments.map((department) => (
             <Card
               key={department._id}
-              className="rounded-xl border border-border/70 shadow-none"
+              className="h-full rounded-xl border border-border/70 shadow-none"
             >
-              <CardContent className="space-y-3 p-3">
+              <CardContent className="flex h-full flex-col space-y-3 p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">
+                    <p className="line-clamp-2 wrap-break-word text-sm font-semibold leading-5">
                       {department.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -75,11 +75,13 @@ export function DepartmentTable({
                 </div>
 
                 <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <p className="truncate">College: {department.college.name}</p>
-                  <p className="truncate">
+                  <p className="line-clamp-2 wrap-break-word">
+                    College: {department.college?.name || "Not assigned"}
+                  </p>
+                  <p className="line-clamp-2 wrap-break-word">
                     HOD: {department.hod_name || "Not assigned"}
                   </p>
-                  <p className="truncate">
+                  <p className="break-all">
                     {department.hod_email || "No email"}
                   </p>
                   <p className="line-clamp-2">
@@ -94,16 +96,21 @@ export function DepartmentTable({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
+                <div className="mt-auto grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full"
                     onClick={() => onViewStudents(department)}
                   >
                     <Eye className="mr-2 h-4 w-4" />
                     View
                   </Button>
-                  <Button size="sm" onClick={() => onViewStudents(department)}>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onViewStudents(department)}
+                  >
                     <Users className="mr-2 h-4 w-4" />
                     {participantPluralLabel}
                   </Button>

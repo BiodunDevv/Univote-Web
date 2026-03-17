@@ -253,7 +253,7 @@ export default function CollegesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-2">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4">
         <TenantPageHeader
           eyebrow="University structure"
           icon={<Building2 className="h-5 w-5" />}

@@ -56,7 +56,7 @@ export function StudentsByCollegeChart({
           <>
             <ChartContainer
               config={chartConfig}
-              className="mx-auto h-[200px] w-full"
+              className="mx-auto h-56 w-full sm:h-60"
             >
               <PieChart accessibilityLayer>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -66,8 +66,8 @@ export function StudentsByCollegeChart({
                   nameKey="college"
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
+                  innerRadius={42}
+                  outerRadius={74}
                   strokeWidth={2}
                   stroke="var(--background)"
                 >
@@ -81,7 +81,7 @@ export function StudentsByCollegeChart({
               </PieChart>
             </ChartContainer>
 
-            <div className="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm lg:grid-cols-2">
               {data.map((college, index) => (
                 <div
                   key={college.college}

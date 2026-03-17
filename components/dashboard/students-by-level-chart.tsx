@@ -50,17 +50,17 @@ export function StudentsByLevelChart({
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <div className="flex h-[280px] items-center justify-center rounded-md border border-dashed">
+          <div className="flex h-60 items-center justify-center rounded-md border border-dashed sm:h-72">
             <p className="text-sm text-muted-foreground">
               No {normalizedDimensionLabel.toLowerCase()} data available
             </p>
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[280px] w-full">
+          <ChartContainer config={chartConfig} className="h-60 w-full sm:h-72">
             <AreaChart
               data={data}
               accessibilityLayer
-              margin={{ left: 4, right: 12 }}
+              margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
             >
               <CartesianGrid vertical={false} />
               <XAxis

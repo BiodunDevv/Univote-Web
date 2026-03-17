@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useSubmitTenantApplicationMutation,
+  useTenantApplicationStatusQuery,
   useUpdateTenantApplicationMutation,
 } from "@/lib/queries/public";
 import type {
@@ -26,8 +27,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Textarea } from "@/components/ui/textarea";
-
-const STORAGE_KEY = "tenant-application-draft-v1";
+import {
+  clearTrackedTenantApplication,
+  readTrackedTenantApplication,
+  shouldKeepTrackedApplication,
+  writeTrackedTenantApplication,
+} from "@/lib/tenant-application-tracker";
 
 const DEFAULT_FORM: TenantApplicationPayload = {
   institution_name: "",
@@ -45,33 +50,6 @@ const DEFAULT_FORM: TenantApplicationPayload = {
 
 const STEPS = ["University", "Contact", "Capacity"] as const;
 
-type DraftState = {
-  reference?: string | null;
-  formData: TenantApplicationPayload;
-};
-
-function saveDraftState(value: DraftState) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-}
-
-function readDraftState(): DraftState | null {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw) as DraftState;
-  } catch {
-    return null;
-  }
-}
-
-function clearDraftState() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
-}
-
 function suggestDomain(slug: string): string {
   if (typeof window === "undefined" || !slug) return "";
   const { hostname, port } = window.location;
@@ -87,33 +65,65 @@ export function TenantApplicationSection() {
   const [applicationReference, setApplicationReference] = useState<
     string | null
   >(null);
+  const [trackedApplication, setTrackedApplication] = useState<{
+    reference: string;
+    email: string;
+    name?: string | null;
+    status?: string | null;
+  } | null>(null);
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState<TenantApplicationResponse | null>(
     null,
   );
+  const [lookupEmail, setLookupEmail] = useState("");
 
   const updateMutation = useUpdateTenantApplicationMutation(
     applicationReference || "",
   );
+  const existingApplicationQuery = useTenantApplicationStatusQuery(
+    lookupEmail,
+    undefined,
+    step >= 1 && /\S+@\S+\.\S+/.test(lookupEmail),
+  );
 
   useEffect(() => {
-    const draft = readDraftState();
-    if (!draft) return;
+    const tracked = readTrackedTenantApplication();
+    if (!tracked) return;
+    if (!shouldKeepTrackedApplication(tracked.status)) {
+      clearTrackedTenantApplication();
+      return;
+    }
 
-    setFormData({
-      ...DEFAULT_FORM,
-      ...draft.formData,
-      institution_type: "university",
-    });
-    setApplicationReference(draft.reference || null);
+    setTrackedApplication(tracked);
   }, []);
 
   useEffect(() => {
-    saveDraftState({
-      reference: applicationReference,
-      formData,
-    });
-  }, [applicationReference, formData]);
+    const timer = window.setTimeout(() => {
+      setLookupEmail(formData.contact_email.trim().toLowerCase());
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [formData.contact_email]);
+
+  useEffect(() => {
+    const application = existingApplicationQuery.data?.application;
+    if (!application) return;
+
+    if (shouldKeepTrackedApplication(application.status)) {
+      const nextTracked = {
+        reference: application.reference || "",
+        email: application.contact_email || lookupEmail,
+        name: application.name,
+        status: application.status,
+      };
+      setTrackedApplication(nextTracked);
+      writeTrackedTenantApplication(nextTracked);
+      return;
+    }
+
+    clearTrackedTenantApplication();
+    setTrackedApplication(null);
+  }, [existingApplicationQuery.data?.application, lookupEmail]);
 
   const isSavingDraft = createMutation.isPending || updateMutation.isPending;
 
@@ -133,6 +143,19 @@ export function TenantApplicationSection() {
 
     if (response.application.reference) {
       setApplicationReference(response.application.reference);
+      if (shouldKeepTrackedApplication(response.application.status)) {
+        const nextTracked = {
+          reference: response.application.reference,
+          email: response.application.contact_email || formData.contact_email,
+          name: response.application.name,
+          status: response.application.status,
+        };
+        setTrackedApplication(nextTracked);
+        writeTrackedTenantApplication(nextTracked);
+      } else {
+        clearTrackedTenantApplication();
+        setTrackedApplication(null);
+      }
     }
 
     return response;
@@ -146,7 +169,6 @@ export function TenantApplicationSection() {
     try {
       const response = await persistApplication(true);
       setSubmitted(response);
-      clearDraftState();
       toast.success(response.message);
     } catch (error) {
       toast.error(
@@ -154,6 +176,11 @@ export function TenantApplicationSection() {
       );
     }
   }
+
+  const existingApplication = useMemo(
+    () => existingApplicationQuery.data?.application || null,
+    [existingApplicationQuery.data?.application],
+  );
 
   function renderStepContent() {
     if (step === 0) {
@@ -478,6 +505,8 @@ export function TenantApplicationSection() {
                       setApplicationReference(null);
                       setFormData(DEFAULT_FORM);
                       setStep(0);
+                      clearTrackedTenantApplication();
+                      setTrackedApplication(null);
                     }}
                   >
                     Start another application
@@ -486,6 +515,81 @@ export function TenantApplicationSection() {
               </div>
             ) : (
               <>
+                {trackedApplication ? (
+                  <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        Existing application available
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {trackedApplication.name || "University application"} •{" "}
+                        {trackedApplication.reference}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" asChild>
+                        <Link
+                          href={`/application-status?reference=${encodeURIComponent(trackedApplication.reference)}&email=${encodeURIComponent(trackedApplication.email)}`}
+                        >
+                          Check status
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          clearTrackedTenantApplication();
+                          setTrackedApplication(null);
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {formData.contact_email && existingApplication ? (
+                  <div className="rounded-2xl border bg-primary/5 p-4">
+                    <p className="text-sm font-medium">
+                      An application already exists for this email
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {existingApplication.name} •{" "}
+                      {existingApplication.reference} •{" "}
+                      {existingApplication.status.replaceAll("_", " ")}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" asChild>
+                        <Link
+                          href={`/application-status?reference=${encodeURIComponent(existingApplication.reference || "")}&email=${encodeURIComponent(existingApplication.contact_email || formData.contact_email)}`}
+                        >
+                          Review existing application
+                        </Link>
+                      </Button>
+                      {shouldKeepTrackedApplication(
+                        existingApplication.status,
+                      ) ? (
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            const nextTracked = {
+                              reference: existingApplication.reference || "",
+                              email:
+                                existingApplication.contact_email ||
+                                formData.contact_email,
+                              name: existingApplication.name,
+                              status: existingApplication.status,
+                            };
+                            writeTrackedTenantApplication(nextTracked);
+                            setTrackedApplication(nextTracked);
+                          }}
+                        >
+                          Keep tracked
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
                 {renderStepContent()}
 
                 <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">

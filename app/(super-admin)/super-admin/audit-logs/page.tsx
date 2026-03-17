@@ -80,9 +80,9 @@ export default function PlatformAuditLogsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
-        <h1 className="text-3xl font-semibold tracking-tight">Platform Audit Logs</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:p-6">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Platform Audit Logs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Review cross-tenant administrative activity, platform mutations, and cleanup posture.
         </p>
@@ -96,7 +96,7 @@ export default function PlatformAuditLogsPage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="border shadow-none">
           <CardHeader className="gap-4">
             <div>
@@ -105,9 +105,9 @@ export default function PlatformAuditLogsPage() {
                 Latest platform and tenant-admin operations recorded by the audit pipeline.
               </CardDescription>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <Select value={action} onValueChange={setAction}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Action" />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,11 +122,13 @@ export default function PlatformAuditLogsPage() {
               <Input
                 type="datetime-local"
                 value={startDate}
+                className="w-full"
                 onChange={(event) => setStartDate(event.target.value)}
               />
               <Input
                 type="datetime-local"
                 value={endDate}
+                className="w-full"
                 onChange={(event) => setEndDate(event.target.value)}
               />
             </div>
@@ -135,7 +137,7 @@ export default function PlatformAuditLogsPage() {
             {logs.map((log) => (
               <div key={log.id} className="rounded-2xl border p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
+                  <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{log.action}</Badge>
                       {log.tenant ? <Badge variant="secondary">{log.tenant.slug}</Badge> : null}
@@ -154,9 +156,9 @@ export default function PlatformAuditLogsPage() {
                         : JSON.stringify(log.details)}
                     </p>
                   </div>
-                  <div className="space-y-1 text-right text-xs text-muted-foreground">
+                  <div className="shrink-0 space-y-1 text-left text-xs text-muted-foreground lg:text-right">
                     <p>{formatDate(log.timestamp)}</p>
-                    <p>{log.ip_address || "No IP recorded"}</p>
+                    <p className="break-all">{log.ip_address || "No IP recorded"}</p>
                   </div>
                 </div>
               </div>
@@ -169,7 +171,7 @@ export default function PlatformAuditLogsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border shadow-none">
+        <Card className="border shadow-none xl:sticky xl:top-4">
           <CardHeader>
             <CardTitle>Cleanup controls</CardTitle>
             <CardDescription>
@@ -190,12 +192,13 @@ export default function PlatformAuditLogsPage() {
             <div className="grid gap-2">
               <Button
                 variant="outline"
+                className="w-full"
                 onClick={handleCleanupPreview}
                 disabled={cleanupMutation.isPending}
               >
                 Preview cleanup
               </Button>
-              <Button onClick={handleCleanup} disabled={cleanupMutation.isPending}>
+              <Button className="w-full" onClick={handleCleanup} disabled={cleanupMutation.isPending}>
                 Delete old logs
               </Button>
             </div>
