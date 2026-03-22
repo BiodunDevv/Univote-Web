@@ -409,8 +409,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-3 py-2 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+      <nav className="fixed inset-x-0 bottom-2 z-40 px-3 lg:hidden">
+        <div
+          className="mx-auto grid max-w-xl grid-cols-5 gap-1 rounded-3xl border bg-background/95 px-2 py-2 shadow-lg shadow-black/5 backdrop-blur"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+        >
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const active = isActivePath(pathname, item.href);
