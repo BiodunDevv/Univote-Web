@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { TenantHeaderSwitcher } from "@/components/tenants/tenant-header-switcher";
 import { Kbd } from "@/components/ui/kbd";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
@@ -77,7 +76,7 @@ export function DashboardShellHeader({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { admin, organizations, tenant, membership } = useAuthStore();
+  const { admin, tenant, membership } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("admin");
@@ -108,10 +107,6 @@ export function DashboardShellHeader({
   };
   const currentSegment = trail[trail.length - 1] ?? rootSegment;
   const currentTitle = getTrailLabel(currentSegment, trail[trail.length - 2]);
-  const showTenantSwitcher =
-    rootSegment === "dashboard" &&
-    admin?.role !== "super_admin" &&
-    Boolean(tenant || organizations.length > 0);
   const notificationsPath =
     rootSegment === "super-admin"
       ? "/super-admin/notifications"
@@ -319,14 +314,6 @@ export function DashboardShellHeader({
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2">
-            {showTenantSwitcher ? (
-              <div
-                className="hidden md:block"
-                data-tour="admin-workspace-switcher"
-              >
-                <TenantHeaderSwitcher />
-              </div>
-            ) : null}
             <AdminChatWidget
               supportPath={supportPath}
               showTenant={rootSegment === "super-admin"}
@@ -357,12 +344,6 @@ export function DashboardShellHeader({
             />
           </div>
         </div>
-
-        {showTenantSwitcher ? (
-          <div className="md:hidden" data-tour="admin-workspace-switcher">
-            <TenantHeaderSwitcher compact />
-          </div>
-        ) : null}
 
         <Tabs
           value={activeTab}

@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
   useAdminStudentDetailQuery,
   useUpdateStudentMutation,
@@ -23,6 +24,7 @@ import {
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
@@ -34,9 +36,12 @@ export default function EditStudentPage() {
   const studentId = params.studentId as string;
   const backRef = searchParams.get("ref") || "/dashboard/students";
 
-  const { token, hasHydrated, tenant } = useAuthStore();
+  const { token, hasHydrated, tenant, admin, membership } = useAuthStore();
   const participantLabels = { singular: "Student", plural: "Students" };
   const isAuthorized = hasHydrated && Boolean(token);
+  const canManageStudent =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, ["students.manage", "tenant.manage"]);
   const studentDetailQuery = useAdminStudentDetailQuery(studentId, {
     enabled: isAuthorized,
   });
@@ -64,6 +69,15 @@ export default function EditStudentPage() {
           "Fetching profile fields...",
           "Preparing edit workspace...",
         ]}
+      />
+    );
+  }
+
+  if (!canManageStudent) {
+    return (
+      <TenantAccessRestricted
+        title="Student editing is restricted"
+        description="Your current university role can’t update student records. Ask your workspace owner for student management access if you need to make changes."
       />
     );
   }

@@ -2,10 +2,24 @@
 
 import { SupportDesk } from "@/components/support/support-desk";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { TenantAccessRestricted } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 export default function TenantSupportPage() {
-  const { admin } = useAuthStore();
+  const { admin, membership } = useAuthStore();
   const isSuperAdmin = admin?.role === "super_admin";
+  const canManageSupport = isSuperAdmin
+    ? true
+    : hasAnyTenantPermission(membership, ["support.manage", "tenant.manage"]);
+
+  if (!canManageSupport) {
+    return (
+      <TenantAccessRestricted
+        title="Support access restricted"
+        subtitle="Your university role does not allow support queue management."
+      />
+    );
+  }
 
   return (
     <SupportDesk

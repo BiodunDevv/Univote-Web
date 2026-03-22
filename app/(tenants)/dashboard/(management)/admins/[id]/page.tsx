@@ -25,6 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  canAssignTenantOwnerRole,
+  hasAnyTenantPermission,
+} from "@/lib/tenant-permissions";
 
 type TenantRole = "owner" | "admin" | "support" | "analyst";
 type AdminRole = "admin" | "super_admin" | TenantRole;
@@ -32,8 +36,12 @@ type AdminRole = "admin" | "super_admin" | TenantRole;
 export default function EditAdminPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { admin, hasHydrated } = useAuthStore();
+  const { admin, hasHydrated, membership } = useAuthStore();
   const isSuperAdmin = admin?.role === "super_admin";
+  const canManageAdmins = isSuperAdmin
+    ? true
+    : hasAnyTenantPermission(membership, ["admins.manage", "tenant.manage"]);
+  const canAssignOwner = canAssignTenantOwnerRole(membership);
   const id = params.id;
 
   const globalAdminQuery = useGlobalAdminDetailQuery(id, {
@@ -90,12 +98,20 @@ export default function EditAdminPage() {
     tenantAdminQuery.data?.member,
   ]);
 
-  const availablePermissions = useMemo(
+  const visibleRoleCatalog = useMemo(
     () =>
-      Array.from(
-        new Set((roleCatalogQuery.data?.roles || []).flatMap((role) => role.permissions)),
+      (roleCatalogQuery.data?.roles || []).filter(
+        (role) =>
+          canAssignOwner || role.code !== "owner" || formData.role === "owner",
       ),
-    [roleCatalogQuery.data?.roles],
+    [canAssignOwner, formData.role, roleCatalogQuery.data?.roles],
+  );
+  const selectedRole = useMemo(
+    () =>
+      !isSuperAdmin
+        ? visibleRoleCatalog.find((role) => role.code === formData.role) || null
+        : null,
+    [formData.role, isSuperAdmin, visibleRoleCatalog],
   );
 
   const isLoading =
@@ -149,6 +165,46 @@ export default function EditAdminPage() {
     );
   }
 
+  if (!isSuperAdmin && !canManageAdmins) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
+        <section className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">Edit Admin</h1>
+          <p className="text-sm text-muted-foreground">
+            Your tenant role does not allow administrator management.
+          </p>
+        </section>
+
+        <Card className="border shadow-none">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Only the tenant owner or an admin with administrator-management
+            access can edit university administrator accounts.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isSuperAdmin && formData.role === "owner" && !canAssignOwner) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
+        <section className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">Edit Admin</h1>
+          <p className="text-sm text-muted-foreground">
+            Owner accounts can only be edited by the current tenant owner.
+          </p>
+        </section>
+
+        <Card className="border shadow-none">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            This membership is assigned to the university owner role. Sign in as
+            the tenant owner to update or deactivate this account.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!email) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
@@ -180,7 +236,7 @@ export default function EditAdminPage() {
         <p className="text-sm text-muted-foreground">
           {isSuperAdmin
             ? "Update platform admin identity and activation status."
-            : "Update tenant-scoped role, permissions, and membership state."}
+            : "Update tenant-scoped role and membership state. Permissions follow the selected role automatically."}
         </p>
       </section>
 
@@ -222,7 +278,7 @@ export default function EditAdminPage() {
                       ...current,
                       role: value as AdminRole,
                       permissions: !isSuperAdmin
-                        ? roleCatalogQuery.data?.roles.find((role) => role.code === value)
+                        ? visibleRoleCatalog.find((role) => role.code === value)
                             ?.permissions || current.permissions
                         : current.permissions,
                     }))
@@ -238,7 +294,7 @@ export default function EditAdminPage() {
                         <SelectItem value="super_admin">Super Admin</SelectItem>
                       </>
                     ) : (
-                      (roleCatalogQuery.data?.roles || []).map((role) => (
+                      visibleRoleCatalog.map((role) => (
                         <SelectItem key={role.code} value={role.code}>
                           {role.label}
                         </SelectItem>
@@ -270,26 +326,17 @@ export default function EditAdminPage() {
                 <div>
                   <h2 className="text-sm font-medium">Permissions</h2>
                   <p className="text-sm text-muted-foreground">
-                    Fine-tune the permission set for this tenant admin.
+                    The access bundle below is fixed by the selected university
+                    role.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {availablePermissions.map((permission) => (
+                  {(selectedRole?.permissions || formData.permissions).map((permission) => (
                     <label
                       key={permission}
                       className="flex items-center gap-3 rounded-xl border p-3 text-sm"
                     >
-                      <Checkbox
-                        checked={formData.permissions.includes(permission)}
-                        onCheckedChange={(checked) =>
-                          setFormData((current) => ({
-                            ...current,
-                            permissions: Boolean(checked)
-                              ? Array.from(new Set([...current.permissions, permission]))
-                              : current.permissions.filter((item) => item !== permission),
-                          }))
-                        }
-                      />
+                      <Checkbox checked disabled />
                       <span>{permission}</span>
                     </label>
                   ))}

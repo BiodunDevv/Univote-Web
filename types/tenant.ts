@@ -72,7 +72,6 @@ export interface TenantContext {
   slug: string;
   primary_domain?: string | null;
   status?: string;
-  subscription_status?: string;
   plan_code?: string;
   branding?: TenantBranding;
   labels?: TenantLabelsSettings;
@@ -98,17 +97,6 @@ export interface TenantContext {
       at: string;
     }>;
   };
-  billing?: {
-    billing_cycle?: string;
-    currency?: string;
-    current_period_start?: string | null;
-    current_period_end?: string | null;
-    grace_ends_at?: string | null;
-    last_payment_at?: string | null;
-    next_plan_code?: string | null;
-    next_plan_effective_at?: string | null;
-    next_plan_requested_at?: string | null;
-  };
 }
 
 export interface TenantMembership {
@@ -128,6 +116,5 @@ export interface TenantOrganization {
   label?: string | null;
   primary_domain?: string | null;
   status?: string;
-  subscription_status?: string;
   plan_code?: string;
 }

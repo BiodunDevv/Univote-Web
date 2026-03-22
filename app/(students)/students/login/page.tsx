@@ -101,9 +101,9 @@ export default function StudentLoginPage() {
 
   const restrictionMessage =
     restrictionReason === "TENANT_SUSPENDED"
-      ? "This organization workspace is currently suspended. Portal access is unavailable until an administrator restores the subscription."
+      ? "This university workspace is currently suspended. Student portal access is unavailable until an administrator restores the workspace."
       : restrictionReason === "TENANT_ACCESS_RESTRICTED"
-        ? "This organization workspace is currently restricted by subscription status. Try again later or contact an administrator."
+        ? "This university workspace is currently restricted. Try again later or contact an administrator."
         : null;
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function StudentLoginPage() {
           <p className="mt-4 max-w-lg text-base text-muted-foreground">
             {selectedOrganization
               ? `Use your ${loginField.label.toLowerCase()} and current password. Shared organization links and subdomain links open this portal automatically.`
-              : "Use the organization chooser to find the right workspace. If an administrator shared a direct link, the organization will already be selected for you."}
+              : "Use the university chooser to find the right workspace. If an administrator shared a direct link, the university will already be selected for you."}
           </p>
         </div>
 
@@ -182,9 +182,9 @@ export default function StudentLoginPage() {
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle>Select Organization</CardTitle>
+                    <CardTitle>Select University</CardTitle>
                     <CardDescription>
-                      Choose the workspace you belong to before signing in.
+                      Choose the university you belong to before signing in.
                     </CardDescription>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function StudentLoginPage() {
                   <Input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search organizations"
+                    placeholder="Search universities"
                     className="pl-9"
                   />
                 </div>
@@ -207,7 +207,7 @@ export default function StudentLoginPage() {
                     className="w-full"
                     disabled
                   >
-                    <LoadingButtonContent label="Fetching organizations..." />
+                    <LoadingButtonContent label="Fetching universities..." />
                   </Button>
                 ) : null}
 
@@ -237,7 +237,7 @@ export default function StudentLoginPage() {
                 {organizationsQuery.data?.organizations.length === 0 ? (
                   <Alert>
                     <AlertDescription>
-                      No organizations matched your search.
+                      No universities matched your search.
                     </AlertDescription>
                   </Alert>
                 ) : null}

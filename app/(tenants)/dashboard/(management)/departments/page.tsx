@@ -13,10 +13,11 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useDepartmentStore } from "@/lib/store/useDepartmentStore";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
-  hasTenantPermission,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 function DepartmentsPageContent() {
   const router = useRouter();
@@ -44,10 +45,7 @@ function DepartmentsPageContent() {
 
   const canManageDepartments =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
-      "tenant.manage",
-      "students.manage",
-    ]);
+    hasAnyTenantPermission(membership, ["tenant.manage", "students.manage"]);
 
   const structureDisabled = !departmentEnabled;
 
@@ -160,6 +158,15 @@ function DepartmentsPageContent() {
           </TenantSectionCard>
         </div>
       </div>
+    );
+  }
+
+  if (!canManageDepartments) {
+    return (
+      <TenantAccessRestricted
+        title="Department access restricted"
+        subtitle="Your university role does not allow department management."
+      />
     );
   }
 

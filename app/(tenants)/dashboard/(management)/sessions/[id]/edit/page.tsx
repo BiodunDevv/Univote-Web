@@ -12,7 +12,9 @@ import {
 import { SessionCreationCollege } from "@/components/tenants/sessions/create";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { TenantAccessRestricted } from "@/components/tenants/shared";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
   useAdminCollegesQuery,
   useAdminSessionDetailQuery,
@@ -28,9 +30,12 @@ export default function EditSessionPage() {
   const params = useParams();
   const sessionId = params.id as string;
 
-  const { token, hasHydrated, tenant } = useAuthStore();
+  const { token, hasHydrated, tenant, admin, membership } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
   const tenantReady = hasHydrated && Boolean(tenant);
+  const canManageSessions =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, ["sessions.manage", "tenant.manage"]);
   const needsStructureData =
     isTenantEligibilityDimensionEnabled(tenant, "college") ||
     isTenantEligibilityDimensionEnabled(tenant, "department") ||
@@ -84,6 +89,15 @@ export default function EditSessionPage() {
             : "Applying tenant-wide eligibility...",
           "Preparing edit workflow...",
         ]}
+      />
+    );
+  }
+
+  if (!canManageSessions) {
+    return (
+      <TenantAccessRestricted
+        title="Session editing is restricted"
+        description="Your current university role can’t update voting sessions. Ask your workspace owner for session management access if you need to make changes."
       />
     );
   }

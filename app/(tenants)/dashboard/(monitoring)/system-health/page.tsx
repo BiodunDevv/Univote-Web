@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/chart";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 const systemHealthChartConfig = {
   count: {
@@ -30,10 +32,23 @@ const systemHealthChartConfig = {
 } satisfies ChartConfig;
 
 export default function SystemHealthPage() {
-  const { tenant } = useAuthStore();
+  const { tenant, membership } = useAuthStore();
+  const canViewSystemHealth = hasAnyTenantPermission(membership, [
+    "analytics.view",
+    "tenant.manage",
+  ]);
   const participantLabels = getTenantParticipantLabels(tenant);
   const healthQuery = useAdminSystemHealthQuery();
   const databaseQuery = useAdminDatabaseStatsQuery();
+
+  if (!canViewSystemHealth) {
+    return (
+      <TenantAccessRestricted
+        title="System health access restricted"
+        subtitle="Your university role does not allow operational monitoring access."
+      />
+    );
+  }
 
   if (healthQuery.isLoading || databaseQuery.isLoading) {
     return (

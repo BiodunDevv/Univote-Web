@@ -28,10 +28,10 @@ import {
   type StudentImagePreview,
 } from "@/components/tenants/students/registry";
 import {
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantPageHeader,
   TenantSectionCard,
-  hasTenantPermission,
 } from "@/components/tenants/shared";
 import {
   ChartContainer,
@@ -40,6 +40,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   useActivateStudentMutation,
@@ -103,7 +104,12 @@ export function StudentsPage() {
 
   const canManageStudents =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
+    hasAnyTenantPermission(membership, ["students.manage", "tenant.manage"]);
+  const canViewStudents =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, [
+      "participants.view",
+      "participants.manage",
       "students.manage",
       "tenant.manage",
     ]);
@@ -456,6 +462,15 @@ export function StudentsPage() {
         messages={[
           `Preparing ${participantLabels.singular.toLowerCase()} workspace...`,
         ]}
+      />
+    );
+  }
+
+  if (!canViewStudents) {
+    return (
+      <TenantAccessRestricted
+        title="Student registry access is restricted"
+        description="Your current university role can’t open the student registry. Ask your workspace owner for participant access if you need to review or manage student records."
       />
     );
   }

@@ -42,8 +42,7 @@ export function TenantDashboardShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { token, admin, tenant, membership, organizations, hasHydrated } =
-    useAuthStore();
+  const { token, admin, tenant, membership, hasHydrated } = useAuthStore();
 
   const currentRef = useMemo(() => {
     if (typeof window === "undefined") {
@@ -84,7 +83,6 @@ export function TenantDashboardShell({
         admin,
         tenant,
         membership,
-        organizations,
       };
       const handoffUrl = buildTenantAuthAcceptUrl(
         tenantSlug,
@@ -99,7 +97,6 @@ export function TenantDashboardShell({
     hasHydrated,
     membership,
     needsTenantHostRedirect,
-    organizations,
     router,
     tenant,
     tenantSlug,

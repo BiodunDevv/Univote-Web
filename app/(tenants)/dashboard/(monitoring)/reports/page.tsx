@@ -5,6 +5,7 @@ import { FileBarChart } from "lucide-react";
 import { toast } from "sonner";
 import { useExportDataMutation } from "@/lib/queries/admin";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 function downloadBlob(blob: Blob, filename: string) {
   const objectUrl = URL.createObjectURL(blob);
@@ -29,10 +31,24 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function ReportsPage() {
-  const { tenant } = useAuthStore();
+  const { tenant, membership } = useAuthStore();
+  const canExportReports = hasAnyTenantPermission(membership, [
+    "reports.export",
+    "tenant.manage",
+  ]);
   const participantLabels = getTenantParticipantLabels(tenant);
   const exportData = useExportDataMutation();
   const [format, setFormat] = useState("json");
+  const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
+
+  if (!canExportReports) {
+    return (
+      <TenantAccessRestricted
+        title="Reports access restricted"
+        subtitle="Your university role does not allow data export and reporting."
+      />
+    );
+  }
 
   const reportTypes = [
     {
@@ -114,20 +130,25 @@ export default function ReportsPage() {
             description={report.description}
             action={
               <Button
-                disabled={exportData.isPending}
+                disabled={Boolean(activeExportKey)}
                 onClick={async () => {
-                  const blob = await exportData.mutateAsync({
-                    dataType: report.key,
-                    format,
-                  });
-                  downloadBlob(
-                    blob,
-                    `${report.key.replace("_", "-")}-${new Date().toISOString()}.${format}`,
-                  );
-                  toast.success(`${report.label} exported`);
+                  setActiveExportKey(report.key);
+                  try {
+                    const blob = await exportData.mutateAsync({
+                      dataType: report.key,
+                      format,
+                    });
+                    downloadBlob(
+                      blob,
+                      `${report.key.replace("_", "-")}-${new Date().toISOString()}.${format}`,
+                    );
+                    toast.success(`${report.label} exported`);
+                  } finally {
+                    setActiveExportKey(null);
+                  }
                 }}
               >
-                {exportData.isPending ? "Exporting..." : "Export"}
+                {activeExportKey === report.key ? "Exporting..." : "Export"}
               </Button>
             }
           >

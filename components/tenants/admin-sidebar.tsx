@@ -26,6 +26,7 @@ import { TeamSwitcher } from "@/components/team-switcher";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { useSupportOverviewQuery } from "@/lib/queries/support";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
   Sidebar,
   SidebarContent,
@@ -126,10 +127,6 @@ const adminNavProjects = [
   { name: "Settings", url: "/dashboard/settings", icon: Settings2 },
 ];
 
-function hasAnyPermission(permissions: string[], required: string[]) {
-  return required.some((permission) => permissions.includes(permission));
-}
-
 function buildSearchItems(
   navMain: NavItem[],
   navProjects: typeof adminNavProjects,
@@ -169,30 +166,39 @@ function buildSearchItems(
 export function AdminSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const { admin, tenant, membership, organizations } = useAuthStore();
+  const { admin, tenant, membership } = useAuthStore();
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("admin");
   const supportOverviewQuery = useSupportOverviewQuery("admin");
   const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
-  const membershipPermissions = membership?.permissions || [];
-  const canManageStudents = hasAnyPermission(membershipPermissions, [
+  const canManageStudents = hasAnyTenantPermission(membership, [
     "students.manage",
     "tenant.manage",
   ]);
-  const canManageSessions = hasAnyPermission(membershipPermissions, [
+  const canViewParticipants = hasAnyTenantPermission(membership, [
+    "participants.view",
+    "participants.manage",
+    "students.manage",
+    "tenant.manage",
+  ]);
+  const canManageSessions = hasAnyTenantPermission(membership, [
     "sessions.manage",
     "tenant.manage",
   ]);
-  const canManageAdmins = hasAnyPermission(membershipPermissions, [
+  const canManageAdmins = hasAnyTenantPermission(membership, [
     "admins.manage",
     "tenant.manage",
   ]);
-  const canViewAnalytics = hasAnyPermission(membershipPermissions, [
+  const canViewAnalytics = hasAnyTenantPermission(membership, [
     "analytics.view",
     "tenant.manage",
   ]);
-  const canManageSupport = hasAnyPermission(membershipPermissions, [
+  const canManageSupport = hasAnyTenantPermission(membership, [
     "support.manage",
+    "tenant.manage",
+  ]);
+  const canExportReports = hasAnyTenantPermission(membership, [
+    "reports.export",
     "tenant.manage",
   ]);
   const advancedAnalyticsEnabled =
@@ -227,7 +233,7 @@ export function AdminSidebar({
         .filter((item) => {
           switch (item.title) {
             case "Students":
-              return canManageStudents;
+              return canViewParticipants;
             case "Sessions":
             case "Candidates":
               return canManageSessions;
@@ -240,7 +246,7 @@ export function AdminSidebar({
             case "Analytics":
               return canViewAnalytics && advancedAnalyticsEnabled;
             case "Reports":
-              return canViewAnalytics && advancedReportsEnabled;
+              return canExportReports && advancedReportsEnabled;
             default:
               return true;
           }
@@ -252,7 +258,9 @@ export function AdminSidebar({
       canManageAdmins,
       canManageSessions,
       canManageStudents,
+      canViewParticipants,
       canViewAnalytics,
+      canExportReports,
       canViewStructure,
       departmentEnabled,
     ],
@@ -290,25 +298,16 @@ export function AdminSidebar({
   const localizedNavMain = navMain;
 
   const teams = React.useMemo(
-    () =>
-      organizations.length > 0
-        ? organizations.map((organization) => ({
-            name: organization.name,
-            slug: organization.slug,
-            logo: UnivoteLogo,
-            active: organization.slug === tenant?.slug,
-            plan: "University workspace",
-          }))
-        : [
-            {
-              name: tenant?.name || "Tenant Workspace",
-              slug: tenant?.slug || "tenant",
-              logo: UnivoteLogo,
-              active: true,
-              plan: "University workspace",
-            },
-          ],
-    [organizations, tenant],
+    () => [
+      {
+        name: tenant?.name || "University Workspace",
+        slug: tenant?.slug || "tenant",
+        logo: UnivoteLogo,
+        active: true,
+        plan: "University workspace",
+      },
+    ],
+    [tenant],
   );
 
   const searchItems = React.useMemo(

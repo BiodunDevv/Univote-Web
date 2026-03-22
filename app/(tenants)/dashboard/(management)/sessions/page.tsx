@@ -42,10 +42,12 @@ import {
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { TablePaginationControls } from "@/components/shared/table-pagination-controls";
 import {
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 const INITIAL_LOADING_MESSAGES = [
   "Getting all sessions...",
@@ -62,7 +64,11 @@ const REFETCH_LOADING_MESSAGES = [
 
 export default function SessionsPage() {
   const router = useRouter();
-  const { token, hasHydrated } = useAuthStore();
+  const { token, hasHydrated, membership } = useAuthStore();
+  const canManageSessions = hasAnyTenantPermission(membership, [
+    "sessions.manage",
+    "tenant.manage",
+  ]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -209,6 +215,15 @@ export default function SessionsPage() {
 
   if (!hasHydrated || !token) {
     return <ChangingLoadingState messages={["Preparing your session..."]} />;
+  }
+
+  if (!canManageSessions) {
+    return (
+      <TenantAccessRestricted
+        title="Sessions access restricted"
+        subtitle="Your university role does not allow session and ballot management."
+      />
+    );
   }
 
   const isFirstLoad =

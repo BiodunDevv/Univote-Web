@@ -23,10 +23,6 @@ export type PlatformTenantListResponse = {
       application_reference?: string | null;
       primary_domain?: string | null;
       is_active: boolean;
-      billing?: {
-        current_plan?: BillingPlan | null;
-        invoices?: BillingInvoice[];
-      };
       onboarding?: {
         contact_name?: string | null;
         contact_email?: string | null;
@@ -36,17 +32,11 @@ export type PlatformTenantListResponse = {
         admin_count_estimate?: number | null;
         notes?: string | null;
         demo_requested?: boolean;
-        payment_required?: boolean;
-        coupon_code?: string | null;
         rejection_reason?: string | null;
         application_submitted_at?: string | null;
         activated_at?: string | null;
         approved_at?: string | null;
         rejected_at?: string | null;
-        billing_snapshot?: {
-          original_amount_ngn?: number;
-          payable_amount_ngn?: number;
-        } | null;
         status_timeline?: Array<{
           status: string;
           label: string;
@@ -78,16 +68,10 @@ export type PlatformTenantDetailResponse = {
       admin_count_estimate?: number | null;
       notes?: string | null;
       demo_requested?: boolean;
-      payment_required?: boolean;
       rejection_reason?: string | null;
-      billing_snapshot?: {
-        original_amount_ngn?: number;
-        payable_amount_ngn?: number;
-      } | null;
       activated_at?: string | null;
       approved_at?: string | null;
       application_submitted_at?: string | null;
-      coupon_code?: string | null;
       rejected_at?: string | null;
       status_timeline?: Array<{
         status: string;
@@ -135,120 +119,6 @@ export type PlatformTenantDetailResponse = {
   }>;
 };
 
-export type BillingPlan = {
-  code: string;
-  name: string;
-  rank: number;
-  monthly_price_ngn: number;
-  monthly_price_kobo: number;
-  support_sla: string;
-  limits: {
-    admins: number;
-    students: number;
-    active_sessions: number;
-  };
-  entitlements: {
-    custom_terminology?: boolean;
-    custom_identity_policy?: boolean;
-    custom_participant_structure?: boolean;
-    custom_branding?: boolean;
-    advanced_analytics?: boolean;
-    advanced_reports?: boolean;
-    realtime_support?: boolean;
-    push_notifications?: boolean;
-    face_verification?: boolean;
-  };
-  features: string[];
-};
-
-export type BillingInvoice = {
-  id: string;
-  invoice_number: string;
-  plan_code: string;
-  amount_ngn: number;
-  amount_kobo: number;
-  currency: string;
-  interval: string;
-  status: string;
-  payment_provider: string;
-  payment_reference?: string | null;
-  provider_checkout_url?: string | null;
-  issued_at: string;
-  paid_at?: string | null;
-  period_start?: string | null;
-  period_end?: string | null;
-  createdAt: string;
-};
-
-export type PlatformBillingOverviewResponse = {
-  plans: BillingPlan[];
-  metrics: {
-    total_tenants: number;
-    active_subscriptions: number;
-    scheduled_downgrades: number;
-    monthly_recurring_revenue_ngn: number;
-  };
-  tenants: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    plan_code: string;
-    subscription_status: string;
-    current_period_end?: string | null;
-    scheduled_plan_code?: string | null;
-    scheduled_plan_effective_at?: string | null;
-  }>;
-  invoices: BillingInvoice[];
-};
-
-export type PlatformCoupon = {
-  _id: string;
-  code: string;
-  name: string;
-  description?: string | null;
-  discount_type: "percentage" | "fixed_amount";
-  discount_value: number;
-  plan_scope: "all" | "selected";
-  plan_codes: string[];
-  minimum_amount_ngn: number;
-  usage_limit?: number | null;
-  per_applicant_limit: number;
-  usage_count: number;
-  active_from?: string | null;
-  active_until?: string | null;
-  is_active: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type PlatformTenantBillingResponse = {
-  tenant: {
-    id: string;
-    name: string;
-    slug: string;
-    status: string;
-    plan_code: string;
-    subscription_status: string;
-  };
-  billing: {
-    billing_cycle: string;
-    currency: string;
-    current_period_start?: string | null;
-    current_period_end?: string | null;
-    grace_ends_at?: string | null;
-    last_payment_at?: string | null;
-    current_plan: BillingPlan;
-    scheduled_change: {
-      plan_code: string;
-      name: string;
-      effective_at: string;
-      requested_at: string;
-    } | null;
-    invoices: BillingInvoice[];
-  };
-  plans: BillingPlan[];
-};
-
 export type PlatformAuditLogsResponse = {
   audit_logs: Array<{
     id: string;
@@ -293,8 +163,6 @@ export type PlatformBiometricsResponse = {
   message?: string;
   defaults: Record<string, unknown>;
   identity_catalog: Record<string, unknown>;
-  plan_entitlements: Record<string, unknown>;
-  plans: BillingPlan[];
   biometrics: {
     active_provider:
       | "facepp"
@@ -373,7 +241,6 @@ export function usePlatformTenantsQuery(
     limit?: number;
     search?: string;
     status?: string;
-    subscription_status?: string;
   } = {},
 ) {
   return useQuery({
@@ -603,7 +470,7 @@ export function useCreatePlatformTenantMutation() {
       name: string;
       slug: string;
       primary_domain?: string;
-      plan_code?: "pro" | "pro_plus" | "enterprise";
+      plan_code?: "university";
       contact_name?: string;
       contact_email?: string;
       owner_admin_id?: string;
@@ -642,20 +509,8 @@ export function useUpdatePlatformTenantMutation(tenantId: string) {
       admin_count_estimate?: number | null;
       notes?: string;
       demo_requested?: boolean;
-      payment_required?: boolean;
-      plan_code?: "pro" | "pro_plus" | "enterprise";
-      status?:
-        | "draft"
-        | "pending_payment"
-        | "pending_approval"
-        | "active"
-        | "suspended";
-      subscription_status?:
-        | "trial"
-        | "active"
-        | "grace"
-        | "expired"
-        | "suspended";
+      plan_code?: "university";
+      status?: "draft" | "pending_approval" | "active" | "suspended";
       is_active?: boolean;
       rejection_reason?: string;
     }) =>

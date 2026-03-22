@@ -214,68 +214,13 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       switchOrganization: async (tenantSlug: string, persistSession = true) => {
-        set({ isLoading: true, error: null });
-        try {
-          const requestedTenantSlug = normalizeTenantSlug(tenantSlug);
-          const data = await apiRequest<AuthSessionData>(
-            "/api/auth/switch-tenant",
-            {
-              method: "POST",
-              data: {
-                tenant_slug: requestedTenantSlug,
-              },
-              auth: "admin",
-              redirectOnAuthError: false,
-            },
-          );
-
-          if (persistSession) {
-            set((state) => ({
-              token: data.token,
-              admin: data.admin,
-              tenant: data.tenant || null,
-              organizations: data.organizations || [],
-              membership: data.membership || null,
-              isLoading: false,
-              error: null,
-              hasHydrated: state.hasHydrated,
-            }));
-            setTenantSlugOverride(
-              data.admin.role === "super_admin"
-                ? null
-                : (data.tenant?.slug ?? null),
-            );
-            syncSharedAdminContext(data);
-          } else {
-            set((state) => ({
-              token: data.token,
-              admin: data.admin,
-              tenant: data.tenant || state.tenant,
-              organizations: data.organizations || state.organizations,
-              membership: data.membership || state.membership,
-              isLoading: false,
-              error: null,
-              hasHydrated: state.hasHydrated,
-            }));
-            setTenantSlugOverride(
-              data.admin.role === "super_admin"
-                ? null
-                : (data.tenant?.slug ?? null),
-            );
-            syncSharedAdminContext(data);
-          }
-
-          return data;
-        } catch (error: unknown) {
-          set({
-            isLoading: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to switch organization",
-          });
-          throw error;
-        }
+        void tenantSlug;
+        void persistSession;
+        const error = new Error(
+          "Organisation switching has been removed. Sign in directly to the university workspace you need.",
+        );
+        set({ isLoading: false, error: error.message });
+        throw error;
       },
       linkOrganization: async (
         tenantSlug: string,
@@ -283,97 +228,23 @@ export const useAuthStore = create<AuthState>()(
         password: string,
         label?: string,
       ) => {
-        set({ isLoading: true, error: null });
-        try {
-          const data = await apiRequest<{
-            message: string;
-            organizations: TenantOrganization[];
-          }>("/api/auth/link-organization", {
-            method: "POST",
-            auth: "admin",
-            data: {
-              tenant_slug: normalizeTenantSlug(tenantSlug),
-              email,
-              password,
-              label,
-            },
-            redirectOnAuthError: false,
-          });
-
-          set((state) => {
-            if (state.token && state.admin) {
-              syncSharedAdminContext({
-                token: state.token,
-                admin: state.admin,
-                tenant: state.tenant,
-                organizations: data.organizations || [],
-                membership: state.membership,
-              });
-            }
-
-            return {
-              organizations: data.organizations || [],
-              isLoading: false,
-              error: null,
-            };
-          });
-
-          return data.organizations || [];
-        } catch (error: unknown) {
-          set({
-            isLoading: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to link organization",
-          });
-          throw error;
-        }
+        void tenantSlug;
+        void email;
+        void password;
+        void label;
+        const error = new Error(
+          "Linked organisations have been removed from this build.",
+        );
+        set({ isLoading: false, error: error.message });
+        throw error;
       },
       unlinkOrganization: async (tenantSlug: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          const data = await apiRequest<{
-            message: string;
-            organizations: TenantOrganization[];
-          }>("/api/auth/unlink-organization", {
-            method: "POST",
-            auth: "admin",
-            data: {
-              tenant_slug: normalizeTenantSlug(tenantSlug),
-            },
-            redirectOnAuthError: false,
-          });
-
-          set((state) => {
-            if (state.token && state.admin) {
-              syncSharedAdminContext({
-                token: state.token,
-                admin: state.admin,
-                tenant: state.tenant,
-                organizations: data.organizations || [],
-                membership: state.membership,
-              });
-            }
-
-            return {
-              organizations: data.organizations || [],
-              isLoading: false,
-              error: null,
-            };
-          });
-
-          return data.organizations || [];
-        } catch (error: unknown) {
-          set({
-            isLoading: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to unlink organization",
-          });
-          throw error;
-        }
+        void tenantSlug;
+        const error = new Error(
+          "Linked organisations have been removed from this build.",
+        );
+        set({ isLoading: false, error: error.message });
+        throw error;
       },
       logout: () => {
         setTenantSlugOverride(null);

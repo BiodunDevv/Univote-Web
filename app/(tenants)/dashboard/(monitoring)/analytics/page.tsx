@@ -13,6 +13,7 @@ import {
 import { useAdminAnalyticsOverviewQuery } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
+  TenantAccessRestricted,
   TenantMetricCard,
   TenantMetricGrid,
   TenantPageHeader,
@@ -33,6 +34,7 @@ import {
   getTenantParticipantLabels,
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 const trendChartConfig = {
   votes: {
@@ -49,9 +51,22 @@ const turnoutChartConfig = {
 } satisfies ChartConfig;
 
 export default function AnalyticsPage() {
-  const { tenant } = useAuthStore();
+  const { tenant, membership } = useAuthStore();
+  const canViewAnalytics = hasAnyTenantPermission(membership, [
+    "analytics.view",
+    "tenant.manage",
+  ]);
   const participantLabels = getTenantParticipantLabels(tenant);
   const analyticsQuery = useAdminAnalyticsOverviewQuery();
+
+  if (!canViewAnalytics) {
+    return (
+      <TenantAccessRestricted
+        title="Analytics access restricted"
+        subtitle="Your university role does not allow analytics access."
+      />
+    );
+  }
 
   if (analyticsQuery.isLoading) {
     return (

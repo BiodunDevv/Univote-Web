@@ -23,13 +23,14 @@ import {
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
 import {
-  hasTenantPermission,
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantMetricCard,
   TenantMetricGrid,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -42,12 +43,17 @@ export default function StudentDetailPage() {
   const participantLabels = { singular: "Student", plural: "Students" };
   const photoEnabled = isTenantParticipantFieldEnabled(tenant, "photo_url");
   const isAuthorized = hasHydrated && Boolean(token);
-  const canManageStudent =
+  const canViewStudent =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
+    hasAnyTenantPermission(membership, [
+      "participants.view",
+      "participants.manage",
       "students.manage",
       "tenant.manage",
     ]);
+  const canManageStudent =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, ["students.manage", "tenant.manage"]);
 
   const studentDetailQuery = useAdminStudentDetailQuery(studentId, {
     enabled: isAuthorized,
@@ -71,6 +77,15 @@ export default function StudentDetailPage() {
           "Fetching voting history...",
           "Preparing the profile view...",
         ]}
+      />
+    );
+  }
+
+  if (!canViewStudent) {
+    return (
+      <TenantAccessRestricted
+        title="Student profile access is restricted"
+        description="Your current university role can’t open student profile details. Ask your workspace owner for participant access if you need to review student records."
       />
     );
   }

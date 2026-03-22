@@ -94,7 +94,6 @@ const CATEGORY_OPTIONS: SupportTicketCategory[] = [
   "general",
   "account",
   "voting",
-  "billing",
   "technical",
 ];
 
@@ -132,6 +131,9 @@ export function SupportDesk({
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
+  const [ticketAction, setTicketAction] = useState<"save" | "close" | null>(
+    null,
+  );
   const [createForm, setCreateForm] = useState({
     subject: "",
     description: "",
@@ -359,6 +361,7 @@ export function SupportDesk({
     if (!effectiveSelectedTicketId) return;
 
     try {
+      setTicketAction(status === "closed" ? "close" : "save");
       await updateTicket.mutateAsync({
         status: status || manageStatus,
         priority: canManage ? managePriority : undefined,
@@ -373,6 +376,8 @@ export function SupportDesk({
       toast.error(
         error instanceof Error ? error.message : "Failed to update ticket",
       );
+    } finally {
+      setTicketAction(null);
     }
   };
 
@@ -729,12 +734,12 @@ export function SupportDesk({
                   className="h-7 text-xs"
                   onClick={() => void handleUpdateTicket()}
                   disabled={
-                    updateTicket.isPending ||
+                    Boolean(ticketAction) ||
                     tenantAdminQuery.isLoading ||
                     globalAdminQuery.isLoading
                   }
                 >
-                  {updateTicket.isPending ? (
+                  {ticketAction === "save" ? (
                     <LoadingButtonContent label="Saving…" />
                   ) : (
                     "Save"
@@ -749,9 +754,9 @@ export function SupportDesk({
                 size="sm"
                 className="h-7 shrink-0 text-xs"
                 onClick={() => void handleUpdateTicket("closed")}
-                disabled={updateTicket.isPending}
+                disabled={Boolean(ticketAction)}
               >
-                {updateTicket.isPending ? (
+                {ticketAction === "close" ? (
                   <LoadingButtonContent label="Closing…" />
                 ) : (
                   "Close"
@@ -825,9 +830,9 @@ export function SupportDesk({
                 size="sm"
                 className="h-7 text-xs"
                 onClick={() => void handleUpdateTicket()}
-                disabled={updateTicket.isPending}
+                disabled={Boolean(ticketAction)}
               >
-                {updateTicket.isPending ? (
+                {ticketAction === "save" ? (
                   <LoadingButtonContent label="Saving…" />
                 ) : (
                   "Save"

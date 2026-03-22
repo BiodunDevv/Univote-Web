@@ -39,22 +39,26 @@ function QuickStatusButton({
   label: string;
 }) {
   const mutation = useUpdatePlatformTestimonialMutation(testimonial.id);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <Button
       variant="outline"
       size="sm"
-      disabled={mutation.isPending || testimonial.status === status}
+      disabled={isSubmitting || testimonial.status === status}
       onClick={async () => {
+        setIsSubmitting(true);
         try {
           await mutation.mutateAsync({ status });
           toast.success(`Testimonial moved to ${status.replace("_", " ")}`);
         } catch (error) {
           toast.error(error instanceof Error ? error.message : "Failed to update testimonial");
+        } finally {
+          setIsSubmitting(false);
         }
       }}
     >
-      {label}
+      {isSubmitting ? `${label}...` : label}
     </Button>
   );
 }

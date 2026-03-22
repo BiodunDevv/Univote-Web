@@ -22,10 +22,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
-  hasTenantPermission,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 export default function CreateCollegePage() {
   const router = useRouter();
@@ -43,10 +44,7 @@ export default function CreateCollegePage() {
 
   const canManageColleges =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
-      "tenant.manage",
-      "students.manage",
-    ]);
+    hasAnyTenantPermission(membership, ["tenant.manage", "students.manage"]);
   const currentStep = COLLEGE_CREATION_STEPS[currentStepIndex].id;
 
   useEffect(() => {
@@ -185,7 +183,12 @@ export default function CreateCollegePage() {
   };
 
   if (admin && !canManageColleges) {
-    return null;
+    return (
+      <TenantAccessRestricted
+        title="College creation is restricted"
+        description="Your current university role can’t create colleges. Ask your workspace owner for structure management access if you need to add a new college."
+      />
+    );
   }
 
   return (

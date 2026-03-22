@@ -221,6 +221,15 @@ export default function PlatformSettingsPage() {
     Record<string, unknown>
   >;
   const activeProviderSettings = providerRecords[activeProvider] || {};
+  const isProviderActionActive = (
+    providerKey: string,
+    actions?: Array<"create" | "delete" | "save" | "test">,
+  ) =>
+    Boolean(
+      providerAction &&
+        providerAction.providerKey === providerKey &&
+        (!actions || actions.includes(providerAction.action)),
+    );
 
   useEffect(() => {
     if (providerEntries.length === 0) return;
@@ -733,7 +742,7 @@ export default function PlatformSettingsPage() {
                           size="sm"
                           variant={isEnabled ? "outline" : "default"}
                           onClick={() => void handleCreateProvider(providerKey)}
-                          disabled={Boolean(providerAction)}
+                          disabled={isProviderActionActive(providerKey)}
                         >
                           {providerAction?.providerKey === providerKey &&
                           providerAction.action === "create" ? (
@@ -761,7 +770,9 @@ export default function PlatformSettingsPage() {
                           variant="outline"
                           className="text-destructive"
                           onClick={() => void handleDeleteProvider(providerKey)}
-                          disabled={!isEnabled || Boolean(providerAction)}
+                          disabled={
+                            !isEnabled || isProviderActionActive(providerKey)
+                          }
                         >
                           {providerAction?.providerKey === providerKey &&
                           providerAction.action === "delete" ? (
@@ -1068,7 +1079,7 @@ export default function PlatformSettingsPage() {
                   <Button
                     className="w-full"
                     onClick={() => void handleSaveBiometrics()}
-                    disabled={Boolean(providerAction)}
+                    disabled={isProviderActionActive(activeProvider)}
                   >
                     {providerAction?.providerKey === activeProvider &&
                     providerAction.action === "save" ? (
@@ -1081,7 +1092,7 @@ export default function PlatformSettingsPage() {
                     variant="outline"
                     className="w-full"
                     onClick={() => void handleCreateProvider(activeProvider)}
-                    disabled={Boolean(providerAction)}
+                    disabled={isProviderActionActive(activeProvider)}
                   >
                     {providerAction?.providerKey === activeProvider &&
                     providerAction.action === "create" ? (
@@ -1103,7 +1114,7 @@ export default function PlatformSettingsPage() {
                     className="w-full text-destructive"
                     onClick={() => void handleDeleteProvider(activeProvider)}
                     disabled={
-                      Boolean(providerAction) ||
+                      isProviderActionActive(activeProvider) ||
                       !Boolean(activeProviderSettings.enabled)
                     }
                   >
@@ -1138,7 +1149,7 @@ export default function PlatformSettingsPage() {
                   <Button
                     variant="outline"
                     onClick={() => void handleTestProvider()}
-                    disabled={Boolean(providerAction)}
+                    disabled={isProviderActionActive(activeProvider)}
                     className="w-full"
                   >
                     {providerAction?.providerKey === activeProvider &&
@@ -1493,7 +1504,7 @@ export default function PlatformSettingsPage() {
                   <Button
                     variant="outline"
                     onClick={() => void handleTestProvider()}
-                    disabled={Boolean(providerAction)}
+                    disabled={isProviderActionActive(activeProvider)}
                     className="w-full"
                   >
                     {providerAction?.providerKey === activeProvider &&
@@ -1532,7 +1543,7 @@ export default function PlatformSettingsPage() {
               <Button
                 className="w-full"
                 onClick={() => void handleSaveBiometrics()}
-                disabled={Boolean(providerAction)}
+                disabled={isProviderActionActive(activeProvider)}
               >
                 {providerAction?.providerKey === activeProvider &&
                 providerAction.action === "save" ? (
@@ -1545,7 +1556,7 @@ export default function PlatformSettingsPage() {
                 variant="outline"
                 className="w-full"
                 onClick={() => void handleCreateProvider(activeProvider)}
-                disabled={Boolean(providerAction)}
+                disabled={isProviderActionActive(activeProvider)}
               >
                 {providerAction?.providerKey === activeProvider &&
                 providerAction.action === "create" ? (
@@ -1567,7 +1578,7 @@ export default function PlatformSettingsPage() {
                 className="w-full text-destructive"
                 onClick={() => void handleDeleteProvider(activeProvider)}
                 disabled={
-                  Boolean(providerAction) ||
+                  isProviderActionActive(activeProvider) ||
                   !Boolean(activeProviderSettings.enabled)
                 }
               >
@@ -1584,7 +1595,7 @@ export default function PlatformSettingsPage() {
           <DialogFooter showCloseButton>
             <Button
               onClick={() => void handleSaveBiometrics()}
-              disabled={Boolean(providerAction)}
+              disabled={isProviderActionActive(activeProvider)}
             >
               {providerAction?.providerKey === activeProvider &&
               providerAction.action === "save" ? (

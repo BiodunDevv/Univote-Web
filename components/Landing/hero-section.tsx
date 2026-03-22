@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -15,11 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import { buildTenantAppUrl } from "@/lib/tenant";
-import {
-  readSharedAdminContext,
-  subscribeSharedAdminContext,
-} from "@/lib/shared-admin-context";
 import { HeroIllustration } from "../HeroIllustration";
 
 type HeroSectionProps = {
@@ -31,58 +25,36 @@ type HeroSectionProps = {
 };
 
 export function HeroSection({ stats }: HeroSectionProps) {
-  const sharedAdminContext = useSyncExternalStore(
-    subscribeSharedAdminContext,
-    readSharedAdminContext,
-    () => null,
-  );
   const {
     token,
     admin,
-    tenant,
     hasHydrated: adminHasHydrated,
   } = useAuthStore();
   const { token: studentToken, hasHydrated: participantHasHydrated } =
     useStudentAuthStore();
   const isCheckingSession = !adminHasHydrated || !participantHasHydrated;
-  const tenantWorkspaceHref =
-    tenant?.slug ||
-    sharedAdminContext?.tenant?.slug ||
-    sharedAdminContext?.organizations[0]?.slug
-      ? buildTenantAppUrl(
-          tenant?.slug ||
-            sharedAdminContext?.tenant?.slug ||
-            sharedAdminContext?.organizations[0]?.slug ||
-            "",
-          "/dashboard",
-        )
-      : "/dashboard";
   const primaryHref = isCheckingSession
     ? "#"
     : token
       ? admin?.role === "super_admin"
         ? "/super-admin"
-        : tenantWorkspaceHref
-      : sharedAdminContext?.organizations.length
-        ? tenantWorkspaceHref
-        : studentToken
-          ? "/students/home"
-          : "/students/login";
+        : "/dashboard"
+      : studentToken
+        ? "/students/home"
+        : "/students/login";
   const primaryLabel = isCheckingSession
     ? "Checking session"
     : token
       ? admin?.role === "super_admin"
         ? "Open Platform Console"
-        : "Open Workspace"
-      : sharedAdminContext?.organizations.length
-        ? "Open Workspace"
-        : studentToken
-          ? "Open Portal"
-          : "Portal Login";
+        : "Open Dashboard"
+      : studentToken
+        ? "Open Portal"
+        : "Portal Login";
   const proofItems = [
-    "Subdomain workspaces for each organisation",
-    "Configurable identity, structure, and voting rules",
-    "Participant, admin, and super-admin access in one platform",
+    "University-ready student, admin, and super-admin access",
+    "Flexible identity, structure, and voting controls",
+    "Fast election setup, secure voting, and transparent results",
   ];
   const metricCards = [
     {
@@ -110,20 +82,19 @@ export function HeroSection({ stats }: HeroSectionProps) {
           <div className="w-full lg:max-w-full">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground shadow-sm backdrop-blur">
               <BadgeCheck className="size-3.5 text-primary" />
-              Multi-tenant voting workspace
+              University election workspace
             </div>
 
             <div className="mt-5 max-w-3xl space-y-4">
               <h1 className="text-balance text-2xl sm:text-4xl font-semibold tracking-tight text-foreground lg:leading-[1.02]">
-                Elections for universities, institutes, associations, and every
-                organised voting body.
+                Elections built for universities, student unions, faculties,
+                and departmental councils.
               </h1>
 
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px] sm:leading-7">
-                Launch secure branded workspaces for each organisation, let each
-                tenant choose how participants sign in, and run transparent
-                digital elections without forcing every customer into one fixed
-                structure.
+                Run secure, branded university elections with clean student
+                identity rules, structured eligibility, transparent results,
+                and one fast workflow for administrators and students.
               </p>
             </div>
 
@@ -133,7 +104,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
                   Built for
                 </p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
-                  Campuses, councils, institutes, unions
+                  Campuses, faculties, departments, councils
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/85 px-3 py-2 shadow-sm backdrop-blur">
@@ -183,8 +154,8 @@ export function HeroSection({ stats }: HeroSectionProps) {
               <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="size-4 text-primary" />
                 <span>
-                  Participant login stays simple while admin and workspace
-                  access adapt to the organisation you select.
+                  Student login stays simple while admin and university
+                  oversight stay centralized in one fast workflow.
                 </span>
               </div>
             ) : null}

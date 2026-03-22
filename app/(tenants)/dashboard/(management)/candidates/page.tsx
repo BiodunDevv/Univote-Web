@@ -9,6 +9,7 @@ import {
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantMetricCard,
   TenantMetricGrid,
@@ -30,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 const chartConfig = {
   candidates: {
@@ -39,6 +42,11 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function CandidatesPage() {
+  const { membership } = useAuthStore();
+  const canManageCandidates = hasAnyTenantPermission(membership, [
+    "sessions.manage",
+    "tenant.manage",
+  ]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [sessionId, setSessionId] = useState("all");
@@ -104,6 +112,15 @@ export default function CandidatesPage() {
           "Fetching session relationships...",
           "Preparing ballot management view...",
         ]}
+      />
+    );
+  }
+
+  if (!canManageCandidates) {
+    return (
+      <TenantAccessRestricted
+        title="Candidate access restricted"
+        subtitle="Your university role does not allow candidate and ballot management."
       />
     );
   }

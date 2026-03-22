@@ -14,8 +14,6 @@ import {
   Mail,
   Server,
   Shield,
-  Link2,
-  Unlink2,
   User,
   XCircle,
 } from "lucide-react";
@@ -64,9 +62,6 @@ function SettingsContent() {
     hasHydrated,
     updateAdmin,
     tenant,
-    organizations,
-    linkOrganization,
-    unlinkOrganization,
   } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
   const {
@@ -119,16 +114,6 @@ function SettingsContent() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [emailTesting, setEmailTesting] = useState(false);
-  const [linkingOrganization, setLinkingOrganization] = useState(false);
-  const [unlinkingOrganizationSlug, setUnlinkingOrganizationSlug] = useState<
-    string | null
-  >(null);
-  const [linkedOrgForm, setLinkedOrgForm] = useState({
-    tenantSlug: "",
-    email: "",
-    password: "",
-    label: "",
-  });
   const lastProfileSyncKey = useRef<string | null>(null);
 
   const isSuperAdmin = admin?.role === "super_admin";
@@ -527,7 +512,11 @@ function SettingsContent() {
                     </Alert>
                   ) : null}
                   <div className="lg:col-span-2 flex justify-end">
-                    <Button type="submit" disabled={loading} className="h-10">
+                    <Button
+                      type="submit"
+                      disabled={profileSaving}
+                      className="h-10"
+                    >
                       {profileSaving ? "Saving..." : "Save profile changes"}
                     </Button>
                   </div>
@@ -564,184 +553,6 @@ function SettingsContent() {
               </div>
             </TenantSectionCard>
           </div>
-
-          {!isSuperAdmin ? (
-            <TenantSectionCard
-              title="Linked organizations"
-              description="Link another tenant-admin account once, then switch into it later from the workspace switcher without another login."
-              contentClassName="space-y-4"
-            >
-              <form
-                className="grid gap-4 rounded-2xl border border-border/70 bg-muted/10 p-4 lg:grid-cols-2"
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  setLinkingOrganization(true);
-                  try {
-                    await linkOrganization(
-                      linkedOrgForm.tenantSlug,
-                      linkedOrgForm.email,
-                      linkedOrgForm.password,
-                      linkedOrgForm.label || undefined,
-                    );
-                    toast.success("Organization linked successfully");
-                    setLinkedOrgForm({
-                      tenantSlug: "",
-                      email: "",
-                      password: "",
-                      label: "",
-                    });
-                  } catch (error) {
-                    toast.error(
-                      error instanceof Error
-                        ? error.message
-                        : "Failed to link organization",
-                    );
-                  } finally {
-                    setLinkingOrganization(false);
-                  }
-                }}
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="linked-org-slug">Organization slug</Label>
-                  <Input
-                    id="linked-org-slug"
-                    value={linkedOrgForm.tenantSlug}
-                    onChange={(event) =>
-                      setLinkedOrgForm((current) => ({
-                        ...current,
-                        tenantSlug: event.target.value.toLowerCase(),
-                      }))
-                    }
-                    placeholder="summit-demo"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="linked-org-email">Admin email</Label>
-                  <Input
-                    id="linked-org-email"
-                    type="email"
-                    value={linkedOrgForm.email}
-                    onChange={(event) =>
-                      setLinkedOrgForm((current) => ({
-                        ...current,
-                        email: event.target.value,
-                      }))
-                    }
-                    placeholder="owner@organization.org"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="linked-org-password">Admin password</Label>
-                  <Input
-                    id="linked-org-password"
-                    type="password"
-                    value={linkedOrgForm.password}
-                    onChange={(event) =>
-                      setLinkedOrgForm((current) => ({
-                        ...current,
-                        password: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="linked-org-label">Internal label</Label>
-                  <Input
-                    id="linked-org-label"
-                    value={linkedOrgForm.label}
-                    onChange={(event) =>
-                      setLinkedOrgForm((current) => ({
-                        ...current,
-                        label: event.target.value,
-                      }))
-                    }
-                    placeholder="Secondary account"
-                  />
-                </div>
-                <div className="lg:col-span-2 flex justify-end">
-                  <Button type="submit" disabled={linkingOrganization}>
-                    <Link2 className="mr-2 h-4 w-4" />
-                    {linkingOrganization ? "Linking..." : "Link organization"}
-                  </Button>
-                </div>
-              </form>
-
-              <div className="space-y-3">
-                {organizations.filter((organization) => organization.linked)
-                  .length === 0 ? (
-                  <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-                    No extra organizations are linked yet.
-                  </div>
-                ) : (
-                  organizations
-                    .filter((organization) => organization.linked)
-                    .map((organization) => (
-                      <div
-                        key={`${organization.tenant_id}-linked`}
-                        className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">
-                              {organization.name}
-                            </span>
-                            <Badge variant="outline">Linked</Badge>
-                          </div>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {organization.slug}
-                            {organization.label
-                              ? ` • ${organization.label}`
-                              : ""}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={
-                            unlinkingOrganizationSlug === organization.slug
-                          }
-                          onClick={async () => {
-                            setUnlinkingOrganizationSlug(organization.slug);
-                            try {
-                              await unlinkOrganization(organization.slug);
-                              toast.success("Linked organization removed");
-                            } catch (error) {
-                              toast.error(
-                                error instanceof Error
-                                  ? error.message
-                                  : "Failed to unlink organization",
-                              );
-                            } finally {
-                              setUnlinkingOrganizationSlug(null);
-                            }
-                          }}
-                        >
-                          <Unlink2 className="mr-2 h-4 w-4" />
-                          {unlinkingOrganizationSlug === organization.slug
-                            ? "Removing..."
-                            : "Remove link"}
-                        </Button>
-                      </div>
-                    ))
-                )}
-              </div>
-            </TenantSectionCard>
-          ) : null}
-
-          {!isSuperAdmin ? (
-            <TenantSectionCard
-              title="University structure policy"
-              description="Identity and structure controls are now standardized platform-wide for all university tenants."
-              contentClassName="space-y-3"
-            >
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-                University tenants now use a fixed model: colleges, departments,
-                levels, required photo, and mandatory face verification. Custom
-                identifier and participant-structure editing has been removed
-                from this settings page.
-              </div>
-            </TenantSectionCard>
-          ) : null}
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">

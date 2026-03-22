@@ -24,7 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { SessionCandidateManager } from "@/components/tenants/sessions/candidates";
+import { TenantAccessRestricted } from "@/components/tenants/shared";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import { isTenantEligibilityDimensionEnabled } from "@/lib/tenant-config";
 import {
   AdminSessionStatsResponse,
@@ -174,8 +176,11 @@ export default function SessionDetailsPage() {
   const searchParams = useSearchParams();
   const sessionId = params.id as string;
 
-  const { token, hasHydrated, tenant } = useAuthStore();
+  const { token, hasHydrated, tenant, admin, membership } = useAuthStore();
   const participantLabels = { singular: "Student", plural: "Students" };
+  const canManageSessions =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, ["sessions.manage", "tenant.manage"]);
   const needsStructureData =
     isTenantEligibilityDimensionEnabled(tenant, "college") ||
     isTenantEligibilityDimensionEnabled(tenant, "department") ||
@@ -216,6 +221,15 @@ export default function SessionDetailsPage() {
     requestedMode === "view"
       ? requestedMode
       : null;
+
+  if (hasHydrated && token && !canManageSessions) {
+    return (
+      <TenantAccessRestricted
+        title="Session access is restricted"
+        description="Your current university role can’t open session administration details. Ask your workspace owner for session management access if you need to review or update election sessions."
+      />
+    );
+  }
 
   useEffect(() => {
     if (!hasHydrated) return;

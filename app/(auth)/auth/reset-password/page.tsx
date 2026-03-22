@@ -33,8 +33,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const { token, hasHydrated, admin, tenant, membership, organizations } =
-    useAuthStore();
+  const { token, hasHydrated, admin, tenant, membership } = useAuthStore();
 
   useEffect(() => {
     if (hasHydrated && token) {
@@ -45,7 +44,6 @@ export default function ResetPasswordPage() {
             admin,
             tenant,
             membership,
-            organizations,
           };
           const handoffUrl = buildTenantAuthAcceptUrl(
             tenant.slug,
@@ -66,7 +64,6 @@ export default function ResetPasswordPage() {
     admin,
     hasHydrated,
     membership,
-    organizations,
     router,
     tenant,
     token,

@@ -37,6 +37,9 @@ export default function PlatformAuditLogsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [cleanupDays, setCleanupDays] = useState("90");
+  const [cleanupAction, setCleanupAction] = useState<"preview" | "delete" | null>(
+    null,
+  );
 
   const auditLogsQuery = usePlatformAuditLogsQuery({
     limit: 50,
@@ -51,6 +54,7 @@ export default function PlatformAuditLogsPage() {
   const actions = auditActionsQuery.data?.actions || [];
 
   const handleCleanupPreview = async () => {
+    setCleanupAction("preview");
     try {
       const result = await cleanupMutation.mutateAsync({
         days_old: Number(cleanupDays) || 90,
@@ -61,10 +65,13 @@ export default function PlatformAuditLogsPage() {
       toast.error(
         error instanceof Error ? error.message : "Failed to preview cleanup",
       );
+    } finally {
+      setCleanupAction(null);
     }
   };
 
   const handleCleanup = async () => {
+    setCleanupAction("delete");
     try {
       const result = await cleanupMutation.mutateAsync({
         days_old: Number(cleanupDays) || 90,
@@ -74,6 +81,8 @@ export default function PlatformAuditLogsPage() {
       toast.error(
         error instanceof Error ? error.message : "Failed to cleanup audit logs",
       );
+    } finally {
+      setCleanupAction(null);
     }
   };
 
@@ -212,16 +221,16 @@ export default function PlatformAuditLogsPage() {
                 variant="outline"
                 className="w-full"
                 onClick={handleCleanupPreview}
-                disabled={cleanupMutation.isPending}
+                disabled={Boolean(cleanupAction)}
               >
-                Preview cleanup
+                {cleanupAction === "preview" ? "Previewing..." : "Preview cleanup"}
               </Button>
               <Button
                 className="w-full"
                 onClick={handleCleanup}
-                disabled={cleanupMutation.isPending}
+                disabled={Boolean(cleanupAction)}
               >
-                Delete old logs
+                {cleanupAction === "delete" ? "Deleting..." : "Delete old logs"}
               </Button>
             </div>
             <div className="rounded-xl border border-dashed p-4 text-xs text-muted-foreground">

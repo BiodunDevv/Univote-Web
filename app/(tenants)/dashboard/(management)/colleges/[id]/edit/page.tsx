@@ -19,10 +19,11 @@ import {
 } from "@/lib/queries/admin";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import {
-  hasTenantPermission,
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 type CollegeFormState = {
   name: string;
@@ -43,10 +44,7 @@ export default function EditCollegePage() {
   const isAuthorized = hasHydrated && Boolean(token);
   const canManageCollege =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
-      "tenant.manage",
-      "students.manage",
-    ]);
+    hasAnyTenantPermission(membership, ["tenant.manage", "students.manage"]);
 
   const detailQuery = useAdminCollegeDetailQuery(collegeId, {
     enabled: isAuthorized,
@@ -154,35 +152,10 @@ export default function EditCollegePage() {
 
   if (!canManageCollege) {
     return (
-      <div className="mx-auto flex min-w-0 w-full max-w-4xl flex-1 flex-col gap-4 p-2">
-        <TenantPageHeader
-          eyebrow="University structure"
-          icon={<Building2 className="h-5 w-5" />}
-          title="College editing is restricted"
-          subtitle="Your current tenant role can review university structure, but only managers can update college configuration."
-          onBack={() =>
-            router.push(`/dashboard/structure/colleges/${collegeId}`)
-          }
-        />
-        <Card className="rounded-[1.75rem] border shadow-none">
-          <CardContent className="space-y-3 p-6 text-sm text-muted-foreground">
-            <p>
-              Ask a tenant owner or administrator with college management access
-              to update this college.
-            </p>
-            <div>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  router.push(`/dashboard/structure/colleges/${collegeId}`)
-                }
-              >
-                Back to college
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <TenantAccessRestricted
+        title="College editing is restricted"
+        description="Your current university role can review structure, but only managers can update college configuration. Ask your workspace owner for structure management access if you need to make changes."
+      />
     );
   }
 

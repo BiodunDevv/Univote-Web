@@ -410,7 +410,7 @@ export function TenantApplicationSection() {
             Apply in three focused steps.
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            No billing setup, no identifier selection, and no structure toggles.
+            University-first onboarding with one clear approval flow and no payment setup.
             University defaults are applied automatically.
           </p>
         </div>

@@ -24,10 +24,11 @@ import { TablePaginationControls } from "@/components/shared/table-pagination-co
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
+  TenantAccessRestricted,
   TenantPageHeader,
   TenantSectionCard,
-  hasTenantPermission,
 } from "@/components/tenants/shared";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 export default function CollegesPage() {
   const router = useRouter();
@@ -73,10 +74,7 @@ export default function CollegesPage() {
 
   const canManageColleges =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
-      "tenant.manage",
-      "students.manage",
-    ]);
+    hasAnyTenantPermission(membership, ["tenant.manage", "students.manage"]);
 
   const structureDisabled = !collegeEnabled && !departmentEnabled;
 
@@ -248,6 +246,15 @@ export default function CollegesPage() {
           </TenantSectionCard>
         </div>
       </div>
+    );
+  }
+
+  if (!canManageColleges) {
+    return (
+      <TenantAccessRestricted
+        title="Structure access restricted"
+        subtitle="Your university role does not allow college and department management."
+      />
     );
   }
 

@@ -39,6 +39,10 @@ import {
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
+import {
+  canAssignTenantOwnerRole,
+  hasAnyTenantPermission,
+} from "@/lib/tenant-permissions";
 
 type DeleteTarget = {
   id: string;
@@ -46,8 +50,12 @@ type DeleteTarget = {
 } | null;
 
 export default function AdminsPage() {
-  const { admin, hasHydrated } = useAuthStore();
+  const { admin, hasHydrated, membership } = useAuthStore();
   const isSuperAdmin = admin?.role === "super_admin";
+  const canManageAdmins = isSuperAdmin
+    ? true
+    : hasAnyTenantPermission(membership, ["admins.manage", "tenant.manage"]);
+  const canManageOwners = isSuperAdmin ? true : canAssignTenantOwnerRole(membership);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
@@ -108,6 +116,25 @@ export default function AdminsPage() {
           "Preparing the admin directory...",
         ]}
       />
+    );
+  }
+
+  if (!isSuperAdmin && !canManageAdmins) {
+    return (
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6">
+        <TenantPageHeader
+          eyebrow="Tenant access"
+          icon={<UserCog className="h-5 w-5" />}
+          title="Admin team"
+          subtitle="Your role can view operational areas assigned to you, but it cannot manage tenant administrator accounts."
+        />
+        <Card className="border shadow-none">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Only the tenant owner or an admin with administrator-management
+            access can invite, edit, or remove university administrators.
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -269,10 +296,13 @@ export default function AdminsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/admins/${row.id}`}>Edit</Link>
-                          </Button>
-                          {row.admin_id !== admin?.id ? (
+                          {row.role !== "owner" || canManageOwners ? (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/dashboard/admins/${row.id}`}>Edit</Link>
+                            </Button>
+                          ) : null}
+                          {row.admin_id !== admin?.id &&
+                          (row.role !== "owner" || canManageOwners) ? (
                             <Button
                               variant="ghost"
                               size="icon"

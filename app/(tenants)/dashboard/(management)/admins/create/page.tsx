@@ -30,6 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  canAssignTenantOwnerRole,
+  hasAnyTenantPermission,
+} from "@/lib/tenant-permissions";
 
 type TenantRole = "owner" | "admin" | "support" | "analyst";
 type AdminRole = "admin" | "super_admin" | TenantRole;
@@ -74,8 +78,12 @@ async function fetchOnboardingDetails() {
 
 export default function CreateAdminPage() {
   const router = useRouter();
-  const { admin, hasHydrated } = useAuthStore();
+  const { admin, hasHydrated, membership } = useAuthStore();
   const isSuperAdmin = admin?.role === "super_admin";
+  const canManageAdmins = isSuperAdmin
+    ? true
+    : hasAnyTenantPermission(membership, ["admins.manage", "tenant.manage"]);
+  const canAssignOwner = canAssignTenantOwnerRole(membership);
 
   const roleCatalogQuery = useTenantRoleCatalogQuery({
     enabled: hasHydrated && !isSuperAdmin,
@@ -99,7 +107,7 @@ export default function CreateAdminPage() {
   }>({
     full_name: "",
     email: "",
-    password: "123456",
+    password: "123456789",
     role: "admin",
     permissions: [],
   });
@@ -152,15 +160,6 @@ export default function CreateAdminPage() {
     toast.success("Filled with application contact details");
   };
 
-  const handlePermissionToggle = (permission: string, checked: boolean) => {
-    setFormData((current) => ({
-      ...current,
-      permissions: checked
-        ? Array.from(new Set([...current.permissions, permission]))
-        : current.permissions.filter((item) => item !== permission),
-    }));
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -203,7 +202,37 @@ export default function CreateAdminPage() {
     );
   }
 
+  if (!isSuperAdmin && !canManageAdmins) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
+        <section className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Access restricted
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Your tenant role does not allow admin user management.
+          </p>
+        </section>
+
+        <Card className="border shadow-none">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Only university owners and admins with admin-management access can
+            invite or update tenant administrators.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const roleCatalog = roleCatalogQuery.data?.roles || [];
+  const visibleRoleCatalog = isSuperAdmin
+    ? []
+    : roleCatalog.filter((role) => canAssignOwner || role.code !== "owner");
+  const selectedRole = isSuperAdmin
+    ? null
+    : visibleRoleCatalog.find((role) => role.code === formData.role) ||
+      visibleRoleCatalog[0] ||
+      null;
 
   if (!isSuperAdmin && roleCatalog.length === 0) {
     return (
@@ -243,8 +272,8 @@ export default function CreateAdminPage() {
         </h1>
         <p className="text-sm text-muted-foreground">
           {isSuperAdmin
-            ? "Create a new global administrator or super-admin identity."
-            : "Create a tenant-scoped admin membership and assign the right permissions."}
+            ? "Create a new global administrator or super-admin identity. New platform-admin passwords are set automatically to 123456789."
+            : "Create a tenant-scoped admin membership and assign the right permissions. New tenant-admin passwords are set automatically to 123456789."}
         </p>
       </section>
 
@@ -316,24 +345,18 @@ export default function CreateAdminPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Temporary password</Label>
                 <Input
                   id="password"
                   type="text"
                   value={formData.password}
-                  onChange={(event) =>
-                    setFormData((current) => ({
-                      ...current,
-                      password: event.target.value,
-                    }))
-                  }
-                  required
+                  disabled
+                  readOnly
                 />
-                {!isSuperAdmin ? (
-                  <p className="text-xs text-muted-foreground">
-                    Default tenant admin password is prefilled as 123456.
-                  </p>
-                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  This account will sign in with 123456789 and should change it
+                  after first login.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
@@ -357,7 +380,7 @@ export default function CreateAdminPage() {
                         <SelectItem value="super_admin">Super Admin</SelectItem>
                       </>
                     ) : (
-                      roleCatalog.map((role) => (
+                      visibleRoleCatalog.map((role) => (
                         <SelectItem key={role.code} value={role.code}>
                           {role.label}
                         </SelectItem>
@@ -373,21 +396,20 @@ export default function CreateAdminPage() {
                 <div>
                   <h2 className="text-sm font-medium">Permissions</h2>
                   <p className="text-sm text-muted-foreground">
-                    Pick what this admin can do. Labels are grouped by
-                    capability and each code remains visible.
+                    Each university role has a fixed permission bundle. Review
+                    the access below before creating the account.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {availablePermissions.map((permission) => (
+                  {(selectedRole?.permissions || availablePermissions).map(
+                    (permission) => (
                     <label
                       key={permission}
                       className="flex items-start gap-3 rounded-xl border p-3 text-sm"
                     >
                       <Checkbox
-                        checked={formData.permissions.includes(permission)}
-                        onCheckedChange={(checked) =>
-                          handlePermissionToggle(permission, Boolean(checked))
-                        }
+                        checked
+                        disabled
                       />
                       <span className="space-y-1">
                         <span className="block font-medium text-foreground">
@@ -402,7 +424,8 @@ export default function CreateAdminPage() {
                         </span>
                       </span>
                     </label>
-                  ))}
+                    ),
+                  )}
                 </div>
               </div>
             ) : null}

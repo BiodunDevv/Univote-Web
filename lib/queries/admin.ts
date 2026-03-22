@@ -23,7 +23,6 @@ import type {
   SystemConfig,
   SystemHealth,
 } from "@/lib/store/useSettingsStore";
-import type { BillingInvoice, BillingPlan } from "@/lib/queries/platform";
 import type { TenantContext } from "@/types/tenant";
 
 type QueryHookOptions = {
@@ -563,71 +562,6 @@ export type TenantAdminOverviewResponse = {
     analysts: number;
   };
   roles: TenantRoleCatalogResponse["roles"];
-};
-
-export type AdminBillingSummaryResponse = {
-  tenant: {
-    id: string;
-    name: string;
-    slug: string;
-    status: string;
-    plan_code: string;
-    subscription_status: string;
-  };
-  billing: {
-    billing_cycle: string;
-    currency: string;
-    current_period_start?: string | null;
-    current_period_end?: string | null;
-    grace_ends_at?: string | null;
-    last_payment_at?: string | null;
-    current_plan: BillingPlan;
-    scheduled_change: {
-      plan_code: string;
-      name: string;
-      effective_at: string;
-      requested_at: string;
-    } | null;
-    invoices: BillingInvoice[];
-  };
-  capabilities: {
-    usage: {
-      admins: {
-        used: number;
-        limit: number;
-        remaining: number;
-      };
-      students: {
-        used: number;
-        limit: number;
-        remaining: number;
-      };
-      active_sessions: {
-        used: number;
-        limit: number;
-        remaining: number;
-      };
-    };
-    features: {
-      custom_terminology: boolean;
-      custom_identity_policy: boolean;
-      custom_participant_structure: boolean;
-      advanced_analytics: boolean;
-      advanced_reports: boolean;
-      realtime_support: boolean;
-      push_notifications: boolean;
-      custom_branding: boolean;
-      face_verification: boolean;
-    };
-  };
-  plans: BillingPlan[];
-};
-
-export type AdminBillingInvoiceListResponse = {
-  invoices: BillingInvoice[];
-  page: number;
-  pages: number;
-  total: number;
 };
 
 type StudentFilters = {

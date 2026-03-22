@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantPageHeader,
   TenantSectionCard,
@@ -26,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 type FaceppErrorState = {
   error: string;
@@ -37,6 +40,11 @@ type FaceppErrorState = {
 };
 
 export default function FaceppTestPage() {
+  const { membership } = useAuthStore();
+  const canRunDiagnostics = hasAnyTenantPermission(membership, [
+    "tenant.manage",
+    "tenant.settings.manage",
+  ]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const systemConfigQuery = useAdminSystemConfigQuery();
   const testFacepp = useTestFaceppMutation();
@@ -188,6 +196,15 @@ export default function FaceppTestPage() {
           "Checking provider readiness...",
           "Preparing diagnostic workspace...",
         ]}
+      />
+    );
+  }
+
+  if (!canRunDiagnostics) {
+    return (
+      <TenantAccessRestricted
+        title="Biometric diagnostics restricted"
+        subtitle="Your university role does not allow tenant biometric diagnostics."
       />
     );
   }

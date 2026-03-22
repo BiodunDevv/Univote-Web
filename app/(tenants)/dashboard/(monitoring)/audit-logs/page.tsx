@@ -12,6 +12,7 @@ import { TablePaginationControls } from "@/components/shared/table-pagination-co
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { TenantAuditLogTable } from "@/components/tenants/monitoring";
 import {
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantMetricCard,
   TenantMetricGrid,
@@ -28,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 function downloadBlob(blob: Blob, filename: string) {
   const objectUrl = URL.createObjectURL(blob);
@@ -39,6 +42,12 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function AuditLogsPage() {
+  const { membership } = useAuthStore();
+  const canViewAuditLogs = hasAnyTenantPermission(membership, [
+    "reports.export",
+    "analytics.view",
+    "tenant.manage",
+  ]);
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   const [action, setAction] = useState("all");
@@ -119,6 +128,15 @@ export default function AuditLogsPage() {
           "Pulling activity filters...",
           "Preparing compliance view...",
         ]}
+      />
+    );
+  }
+
+  if (!canViewAuditLogs) {
+    return (
+      <TenantAccessRestricted
+        title="Audit log access restricted"
+        subtitle="Your university role does not allow audit review and compliance exports."
       />
     );
   }

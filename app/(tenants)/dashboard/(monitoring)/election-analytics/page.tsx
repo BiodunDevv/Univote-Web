@@ -7,13 +7,19 @@ import {
   useAdminSessionsQuery,
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import { TenantAccessRestricted } from "@/components/tenants/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 export default function ElectionAnalyticsPage() {
-  const { tenant } = useAuthStore();
+  const { tenant, membership } = useAuthStore();
+  const canViewElectionAnalytics = hasAnyTenantPermission(membership, [
+    "analytics.view",
+    "tenant.manage",
+  ]);
   const participantLabels = getTenantParticipantLabels(tenant);
   const sessionsQuery = useAdminSessionsQuery({ page: 1, limit: 50 });
   const [manualSelectedSessionId, setManualSelectedSessionId] = useState("");
@@ -26,6 +32,15 @@ export default function ElectionAnalyticsPage() {
       enabled: Boolean(selectedSessionId),
     },
   );
+
+  if (!canViewElectionAnalytics) {
+    return (
+      <TenantAccessRestricted
+        title="Election analytics restricted"
+        subtitle="Your university role does not allow advanced election analytics access."
+      />
+    );
+  }
 
   if (
     sessionsQuery.isLoading ||

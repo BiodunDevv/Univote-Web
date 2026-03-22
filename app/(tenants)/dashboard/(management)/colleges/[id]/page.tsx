@@ -29,12 +29,13 @@ import { DeleteDepartmentDialog } from "@/components/tenants/departments/delete-
 import { EditCollegeModal } from "@/components/tenants/colleges/Modals";
 import { DepartmentCard } from "@/components/tenants/colleges/shared";
 import {
-  hasTenantPermission,
+  TenantAccessRestricted,
   TenantEmptyState,
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
   useAdminCollegeDetailQuery,
   useAdminCollegeDetailStatsQuery,
@@ -72,12 +73,17 @@ export default function CollegeDetailPage() {
   const participantLabels = getTenantParticipantLabels(tenant);
 
   const isAuthorized = hasHydrated && Boolean(token);
+  const canViewCollege =
+    admin?.role === "super_admin" ||
+    hasAnyTenantPermission(membership, [
+      "participants.view",
+      "participants.manage",
+      "students.manage",
+      "tenant.manage",
+    ]);
   const canManageCollege =
     admin?.role === "super_admin" ||
-    hasTenantPermission(membership?.permissions, [
-      "tenant.manage",
-      "students.manage",
-    ]);
+    hasAnyTenantPermission(membership, ["tenant.manage", "students.manage"]);
 
   const detailQuery = useAdminCollegeDetailQuery(collegeId, {
     enabled: isAuthorized,
@@ -212,6 +218,15 @@ export default function CollegeDetailPage() {
           "Assembling department coverage...",
           "Preparing structure details...",
         ]}
+      />
+    );
+  }
+
+  if (!canViewCollege) {
+    return (
+      <TenantAccessRestricted
+        title="Structure access is restricted"
+        description="Your current university role can’t open college structure details. Ask your workspace owner for participant or structure access if you need to review this area."
       />
     );
   }

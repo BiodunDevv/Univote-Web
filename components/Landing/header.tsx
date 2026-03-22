@@ -7,13 +7,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import { buildTenantAppUrl } from "@/lib/tenant";
-import {
-  readSharedAdminContext,
-  subscribeSharedAdminContext,
-} from "@/lib/shared-admin-context";
 import { AnimatedThemeToggler } from "../theme-toggler";
-import { LandingOrganizationSwitcher } from "./organization-switcher";
 import {
   Sheet,
   SheetContent,
@@ -36,41 +30,21 @@ export const HeroHeader = () => {
     () => true,
     () => false,
   );
-  const sharedAdminContext = useSyncExternalStore(
-    subscribeSharedAdminContext,
-    readSharedAdminContext,
-    () => null,
-  );
   const {
     token,
     admin,
-    tenant,
     hasHydrated: adminHasHydrated,
   } = useAuthStore();
   const { token: studentToken, hasHydrated: participantHasHydrated } =
     useStudentAuthStore();
   const isCheckingSession =
     !mounted || !adminHasHydrated || !participantHasHydrated;
-
-  const tenantWorkspaceHref =
-    tenant?.slug ||
-    sharedAdminContext?.tenant?.slug ||
-    sharedAdminContext?.organizations[0]?.slug
-      ? buildTenantAppUrl(
-          tenant?.slug ||
-            sharedAdminContext?.tenant?.slug ||
-            sharedAdminContext?.organizations[0]?.slug ||
-            "",
-          "/dashboard",
-        )
-      : null;
   const isTenantAuthenticated =
-    (Boolean(token) && admin?.role !== "super_admin") ||
-    Boolean(sharedAdminContext?.organizations.length);
+    Boolean(token) && admin?.role !== "super_admin";
   const activeHref = token
     ? admin?.role === "super_admin"
       ? "/super-admin"
-      : tenantWorkspaceHref
+      : "/dashboard"
     : studentToken
       ? "/students/home"
       : null;
@@ -121,12 +95,6 @@ export const HeroHeader = () => {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-3">
-              {!isCheckingSession && isTenantAuthenticated ? (
-                <div className="md:hidden">
-                  <LandingOrganizationSwitcher compact />
-                </div>
-              ) : null}
-
               {isCheckingSession ? (
                 <>
                   <Button
@@ -140,10 +108,6 @@ export const HeroHeader = () => {
                   </Button>
                   <div className="hidden h-9 w-9 animate-pulse rounded-md bg-muted md:inline-flex" />
                 </>
-              ) : isTenantAuthenticated ? (
-                <div className="hidden md:flex">
-                  <LandingOrganizationSwitcher />
-                </div>
               ) : activeHref ? (
                 <Button
                   variant="outline"
@@ -232,22 +196,6 @@ export const HeroHeader = () => {
                           <Loader2 className="mr-2 size-4 animate-spin" />
                           Checking session
                         </Button>
-                      ) : isTenantAuthenticated ? (
-                        <div className="space-y-3">
-                          <LandingOrganizationSwitcher />
-                          {tenantWorkspaceHref ? (
-                            <Button
-                              variant="outline"
-                              asChild
-                              className="w-full py-3 text-sm"
-                              onClick={handleLinkClick}
-                            >
-                              <Link href={tenantWorkspaceHref}>
-                                Open current workspace
-                              </Link>
-                            </Button>
-                          ) : null}
-                        </div>
                       ) : activeHref ? (
                         <Button
                           variant="default"

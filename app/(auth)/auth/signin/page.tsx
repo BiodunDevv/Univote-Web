@@ -22,7 +22,6 @@ function SignInPageContent() {
     admin,
     tenant,
     membership,
-    organizations,
   } = useAuthStore();
 
   useEffect(() => {
@@ -52,7 +51,6 @@ function SignInPageContent() {
               admin,
               tenant,
               membership,
-              organizations,
             };
             const handoffUrl = buildTenantAuthAcceptUrl(
               tenantSlug,
@@ -74,7 +72,6 @@ function SignInPageContent() {
     admin,
     hasHydrated,
     membership,
-    organizations,
     router,
     searchParams,
     tenant,

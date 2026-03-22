@@ -164,6 +164,9 @@ function OnboardingTenantCard({
   >["tenants"][number];
 }) {
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
+  const [actionState, setActionState] = useState<"approve" | "draft" | null>(
+    null,
+  );
   const reviewStateLabel =
     tenant.status === "pending_approval"
       ? "Ready for decision"
@@ -307,6 +310,7 @@ function OnboardingTenantCard({
               <Button
                 size="sm"
                 onClick={async () => {
+                  setActionState("approve");
                   try {
                     await updateMutation.mutateAsync({
                       status: "active",
@@ -318,11 +322,15 @@ function OnboardingTenantCard({
                         ? error.message
                         : "Failed to approve tenant",
                     );
+                  } finally {
+                    setActionState(null);
                   }
                 }}
-                disabled={updateMutation.isPending}
+                disabled={Boolean(actionState)}
               >
-                Approve application
+                {actionState === "approve"
+                  ? "Approving..."
+                  : "Approve application"}
               </Button>
             ) : null}
             {tenant.status === "pending_approval" ||
@@ -331,6 +339,7 @@ function OnboardingTenantCard({
                 size="sm"
                 variant="outline"
                 onClick={async () => {
+                  setActionState("draft");
                   try {
                     await updateMutation.mutateAsync({
                       status: "draft",
@@ -342,11 +351,15 @@ function OnboardingTenantCard({
                         ? error.message
                         : "Failed to update application",
                     );
+                  } finally {
+                    setActionState(null);
                   }
                 }}
-                disabled={updateMutation.isPending}
+                disabled={Boolean(actionState)}
               >
-                Return to draft
+                {actionState === "draft"
+                  ? "Updating..."
+                  : "Return to draft"}
               </Button>
             ) : null}
             <Button variant="outline" size="sm" asChild>
@@ -372,6 +385,9 @@ function ApplicationReviewDialog({
 }) {
   const [open, setOpen] = useState(false);
   const updateMutation = useUpdatePlatformTenantMutation(tenant.id);
+  const [actionState, setActionState] = useState<
+    "approve" | "draft" | "save" | null
+  >(null);
   const [form, setForm] = useState({
     contact_name: tenant.onboarding?.contact_name || "",
     contact_email: tenant.onboarding?.contact_email || "",
@@ -690,8 +706,9 @@ function ApplicationReviewDialog({
         <DialogFooter showCloseButton>
           <Button
             variant="outline"
-            disabled={updateMutation.isPending}
+            disabled={Boolean(actionState)}
             onClick={async () => {
+              setActionState("approve");
               try {
                 await updateMutation.mutateAsync({
                   status: "active",
@@ -704,15 +721,20 @@ function ApplicationReviewDialog({
                     ? error.message
                     : "Failed to approve tenant",
                 );
+              } finally {
+                setActionState(null);
               }
             }}
           >
-            Approve application
+            {actionState === "approve"
+              ? "Approving..."
+              : "Approve application"}
           </Button>
           <Button
             variant="outline"
-            disabled={updateMutation.isPending}
+            disabled={Boolean(actionState)}
             onClick={async () => {
+              setActionState("draft");
               try {
                 await updateMutation.mutateAsync({
                   status: "draft",
@@ -727,14 +749,17 @@ function ApplicationReviewDialog({
                     ? error.message
                     : "Failed to update application",
                 );
+              } finally {
+                setActionState(null);
               }
             }}
           >
-            Return to draft
+            {actionState === "draft" ? "Updating..." : "Return to draft"}
           </Button>
           <Button
-            disabled={updateMutation.isPending}
+            disabled={Boolean(actionState)}
             onClick={async () => {
+              setActionState("save");
               try {
                 await saveChanges();
                 toast.success("Application review updated");
@@ -745,10 +770,14 @@ function ApplicationReviewDialog({
                     ? error.message
                     : "Failed to save review changes",
                 );
+              } finally {
+                setActionState(null);
               }
             }}
           >
-            Save review changes
+            {actionState === "save"
+              ? "Saving..."
+              : "Save review changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -6,7 +6,6 @@ export type SupportTicketCategory =
   | "general"
   | "account"
   | "voting"
-  | "billing"
   | "technical";
 
 export interface SupportActorSnapshot {

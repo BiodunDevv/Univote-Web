@@ -89,6 +89,9 @@ export default function PlatformTenantDetailPage() {
   const tenantId = params.id;
   const tenantQuery = usePlatformTenantQuery(tenantId);
   const updateTenant = useUpdatePlatformTenantMutation(tenantId);
+  const [reviewAction, setReviewAction] = useState<
+    "approve" | "suspend" | "save" | null
+  >(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -171,6 +174,7 @@ export default function PlatformTenantDetailPage() {
       toast.error(
         error instanceof Error ? error.message : "Failed to update tenant",
       );
+      throw error;
     }
   }
 
@@ -591,18 +595,25 @@ export default function PlatformTenantDetailPage() {
                     <Button
                       type="button"
                       className="w-full"
-                      disabled={updateTenant.isPending}
-                      onClick={() =>
-                        void saveReview({
-                          ...formData,
-                          status: "active",
-                          is_active: true,
-                          rejection_reason: "",
-                        })
-                      }
+                      disabled={Boolean(reviewAction)}
+                      onClick={async () => {
+                        setReviewAction("approve");
+                        try {
+                          await saveReview({
+                            ...formData,
+                            status: "active",
+                            is_active: true,
+                            rejection_reason: "",
+                          });
+                        } finally {
+                          setReviewAction(null);
+                        }
+                      }}
                     >
                       <CheckCircle2 className="mr-2 size-4" />
-                      Approve and Activate
+                      {reviewAction === "approve"
+                        ? "Approving..."
+                        : "Approve and Activate"}
                     </Button>
                   )}
 
@@ -621,17 +632,24 @@ export default function PlatformTenantDetailPage() {
                       type="button"
                       variant="destructive"
                       className="w-full"
-                      disabled={updateTenant.isPending}
-                      onClick={() =>
-                        void saveReview({
-                          ...formData,
-                          status: "suspended",
-                          is_active: false,
-                        })
-                      }
+                      disabled={Boolean(reviewAction)}
+                      onClick={async () => {
+                        setReviewAction("suspend");
+                        try {
+                          await saveReview({
+                            ...formData,
+                            status: "suspended",
+                            is_active: false,
+                          });
+                        } finally {
+                          setReviewAction(null);
+                        }
+                      }}
                     >
                       <XCircle className="mr-2 size-4" />
-                      Suspend Tenant Access
+                      {reviewAction === "suspend"
+                        ? "Suspending..."
+                        : "Suspend Tenant Access"}
                     </Button>
                   )}
 
@@ -639,10 +657,19 @@ export default function PlatformTenantDetailPage() {
                     type="button"
                     variant="outline"
                     className="w-full"
-                    disabled={updateTenant.isPending}
-                    onClick={() => void saveReview()}
+                    disabled={Boolean(reviewAction)}
+                    onClick={async () => {
+                      setReviewAction("save");
+                      try {
+                        await saveReview();
+                      } finally {
+                        setReviewAction(null);
+                      }
+                    }}
                   >
-                    Save Review Changes
+                    {reviewAction === "save"
+                      ? "Saving..."
+                      : "Save Review Changes"}
                   </Button>
                 </div>
               </CardContent>
