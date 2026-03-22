@@ -1,6 +1,7 @@
 {
   "name": "UniVote Student Portal",
   "short_name": "UniVote",
+  "id": "/students/login",
   "description": "Install the UniVote student portal for a faster voting experience.",
   "start_url": "/students/login",
   "scope": "/students",
@@ -11,12 +12,14 @@
     {
       "src": "/Darklogo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/Whitelogo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

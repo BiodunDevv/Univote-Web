@@ -1,4 +1,4 @@
-export default function StudentPortalHead() {
+export default function StudentsHead() {
   return (
     <>
       <link rel="manifest" href="/student-portal.webmanifest" />

@@ -32,6 +32,7 @@ import {
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -46,6 +47,8 @@ export default function StudentLoginPage() {
 
   const { login, token, hasHydrated, isLoading, error, clearError, tenant } =
     useStudentAuthStore();
+  const { canInstall, isPrompting, promptInstall } =
+    useStudentPwaInstallState();
 
   const [search, setSearch] = useState("");
   const [selectedOrgSlug, setSelectedOrgSlug] = useState(
@@ -155,6 +158,10 @@ export default function StudentLoginPage() {
     }
   };
 
+  const handleInstall = async () => {
+    await promptInstall();
+  };
+
   return (
     <div className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto mb-4 flex max-w-6xl justify-end">
@@ -194,6 +201,22 @@ export default function StudentLoginPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {canInstall ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center"
+                    onClick={() => void handleInstall()}
+                    disabled={isPrompting}
+                  >
+                    <LoadingButtonContent
+                      loading={isPrompting}
+                      label="Install app"
+                      loadingLabel="Opening install prompt..."
+                    />
+                  </Button>
+                ) : null}
+
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -265,6 +288,22 @@ export default function StudentLoginPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
+                {canInstall ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center"
+                    onClick={() => void handleInstall()}
+                    disabled={isPrompting}
+                  >
+                    <LoadingButtonContent
+                      loading={isPrompting}
+                      label="Install app"
+                      loadingLabel="Opening install prompt..."
+                    />
+                  </Button>
+                ) : null}
+
                 {selectedOrganization ? (
                   <div className="rounded-2xl border bg-muted/20 p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">

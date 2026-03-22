@@ -1,8 +1,9 @@
-const CACHE_NAME = "univote-student-portal-v1";
+const CACHE_NAME = "univote-student-portal-v2";
 const CORE_ASSETS = [
   "/student-portal.webmanifest",
   "/Darklogo.png",
   "/Whitelogo.png",
+  "/students/login",
 ];
 
 self.addEventListener("install", (event) => {
@@ -34,20 +35,43 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
-
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+    fetch(request)
+      .then((response) => {
+        if (!response || response.status !== 200) {
           return response;
-        })
-        .catch(() => caches.match("/students/home"));
-    }),
+        }
+
+        const cacheable =
+          request.mode === "navigate" ||
+          url.pathname === "/students/login" ||
+          CORE_ASSETS.includes(url.pathname);
+
+        if (cacheable) {
+          const clone = response.clone();
+          void caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+
+        return response;
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        const cachedLogin = await caches.match("/students/login");
+        if (cachedLogin) {
+          return cachedLogin;
+        }
+
+        return new Response(
+          "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Offline</title></head><body style=\"font-family:system-ui,sans-serif;padding:24px;background:#f8fafc;color:#0f172a;\"><h1 style=\"font-size:20px;margin-bottom:8px;\">You're offline</h1><p style=\"margin:0;line-height:1.5;\">Reconnect to continue using the student portal.</p></body></html>",
+          {
+            headers: {
+              "Content-Type": "text/html; charset=utf-8",
+            },
+          },
+        );
+      }),
   );
 });

@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 import {
   formatParticipantIdentifier,
   getTenantParticipantLabels,
@@ -73,6 +74,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { student, tenant, logout } = useStudentAuthStore();
+  const { canInstall, isPrompting, promptInstall } =
+    useStudentPwaInstallState();
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("student");
   const participantLabels = getTenantParticipantLabels(tenant);
@@ -82,26 +85,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     pathname === "/students/support" ||
     pathname.startsWith("/students/support/");
   const [isScrolled, setIsScrolled] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () =>
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
   }, []);
   const initials = student?.full_name
     ?.split(" ")
@@ -124,18 +112,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   };
 
   const handleInstall = async () => {
-    const promptEvent = installPrompt as
-      | (Event & {
-          prompt?: () => Promise<void>;
-          userChoice?: Promise<{ outcome: "accepted" | "dismissed" }>;
-        })
-      | null;
-
-    if (!promptEvent?.prompt) return;
-
-    await promptEvent.prompt();
-    await promptEvent.userChoice;
-    setInstallPrompt(null);
+    await promptInstall();
   };
 
   return (
@@ -280,14 +257,15 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
-                  {installPrompt ? (
+                  {canInstall ? (
                     <Button
                       variant="outline"
                       size="sm"
                       className="h-8 rounded-xl px-2 text-xs"
                       onClick={() => void handleInstall()}
+                      disabled={isPrompting}
                     >
-                      Install
+                      {isPrompting ? "Installing..." : "Install"}
                     </Button>
                   ) : null}
                   <AnimatedThemeToggler
