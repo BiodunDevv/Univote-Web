@@ -57,7 +57,8 @@ export function NavMain({
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const shouldCollapse = Boolean(item.items && item.items.length > 1);
+          const subItems = item.items ?? [];
+          const shouldCollapse = subItems.length > 1;
 
           return shouldCollapse ? (
             <Collapsible
@@ -87,7 +88,7 @@ export function NavMain({
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items.map((subItem) => (
+                    {subItems.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild
