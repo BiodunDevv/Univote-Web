@@ -5,7 +5,15 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, Search, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Search,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -162,32 +170,86 @@ export default function StudentLoginPage() {
     await promptInstall();
   };
 
+  const resetOrganizationSelection = () => {
+    setSelectedOrgSlug("");
+    setEmail("");
+    setPassword("");
+    clearError();
+  };
+
   return (
-    <div className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto mb-4 flex max-w-6xl justify-end">
+    <div className="min-h-svh overflow-x-hidden bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto mb-4 flex max-w-6xl items-center justify-between gap-3">
+        <Button variant="ghost" size="sm" asChild className="rounded-xl px-3">
+          <Link href="/">
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            Website
+          </Link>
+        </Button>
         <AnimatedThemeToggler variant="header" className="h-9" />
       </div>
-      <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="hidden rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-8 shadow-none lg:block lg:p-10">
-          <div className="inline-flex rounded-full border border-border/70 bg-muted/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {selectedOrganization ? labels.singular : "Organization"} access
+      <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
+        <div className="relative overflow-hidden rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none sm:p-6 lg:p-10 hidden md:block">
+          <div className="absolute inset-x-0 top-0 h-28 bg-linear-to-b from-primary/8 to-transparent" />
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5" />
+              {selectedOrganization ? labels.singular : "University"} access
+            </div>
+            <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              {selectedOrganization
+                ? `Sign in to enter your ${labels.singular.toLowerCase()} voting workspace.`
+                : "Choose your university and continue into the student voting app."}
+            </h1>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
+              {selectedOrganization
+                ? `Use your ${loginField.label.toLowerCase()} and password to open sessions, vote securely, and track results from one clean mobile-friendly portal.`
+                : "Search for your university workspace first. Once selected, you can sign in, install the app, and move straight into your student dashboard."}
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Smartphone className="h-4 w-4 text-primary" />
+                  Mobile-first flow
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Install the student app, sign in once, and move through sessions
+                  and voting with a cleaner mobile experience.
+                </p>
+              </div>
+              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Secure access
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Your university workspace keeps sign-in, recovery, and voting
+                  access scoped to your institution only.
+                </p>
+              </div>
+            </div>
+
+            {selectedOrganization ? (
+              <div className="mt-6 rounded-2xl border bg-background/80 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Selected university
+                </p>
+                <p className="mt-1 text-base font-semibold text-foreground">
+                  {selectedOrganization.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedOrganization.slug}
+                </p>
+              </div>
+            ) : null}
           </div>
-          <h1 className="mt-6 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {selectedOrganization
-              ? `Sign in to access your ${labels.singular.toLowerCase()} portal, active sessions, and results.`
-              : "Select your organization first, then continue into your portal."}
-          </h1>
-          <p className="mt-4 max-w-lg text-base text-muted-foreground">
-            {selectedOrganization
-              ? `Use your ${loginField.label.toLowerCase()} and current password. Shared organization links and subdomain links open this portal automatically.`
-              : "Use the university chooser to find the right workspace. If an administrator shared a direct link, the university will already be selected for you."}
-          </p>
         </div>
 
-        <Card className="border shadow-none">
+        <Card className="overflow-hidden rounded-[2rem] border bg-card/95 shadow-none">
           {!selectedOrganization && !hostTenantSlug ? (
             <>
-              <CardHeader>
+              <CardHeader className="border-b bg-muted/10 pb-5">
                 <div className="flex items-center gap-3">
                   <div className="rounded-2xl border bg-muted p-3">
                     <Building2 className="h-5 w-5" />
@@ -200,12 +262,12 @@ export default function StudentLoginPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-5 sm:p-6">
                 {canInstall ? (
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full justify-center"
+                    className="w-full justify-center rounded-2xl"
                     onClick={() => void handleInstall()}
                     disabled={isPrompting}
                   >
@@ -223,7 +285,7 @@ export default function StudentLoginPage() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search universities"
-                    className="pl-9"
+                    className="h-11 rounded-2xl pl-9"
                   />
                 </div>
 
@@ -238,7 +300,7 @@ export default function StudentLoginPage() {
                   </Button>
                 ) : null}
 
-                <div className="max-h-80 space-y-2 overflow-y-auto">
+                <div className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
                   {(organizationsQuery.data?.organizations || []).map(
                     (organization) => (
                       <button
@@ -272,27 +334,41 @@ export default function StudentLoginPage() {
             </>
           ) : (
             <>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl border bg-muted p-3">
-                    <ShieldCheck className="h-5 w-5" />
+              <CardHeader className="border-b bg-muted/10 pb-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl border bg-muted p-3">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle>Portal Sign In</CardTitle>
+                      <CardDescription>
+                        {selectedOrganization
+                          ? `Continue to ${selectedOrganization.name}.`
+                          : `Continue to the Univote ${labels.singular.toLowerCase()} portal.`}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle>Portal Sign In</CardTitle>
-                    <CardDescription>
-                      {selectedOrganization
-                        ? `Continue to ${selectedOrganization.name}.`
-                        : `Continue to the Univote ${labels.singular.toLowerCase()} portal.`}
-                    </CardDescription>
-                  </div>
+                  {!hostTenantSlug ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl px-3"
+                      onClick={resetOrganizationSelection}
+                    >
+                      <ArrowLeft className="mr-1.5 h-4 w-4" />
+                      Back
+                    </Button>
+                  ) : null}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-5 p-5 sm:p-6">
                 {canInstall ? (
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full justify-center"
+                    className="w-full justify-center rounded-2xl"
                     onClick={() => void handleInstall()}
                     disabled={isPrompting}
                   >
@@ -307,7 +383,7 @@ export default function StudentLoginPage() {
                 {selectedOrganization ? (
                   <div className="rounded-2xl border bg-muted/20 p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                      Organization
+                      University
                     </p>
                     <p className="mt-1 text-sm font-semibold">
                       {selectedOrganization.name}
@@ -318,10 +394,10 @@ export default function StudentLoginPage() {
                     {!hostTenantSlug ? (
                       <button
                         type="button"
-                        onClick={() => setSelectedOrgSlug("")}
+                        onClick={resetOrganizationSelection}
                         className="mt-3 text-xs font-medium underline underline-offset-4"
                       >
-                        Change organization
+                        Change university
                       </button>
                     ) : null}
                   </div>
@@ -336,6 +412,7 @@ export default function StudentLoginPage() {
                       autoCapitalize="none"
                       autoComplete="email"
                       placeholder={loginField.placeholder}
+                      className="h-11 rounded-2xl"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       required
@@ -347,6 +424,7 @@ export default function StudentLoginPage() {
                       id="password"
                       type="password"
                       placeholder="Enter your password"
+                      className="h-11 rounded-2xl"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       required
@@ -377,7 +455,11 @@ export default function StudentLoginPage() {
                     </Alert>
                   ) : null}
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="h-11 w-full rounded-2xl"
+                    disabled={isLoading}
+                  >
                     {isLoading
                       ? "Signing in..."
                       : `Continue to ${labels.singular.toLowerCase()} portal`}

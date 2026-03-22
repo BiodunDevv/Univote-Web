@@ -186,7 +186,7 @@ export default function StudentHomePage() {
         ))}
       </PortalStatsGrid>
 
-      <section className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.85fr)]">
+      <section className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.18fr)_minmax(300px,0.82fr)]">
         <div className="space-y-4">
           <PortalSectionHeader
             title="Your eligible sessions"
@@ -230,7 +230,7 @@ export default function StudentHomePage() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card className="border shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">

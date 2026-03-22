@@ -53,6 +53,13 @@ function useSidebar() {
   return context
 }
 
+function shouldCloseMobileSidebarOnNavigate(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+
+  const link = target.closest("a[href]")
+  return Boolean(link)
+}
+
 function SidebarProvider({
   defaultOpen = true,
   open: openProp,
@@ -515,7 +522,11 @@ function SidebarMenuButton({
   const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
     onClick?.(event)
 
-    if (!event.defaultPrevented && isMobile) {
+    if (
+      !event.defaultPrevented &&
+      isMobile &&
+      shouldCloseMobileSidebarOnNavigate(event.target)
+    ) {
       setOpenMobile(false)
     }
   }

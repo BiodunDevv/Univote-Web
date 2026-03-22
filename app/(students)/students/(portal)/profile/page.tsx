@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bell, LifeBuoy, Mail, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Bell,
+  Headset,
+  Mail,
+  Palette,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   PortalEmptyState,
@@ -16,6 +23,7 @@ import { NotificationCountBadge } from "@/components/notifications/notification-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   formatParticipantIdentifier,
   getTenantParticipantLabels,
@@ -153,7 +161,7 @@ export default function StudentProfilePage() {
             </p>
             <div className="grid gap-2">
               <Button variant="outline" className="justify-start" onClick={() => router.push("/students/support")}>
-                <LifeBuoy className="mr-2 h-4 w-4" />
+                <Headset className="mr-2 h-4 w-4" />
                 Support
               </Button>
               <Button
@@ -168,6 +176,14 @@ export default function StudentProfilePage() {
                   className="absolute right-2 top-2"
                 />
               </Button>
+              <AnimatedThemeToggler
+                variant="with-text"
+                className="justify-start rounded-xl border border-input bg-background px-3"
+              />
+              <div className="flex items-center gap-3 rounded-xl border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                <Palette className="h-4 w-4" />
+                <span>Choose the theme that feels best for your device.</span>
+              </div>
             </div>
             <Button
               variant="outline"

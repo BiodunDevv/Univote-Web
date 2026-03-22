@@ -9,8 +9,8 @@ import {
   Bell,
   Building2,
   Globe,
+  Headset,
   House,
-  LifeBuoy,
   LogOut,
   Mail,
   ShieldCheck,
@@ -24,7 +24,6 @@ import { Card } from "@/components/ui/card";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 import {
@@ -122,8 +121,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-svh overflow-x-hidden bg-background">
         <div className="sticky top-0 z-40 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur xl:px-6">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -142,15 +141,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                     : "Voting flow"}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <AnimatedThemeToggler
-                variant="header"
-                className="h-9 rounded-xl px-2 text-xs [&>span:last-child]:hidden sm:[&>span:last-child]:inline"
-              />
-              <Button
-                variant="outline"
-                size="sm"
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                 className="hidden h-9 rounded-xl px-3 text-xs sm:inline-flex"
                 onClick={openWebsite}
               >
@@ -169,9 +164,12 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh overflow-x-hidden bg-muted/20">
-      <div className="mx-auto flex min-h-svh w-full max-w-9xl gap-3 px-2 pb-24 pt-2 sm:gap-4 sm:px-4 sm:pt-3 lg:pb-6">
-        <aside className="hidden w-72 shrink-0 xl:block">
-          <Card className="sticky top-4 flex h-[calc(100svh-2rem)] flex-col justify-between border bg-card/95 p-4 shadow-none">
+      <div className="mx-auto min-h-svh w-full max-w-[1680px] px-2 pb-28 pt-2 sm:px-4 sm:pt-3 lg:pb-8">
+        <aside
+          className="fixed inset-y-4 z-20 hidden w-72 lg:block"
+          style={{ left: "max(1rem, calc((100vw - 1680px) / 2 + 1rem))" }}
+        >
+          <Card className="flex h-full flex-col justify-between overflow-hidden border bg-card/95 p-4 shadow-none">
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -238,7 +236,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 </p>
                 <Button variant="outline" className="mt-4 w-full" asChild>
                   <Link href="/students/support">
-                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <Headset className="mr-2 h-4 w-4" />
                     Support
                   </Link>
                 </Button>
@@ -276,7 +274,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </Card>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 lg:ml-[19.25rem]">
           <div className="sticky top-0 z-30 mb-3 shrink-0">
             <div
               className={cn(
@@ -313,17 +311,13 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 rounded-xl px-2 text-xs"
+                      className="hidden h-8 rounded-xl px-2 text-xs sm:inline-flex"
                       onClick={() => void handleInstall()}
                       disabled={isPrompting}
                     >
                       {isPrompting ? "Installing..." : "Install"}
                     </Button>
                   ) : null}
-                  <AnimatedThemeToggler
-                    variant="header"
-                    className="h-8 rounded-xl px-2 text-xs [&>span:last-child]:hidden sm:[&>span:last-child]:inline"
-                  />
                   <Button
                     variant="outline"
                     size="sm"
@@ -357,49 +351,32 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                     className="size-8 rounded-xl"
                   >
                     <Link href="/students/support" aria-label="Support">
-                      <LifeBuoy className="h-4 w-4" />
+                      <Headset className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={student?.photo_url || undefined}
-                      alt={student?.full_name || "Participant"}
-                    />
-                    <AvatarFallback className="text-xs">
-                      {initials || "PT"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Link
+                    href="/students/profile"
+                    aria-label="Open profile"
+                    className="shrink-0 rounded-xl outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={student?.photo_url || undefined}
+                        alt={student?.full_name || "Participant"}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {initials || "PT"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
                 </div>
-              </div>
-
-              <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 xl:hidden">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActivePath(pathname, item.href);
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                        active
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
               </div>
             </div>
           </div>
 
           <div
             className={cn(
-              "space-y-3",
+              "min-w-0 space-y-3",
               isSupportRoute &&
                 "h-[calc(100svh-13rem)] min-h-0 pb-0 lg:h-[calc(100svh-8rem)]",
             )}
@@ -409,10 +386,12 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-2 z-40 px-3 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-3 z-40 px-3 lg:hidden">
         <div
-          className="mx-auto grid max-w-xl grid-cols-5 gap-1 rounded-3xl border bg-background/95 px-2 py-2 shadow-lg shadow-black/5 backdrop-blur"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+          className="mx-auto grid max-w-lg grid-cols-5 gap-1 rounded-[28px] border border-border/70 bg-background/95 px-2 py-2 shadow-xl shadow-black/10 backdrop-blur"
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.55rem)",
+          }}
         >
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -423,14 +402,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium transition-colors",
+                  "flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-2.5 text-[10px] font-medium transition-all duration-200",
                   active
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <Icon className="h-[18px] w-[18px]" />
+                <span className="truncate leading-none">{item.label}</span>
               </Link>
             );
           })}
