@@ -209,11 +209,11 @@ export default function StudentLoginPage() {
                     onClick={() => void handleInstall()}
                     disabled={isPrompting}
                   >
-                    <LoadingButtonContent
-                      loading={isPrompting}
-                      label="Install app"
-                      loadingLabel="Opening install prompt..."
-                    />
+                    {isPrompting ? (
+                      <LoadingButtonContent label="Opening install prompt..." />
+                    ) : (
+                      "Install app"
+                    )}
                   </Button>
                 ) : null}
 
@@ -296,11 +296,11 @@ export default function StudentLoginPage() {
                     onClick={() => void handleInstall()}
                     disabled={isPrompting}
                   >
-                    <LoadingButtonContent
-                      loading={isPrompting}
-                      label="Install app"
-                      loadingLabel="Opening install prompt..."
-                    />
+                    {isPrompting ? (
+                      <LoadingButtonContent label="Opening install prompt..." />
+                    ) : (
+                      "Install app"
+                    )}
                   </Button>
                 ) : null}
 
