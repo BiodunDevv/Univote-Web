@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { StudentPwaBootstrap } from "@/components/students/student-pwa-bootstrap";
 
 export const metadata: Metadata = {
   title: "Univote - Smart Campus Voting Platform",
@@ -27,6 +28,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             <TooltipProvider>
+              <StudentPwaBootstrap />
               {children}
               <Toaster position="top-center" />
             </TooltipProvider>

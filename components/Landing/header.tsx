@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 import { AnimatedThemeToggler } from "../theme-toggler";
 import {
   Sheet,
@@ -38,6 +39,7 @@ export const HeroHeader = () => {
   } = useAuthStore();
   const { token: studentToken, hasHydrated: participantHasHydrated } =
     useStudentAuthStore();
+  const { canInstall, isPrompting, promptInstall } = useStudentPwaInstallState();
   const isCheckingSession =
     !mounted || !adminHasHydrated || !participantHasHydrated;
   const isTenantAuthenticated =
@@ -61,6 +63,10 @@ export const HeroHeader = () => {
 
   const handleLinkClick = () => {
     setIsSidebarOpen(false);
+  };
+
+  const handleInstall = async () => {
+    await promptInstall();
   };
 
   return (
@@ -114,6 +120,17 @@ export const HeroHeader = () => {
                 </Button>
               ) : (
                 <>
+                  {canInstall ? (
+                    <Button
+                      variant="outline"
+                      className="hidden transition-transform md:inline-flex"
+                      size="sm"
+                      onClick={() => void handleInstall()}
+                      disabled={isPrompting}
+                    >
+                      {isPrompting ? "Installing..." : "Install App"}
+                    </Button>
+                  ) : null}
                   <Button
                     variant="outline"
                     asChild
@@ -202,6 +219,16 @@ export const HeroHeader = () => {
                         </Button>
                       ) : (
                         <>
+                          {canInstall ? (
+                            <Button
+                              variant="outline"
+                              className="w-full py-3 text-sm"
+                              onClick={() => void handleInstall()}
+                              disabled={isPrompting}
+                            >
+                              {isPrompting ? "Installing..." : "Install App"}
+                            </Button>
+                          ) : null}
                           <Button
                             variant="outline"
                             asChild

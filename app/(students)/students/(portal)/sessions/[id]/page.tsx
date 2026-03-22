@@ -71,7 +71,7 @@ export default function StudentSessionDetailPage() {
     session.status === "active" && session.eligible && !session.has_voted
       ? {
           href: `/students/vote/${session.id}`,
-          label: "Open ballot",
+          label: "Start voting",
         }
       : session.status === "ended"
         ? {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Camera,
@@ -9,12 +9,13 @@ import {
   ChevronRight,
   LocateFixed,
   MapPin,
+  RotateCcw,
   ShieldAlert,
   Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { PortalHero, PortalPage } from "@/components/students/portal/portal-page";
+import { PortalPage } from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import {
   useStudentSessionDetailQuery,
@@ -26,8 +27,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 type VoteStep = "ballot" | "verification" | "review";
+type SelfieStatus = "idle" | "choosing" | "uploading" | "ready" | "error";
 
 function getVoteErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
@@ -63,12 +66,15 @@ export default function StudentVotePage() {
     Record<string, string>
   >({});
   const [imageUrl, setImageUrl] = useState("");
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null,
   );
   const [currentStep, setCurrentStep] = useState<VoteStep>("ballot");
-  const [isUploading, setIsUploading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [selfieStatus, setSelfieStatus] = useState<SelfieStatus>("idle");
+  const [selfieError, setSelfieError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const session = data?.session;
 
@@ -84,6 +90,14 @@ export default function StudentVotePage() {
     categories.length > 0 &&
     categories.every(([position]) => Boolean(selectedByCategory[position]));
   const canContinueFromVerification = Boolean(imageUrl && location);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   if (isLoading) {
     return (
@@ -123,21 +137,56 @@ export default function StudentVotePage() {
   }
 
   const handleUpload = async (file: File) => {
-    setIsUploading(true);
+    setSelfieError("");
+    setSelfieStatus("uploading");
+
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+
     try {
       const uploaded = await uploadImageToCloudinary(
         file,
         "univote/student-votes",
       );
       setImageUrl(uploaded);
+      setSelfieStatus("ready");
       toast.success("Selfie uploaded successfully.");
     } catch (uploadError) {
+      setSelfieStatus("error");
+      setSelfieError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Failed to upload image.",
+      );
       toast.error(
         uploadError instanceof Error ? uploadError.message : "Failed to upload image",
       );
-    } finally {
-      setIsUploading(false);
     }
+  };
+
+  const openSelfiePicker = () => {
+    setSelfieError("");
+    setSelfieStatus("choosing");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const resetSelfie = () => {
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+
+    setImagePreviewUrl("");
+    setImageUrl("");
+    setSelfieError("");
+    setSelfieStatus("idle");
   };
 
   const captureLocation = async () => {
@@ -198,12 +247,34 @@ export default function StudentVotePage() {
   };
 
   return (
-    <PortalPage className="pb-24">
-      <PortalHero
-        eyebrow={<Badge variant="outline">Active ballot</Badge>}
-        title={session.title}
-        description="Work through the ballot, identity verification, and final review in one guided voting flow."
-      />
+    <PortalPage className="flex min-h-full flex-col gap-4 pb-28">
+      <section className="rounded-3xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <Badge variant="outline">Active ballot</Badge>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                {session.title}
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Cast your vote in one guided full-screen flow. Complete ballot
+                selection, selfie verification, location capture, and final review
+                without leaving this page.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="capitalize">
+              {session.status}
+            </Badge>
+            <Badge variant="outline">
+              {session.is_off_campus_allowed
+                ? "Flexible location"
+                : "Geofence required"}
+            </Badge>
+          </div>
+        </div>
+      </section>
 
       <Card className="border shadow-none">
         <CardContent className="space-y-4 p-4 sm:p-5">
@@ -315,34 +386,103 @@ export default function StudentVotePage() {
                           facial profile before your vote is accepted.
                         </p>
                       </div>
-                      <label className="inline-flex cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (file) {
-                              void handleUpload(file);
-                            }
-                            event.target.value = "";
-                          }}
-                        />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        className="sr-only"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) {
+                            void handleUpload(file);
+                          } else {
+                            setSelfieStatus("idle");
+                          }
+                          event.target.value = "";
+                        }}
+                      />
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          disabled={isUploading}
+                          disabled={selfieStatus === "uploading"}
+                          onClick={openSelfiePicker}
                         >
                           <Camera className="mr-2 h-4 w-4" />
-                          {isUploading ? "Uploading..." : "Upload selfie"}
+                          {selfieStatus === "uploading"
+                            ? "Uploading..."
+                            : selfieStatus === "ready"
+                              ? "Retake selfie"
+                              : selfieStatus === "choosing"
+                                ? "Choose selfie"
+                                : "Upload selfie"}
                         </Button>
-                      </label>
+                        {(selfieStatus === "ready" || selfieStatus === "error") &&
+                        imagePreviewUrl ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={resetSelfie}
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Clear
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
-                    {imageUrl ? (
-                      <p className="mt-3 break-all text-xs text-muted-foreground">
-                        Upload ready: {imageUrl}
-                      </p>
-                    ) : null}
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)]">
+                      <div className="overflow-hidden rounded-2xl border bg-muted/30">
+                        {imagePreviewUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={imagePreviewUrl}
+                            alt="Selfie preview"
+                            className="aspect-square w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex aspect-square items-center justify-center text-xs text-muted-foreground">
+                            No selfie selected
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-3 rounded-2xl border bg-background/70 p-4">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                            Status
+                          </p>
+                          <p
+                            className={cn(
+                              "mt-1 text-sm font-semibold",
+                              selfieStatus === "error"
+                                ? "text-destructive"
+                                : "text-foreground",
+                            )}
+                          >
+                            {selfieStatus === "idle"
+                              ? "Waiting for selfie"
+                              : selfieStatus === "choosing"
+                                ? "Waiting for photo selection"
+                                : selfieStatus === "uploading"
+                                  ? "Uploading selfie"
+                                  : selfieStatus === "ready"
+                                    ? "Ready for biometric verification"
+                                    : "Upload failed"}
+                          </p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {selfieStatus === "ready"
+                            ? "Your selfie is ready and will be checked against your enrolled face before the vote is accepted."
+                            : "Use a clear front-facing image with good lighting and only one visible face."}
+                        </p>
+                        {selfieError ? (
+                          <Alert variant="destructive">
+                            <AlertDescription>{selfieError}</AlertDescription>
+                          </Alert>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="rounded-2xl border bg-muted/20 p-4">
@@ -501,9 +641,9 @@ export default function StudentVotePage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[4.5rem] z-30 px-3 lg:static lg:mt-4 lg:px-0">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-3 py-3 backdrop-blur">
         <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border bg-background/95 p-3 shadow-none backdrop-blur">
+          <div className="rounded-2xl border bg-background p-3 shadow-none">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">

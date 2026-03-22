@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   BarChart3,
   Bell,
   Building2,
@@ -81,6 +82,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const participantLabels = getTenantParticipantLabels(tenant);
 
   const pageTitle = useMemo(() => titleFromPath(pathname), [pathname]);
+  const isVoteRoute =
+    pathname === "/students/vote" || pathname.startsWith("/students/vote/");
   const isSupportRoute =
     pathname === "/students/support" ||
     pathname.startsWith("/students/support/");
@@ -114,6 +117,55 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const handleInstall = async () => {
     await promptInstall();
   };
+
+  if (isVoteRoute) {
+    return (
+      <div className="min-h-svh overflow-x-hidden bg-background">
+        <div className="sticky top-0 z-40 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur xl:px-6">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-xl"
+                onClick={() => router.back()}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Guided vote
+                </p>
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {student
+                    ? `${student.full_name.split(" ")[0]}'s ballot`
+                    : "Voting flow"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <AnimatedThemeToggler
+                variant="header"
+                className="h-9 rounded-xl px-2 text-xs [&>span:last-child]:hidden sm:[&>span:last-child]:inline"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden h-9 rounded-xl px-3 text-xs sm:inline-flex"
+                onClick={openWebsite}
+              >
+                <Globe className="mr-1.5 h-3.5 w-3.5" />
+                Website
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="mx-auto flex min-h-[calc(100svh-4.5rem)] w-full max-w-6xl flex-col px-3 py-3 sm:px-4 xl:px-6">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-svh overflow-x-hidden bg-muted/20">

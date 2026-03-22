@@ -85,7 +85,7 @@ export function StudentPwaBootstrap() {
 
     void navigator.serviceWorker
       .register("/student-portal-sw.js", {
-        scope: "/students",
+        scope: "/",
       })
       .catch((error) => {
         console.error("Student portal service worker registration failed:", error);
