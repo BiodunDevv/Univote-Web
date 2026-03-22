@@ -13,6 +13,10 @@ export const queryKeys = {
   },
   platform: {
     overview: () => ["platform", "overview"] as const,
+    biometricMetrics: (filters: Record<string, unknown>) =>
+      ["platform", "biometric-metrics", filters] as const,
+    verificationLogs: (filters: Record<string, unknown>) =>
+      ["platform", "verification-logs", filters] as const,
     tenants: (filters: Record<string, unknown>) =>
       ["platform", "tenants", filters] as const,
     tenant: (tenantId: string) => ["platform", "tenant", tenantId] as const,
@@ -64,10 +68,20 @@ export const queryKeys = {
   },
   settings: {
     profile: () => ["settings", "profile"] as const,
+    tenantProfile: () => ["settings", "tenant-profile"] as const,
+    identity: () => ["settings", "identity"] as const,
+    labels: () => ["settings", "labels"] as const,
+    authPolicy: () => ["settings", "auth-policy"] as const,
+    participantFields: () => ["settings", "participant-fields"] as const,
     system: () => ["settings", "system"] as const,
     health: () => ["settings", "health"] as const,
     database: () => ["settings", "database"] as const,
     notifications: () => ["settings", "notifications"] as const,
+    biometricMetrics: (filters: Record<string, unknown>) =>
+      ["settings", "biometric-metrics", filters] as const,
+    verificationLogs: (filters: Record<string, unknown>) =>
+      ["settings", "verification-logs", filters] as const,
+    biometricThreshold: () => ["settings", "biometric-threshold"] as const,
     auditLogs: (filters: Record<string, unknown>) =>
       ["settings", "audit-logs", filters] as const,
     auditActions: () => ["settings", "audit-actions"] as const,

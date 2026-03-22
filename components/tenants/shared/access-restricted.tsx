@@ -7,10 +7,12 @@ import { TenantPageHeader } from "./page-header";
 export function TenantAccessRestricted({
   title = "Access restricted",
   subtitle,
+  description,
   detail,
 }: {
   title?: string;
   subtitle?: string;
+  description?: string;
   detail?: string;
 }) {
   return (
@@ -21,6 +23,7 @@ export function TenantAccessRestricted({
         title={title}
         subtitle={
           subtitle ||
+          description ||
           "Your university role does not allow access to this workspace area."
         }
       />

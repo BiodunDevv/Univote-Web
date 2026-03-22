@@ -16,6 +16,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -694,8 +695,8 @@ export function CreateStudentModal({
           )}
 
           {mode === "manual" ? (
-            <form onSubmit={submitManual} className="space-y-3">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <form onSubmit={submitManual} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Matric Number</Label>
                   <Input
@@ -904,7 +905,7 @@ export function CreateStudentModal({
                 ) : null}
               </div>
 
-              <div className="flex justify-end gap-2 border-t pt-3">
+              <SheetFooter className="flex justify-end gap-2 border-t pt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -917,7 +918,7 @@ export function CreateStudentModal({
                     ? "Creating..."
                     : `Create ${participantLabels.singular}`}
                 </Button>
-              </div>
+              </SheetFooter>
             </form>
           ) : (
             <div className="space-y-3">
@@ -1043,7 +1044,7 @@ export function CreateStudentModal({
                       setTargetDepartmentId("all");
                     }}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                    <SelectTrigger className="h-10 text-sm">
                       <SelectValue placeholder="College Override" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1063,7 +1064,7 @@ export function CreateStudentModal({
                     onValueChange={setTargetDepartmentId}
                     disabled={!collegeEnabled || targetCollegeId === "all"}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm">
                       <SelectValue placeholder="Department Override" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1081,7 +1082,7 @@ export function CreateStudentModal({
 
                 {levelEnabled ? (
                   <Select value={targetLevel} onValueChange={setTargetLevel}>
-                    <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm">
                       <SelectValue placeholder="Level Override" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1209,7 +1210,7 @@ export function CreateStudentModal({
                 </div>
               ) : null}
 
-              <div className="flex justify-end gap-2 border-t pt-3">
+              <SheetFooter className="flex justify-end gap-2 border-t pt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -1231,7 +1232,7 @@ export function CreateStudentModal({
                     ? "Uploading..."
                     : `Upload ${participantLabels.plural}`}
                 </Button>
-              </div>
+              </SheetFooter>
             </div>
           )}
         </div>

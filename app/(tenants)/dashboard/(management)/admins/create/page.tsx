@@ -265,7 +265,7 @@ export default function CreateAdminPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-x-hidden">
       <section className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">
           {isSuperAdmin ? "Create Platform Admin" : "Invite Tenant Admin"}
@@ -400,7 +400,7 @@ export default function CreateAdminPage() {
                     the access below before creating the account.
                   </p>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3">
                   {(selectedRole?.permissions || availablePermissions).map(
                     (permission) => (
                     <label
@@ -430,7 +430,7 @@ export default function CreateAdminPage() {
               </div>
             ) : null}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button
                 type="submit"
                 disabled={

@@ -83,6 +83,7 @@ export interface TenantContext {
   onboarding?: {
     contact_name?: string | null;
     contact_email?: string | null;
+    contact_phone?: string | null;
     student_count_estimate?: number | null;
     admin_count_estimate?: number | null;
     application_submitted_at?: string | null;

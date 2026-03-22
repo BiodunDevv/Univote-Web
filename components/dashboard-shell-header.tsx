@@ -183,6 +183,7 @@ export function DashboardShellHeader({
           label: "Analytics",
           match: (path: string) =>
             path.startsWith("/dashboard/analytics") ||
+            path.startsWith("/dashboard/biometrics") ||
             path.startsWith("/dashboard/reports") ||
             path.startsWith("/dashboard/system-health") ||
             path.startsWith("/dashboard/audit-logs") ||
@@ -257,6 +258,11 @@ export function DashboardShellHeader({
         value: "/super-admin/testimonials",
         label: "Testimonials",
         match: (path: string) => path.startsWith("/super-admin/testimonials"),
+      },
+      {
+        value: "/super-admin/biometrics",
+        label: "Biometrics",
+        match: (path: string) => path.startsWith("/super-admin/biometrics"),
       },
       {
         value: "/super-admin/system-health",
@@ -344,7 +350,6 @@ export function DashboardShellHeader({
             />
           </div>
         </div>
-
         <Tabs
           value={activeTab}
           onValueChange={(value) => router.push(value)}
@@ -353,13 +358,13 @@ export function DashboardShellHeader({
         >
           <TabsList
             variant="line"
-            className="w-full justify-start overflow-x-auto border-b border-border/70 px-0"
+            className="flex h-auto w-full justify-start gap-1 border-b border-border/70 px-0 pb-2"
           >
             {navTabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="rounded-none px-3 py-2 text-xs sm:px-4"
+                className="px-3 py-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 sm:px-4"
               >
                 {tab.label}
               </TabsTrigger>

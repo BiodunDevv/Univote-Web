@@ -143,7 +143,7 @@ export function ParticipantEditDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="text-sm font-semibold">
             Edit {participantLabels.singular}
@@ -155,8 +155,9 @@ export function ParticipantEditDialog({
         </SheetHeader>
 
         {student ? (
-          <div className="grid gap-3 overflow-y-auto px-3 pb-3">
-            <div className="space-y-1.5">
+          <div className="grid gap-4 px-3 pb-4">
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <div className="space-y-1.5">
               <Label htmlFor="participant-full-name" className="text-xs">
                 Full name
               </Label>
@@ -165,10 +166,10 @@ export function ParticipantEditDialog({
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
               />
-            </div>
+              </div>
 
-            {showEmail ? (
-              <div className="space-y-1.5">
+              {showEmail ? (
+                <div className="mt-4 space-y-1.5">
                 <Label htmlFor="participant-email" className="text-xs">
                   Email
                 </Label>
@@ -177,10 +178,11 @@ export function ParticipantEditDialog({
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
-              </div>
-            ) : null}
+                </div>
+              ) : null}
+            </div>
 
-            <div className="space-y-1.5">
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
               <Label className="text-xs">Profile image</Label>
               <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
                 <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border bg-muted/20">
@@ -221,7 +223,8 @@ export function ParticipantEditDialog({
             </div>
 
             {showCollege || showDepartment || showLevel ? (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="grid gap-3 md:grid-cols-3">
                 {showCollege ? (
                   <div className="space-y-1.5">
                     <Label className="text-xs">College</Label>
@@ -284,10 +287,11 @@ export function ParticipantEditDialog({
                     </Select>
                   </div>
                 ) : null}
+                </div>
               </div>
             ) : null}
 
-            <label className="flex items-center gap-2 rounded-lg border p-2 text-sm">
+            <label className="flex items-center gap-2 rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm">
               <Checkbox
                 checked={isActive}
                 onCheckedChange={(checked) => setIsActive(checked === true)}

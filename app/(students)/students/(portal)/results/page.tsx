@@ -46,9 +46,22 @@ export default function StudentResultsPage() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList variant="line" className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="results" className="text-xs">Session results</TabsTrigger>
-          <TabsTrigger value="history" className="text-xs">Vote history</TabsTrigger>
+        <TabsList
+          variant="line"
+          className="flex h-auto w-full flex-wrap justify-start gap-1"
+        >
+          <TabsTrigger
+            value="results"
+            className="rounded-xl border border-border/70 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
+          >
+            Session results
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="rounded-xl border border-border/70 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
+          >
+            Vote history
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="results" className="mt-4">

@@ -4,13 +4,26 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   BarChart3,
   Building2,
+  Fingerprint,
   LayoutDashboard,
   ShieldCheck,
   Vote,
 } from "lucide-react";
-import { ChartConfig } from "@/components/ui/chart";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { StudentsByLevelChart } from "@/components/dashboard/students-by-level-chart";
 import { CalendarWidget } from "@/components/dashboard/calendar-widget";
 import { StudentsByCollegeChart } from "@/components/dashboard/students-by-college-chart";
@@ -21,12 +34,14 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 import { AdminChatOverviewCard } from "@/components/support/admin-chat-overview-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MetricsGrid } from "@/components/dashboard/metrics-grid";
 import {
   TenantPageHeader,
   TenantSectionCard,
 } from "@/components/tenants/shared";
-import { useAdminDashboardQuery } from "@/lib/queries/admin";
+import {
+  useAdminBiometricMetricsQuery,
+  useAdminDashboardQuery,
+} from "@/lib/queries/admin";
 import {
   getTenantParticipantLabels,
   isTenantParticipantFieldEnabled,
@@ -45,6 +60,10 @@ export default function DashboardWelcomePage() {
   const { admin, token, hasHydrated, tenant: activeTenant } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
   const dashboardQuery = useAdminDashboardQuery({ enabled: isAuthorized });
+  const biometricMetricsQuery = useAdminBiometricMetricsQuery(
+    {},
+    { enabled: isAuthorized },
+  );
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
@@ -138,6 +157,12 @@ export default function DashboardWelcomePage() {
       students: item.count,
       fill: `var(--color-college${index + 1})`,
     })) || [];
+  const voteTrendConfig = {
+    votes: {
+      label: "Votes",
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
 
   const collegeChartConfig = {
     students: {
@@ -235,32 +260,68 @@ export default function DashboardWelcomePage() {
               </div>
             }
           >
-            {showLevelStructure ? (
-              <StudentsByLevelChart
-                data={studentsByLevelData}
-                participantPluralLabel={participantLabels.plural}
-                dimensionLabel={levelDimensionLabel}
-              />
-            ) : (
+            <div className="grid gap-3 xl:grid-cols-[1fr_1fr]">
+              {showLevelStructure ? (
+                <StudentsByLevelChart
+                  data={studentsByLevelData}
+                  participantPluralLabel={participantLabels.plural}
+                  dimensionLabel={levelDimensionLabel}
+                />
+              ) : (
+                <Card className="border shadow-none">
+                  <CardContent className="flex h-full min-h-80 flex-col items-center justify-center gap-3 p-6 text-center">
+                    <div className="rounded-2xl border border-border/70 bg-muted/30 p-3 text-muted-foreground">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium">
+                        Structure insights are streamlined
+                      </p>
+                      <p className="max-w-sm text-sm text-muted-foreground">
+                        This workspace is not organizing{" "}
+                        {participantLabels.plural.toLowerCase()} by level, so the
+                        operational focus stays on sessions, turnout, and recent
+                        activity.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className="border shadow-none">
-                <CardContent className="flex h-full min-h-80 flex-col items-center justify-center gap-3 p-6 text-center">
-                  <div className="rounded-2xl border border-border/70 bg-muted/30 p-3 text-muted-foreground">
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-medium">
-                      Structure insights are streamlined
+                <CardContent className="space-y-4 p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Voting momentum
                     </p>
-                    <p className="max-w-sm text-sm text-muted-foreground">
-                      This workspace is not organizing{" "}
-                      {participantLabels.plural.toLowerCase()} by level, so the
-                      operational focus stays on sessions, turnout, and recent
-                      activity.
+                    <p className="text-sm text-muted-foreground">
+                      Daily vote volume across the active university schedule.
                     </p>
                   </div>
+                  <ChartContainer
+                    config={voteTrendConfig}
+                    className="h-[240px] w-full"
+                  >
+                    <AreaChart accessibilityLayer data={dashboardData?.vote_trend || []}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                      <YAxis tickLine={false} axisLine={false} width={42} />
+                      <ChartTooltip
+                        content={<ChartTooltipContent indicator="line" />}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="votes"
+                        stroke="var(--color-votes)"
+                        fill="var(--color-votes)"
+                        fillOpacity={0.18}
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
                 </CardContent>
               </Card>
-            )}
+            </div>
           </TenantSectionCard>
           <div className="grid auto-rows-fr gap-3">
             <CalendarWidget
@@ -312,7 +373,22 @@ export default function DashboardWelcomePage() {
           </div>
         </TenantSectionCard>
 
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
+            <CardContent className="flex items-center gap-3 p-2">
+              <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">
+                <Fingerprint className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                  Biometric accuracy
+                </p>
+                <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                  {`${((biometricMetricsQuery.data?.metrics.summary.accuracy || 0) * 100).toFixed(1)}%`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
             <CardContent className="flex items-center gap-3 p-2">
               <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">

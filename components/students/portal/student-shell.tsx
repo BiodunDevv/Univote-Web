@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bell,
   Building2,
+  Globe,
   House,
   LifeBuoy,
   LogOut,
@@ -22,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import {
   formatParticipantIdentifier,
@@ -80,11 +82,26 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     pathname === "/students/support" ||
     pathname.startsWith("/students/support/");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () =>
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
   }, []);
   const initials = student?.full_name
     ?.split(" ")
@@ -102,9 +119,28 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     router.replace("/students/login");
   };
 
+  const openWebsite = () => {
+    window.open("/", "_blank", "noopener,noreferrer");
+  };
+
+  const handleInstall = async () => {
+    const promptEvent = installPrompt as
+      | (Event & {
+          prompt?: () => Promise<void>;
+          userChoice?: Promise<{ outcome: "accepted" | "dismissed" }>;
+        })
+      | null;
+
+    if (!promptEvent?.prompt) return;
+
+    await promptEvent.prompt();
+    await promptEvent.userChoice;
+    setInstallPrompt(null);
+  };
+
   return (
-    <div className="min-h-svh bg-muted/20">
-      <div className="mx-auto flex min-h-svh w-full max-w-9xl gap-4 px-3 pb-24 pt-3 sm:px-4 lg:pb-6">
+    <div className="min-h-svh overflow-x-hidden bg-muted/20">
+      <div className="mx-auto flex min-h-svh w-full max-w-9xl gap-3 px-2 pb-24 pt-2 sm:gap-4 sm:px-4 sm:pt-3 lg:pb-6">
         <aside className="hidden w-72 shrink-0 xl:block">
           <Card className="sticky top-4 flex h-[calc(100svh-2rem)] flex-col justify-between border bg-card/95 p-4 shadow-none">
             <div className="space-y-6">
@@ -244,6 +280,29 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
+                  {installPrompt ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-xl px-2 text-xs"
+                      onClick={() => void handleInstall()}
+                    >
+                      Install
+                    </Button>
+                  ) : null}
+                  <AnimatedThemeToggler
+                    variant="header"
+                    className="h-8 rounded-xl px-2 text-xs [&>span:last-child]:hidden sm:[&>span:last-child]:inline"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden h-8 rounded-xl px-2 text-xs md:inline-flex"
+                    onClick={openWebsite}
+                  >
+                    <Globe className="mr-1.5 h-3.5 w-3.5" />
+                    Website
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

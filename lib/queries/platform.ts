@@ -6,6 +6,10 @@ import { queryKeys } from "@/lib/query-keys";
 import type { TenantContext } from "@/types/tenant";
 import type { DatabaseStats, SystemHealth } from "@/lib/store/useSettingsStore";
 import type { LandingTestimonial } from "@/types/landing";
+import type {
+  AdminBiometricMetricsResponse,
+  AdminVerificationLogEntry,
+} from "@/lib/queries/admin";
 
 export type PlatformOverviewResponse = {
   overview: {
@@ -224,6 +228,35 @@ export type PlatformBiometricsResponse = {
   };
 };
 
+export type PlatformVerificationLogsResponse = {
+  logs: Array<
+    AdminVerificationLogEntry & {
+      tenant?: {
+        id: string;
+        name: string;
+        slug: string;
+      } | null;
+      student?: {
+        id: string;
+        full_name: string;
+        matric_no?: string | null;
+        email?: string | null;
+      } | null;
+      session?: {
+        id: string;
+        title: string;
+        status: string;
+      } | null;
+    }
+  >;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+};
+
 export function usePlatformOverviewQuery() {
   return useQuery({
     queryKey: queryKeys.platform.overview(),
@@ -232,6 +265,55 @@ export function usePlatformOverviewQuery() {
         auth: "admin",
         signal,
       }),
+  });
+}
+
+export function usePlatformBiometricMetricsQuery(
+  filters: {
+    tenant_id?: string;
+    session_id?: string;
+    start_date?: string;
+    end_date?: string;
+  } = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.platform.biometricMetrics(filters),
+    queryFn: ({ signal }) =>
+      apiRequest<{
+        tenant?: { id: string; name: string; slug: string } | null;
+        metrics: AdminBiometricMetricsResponse["metrics"];
+      }>("/api/platform/biometric-metrics", {
+        auth: "admin",
+        params: filters,
+        signal,
+      }),
+  });
+}
+
+export function usePlatformVerificationLogsQuery(
+  filters: {
+    tenant_id?: string;
+    session_id?: string;
+    result?: string;
+    failure_reason?: string;
+    review_state?: "reviewed" | "pending";
+    page?: number;
+    limit?: number;
+    start_date?: string;
+    end_date?: string;
+  } = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.platform.verificationLogs(filters),
+    queryFn: ({ signal }) =>
+      apiRequest<PlatformVerificationLogsResponse>(
+        "/api/platform/verification-logs",
+        {
+          auth: "admin",
+          params: filters,
+          signal,
+        },
+      ),
   });
 }
 

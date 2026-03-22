@@ -56,8 +56,10 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) =>
-          item.items && item.items.length > 0 ? (
+        {items.map((item) => {
+          const shouldCollapse = Boolean(item.items && item.items.length > 1);
+
+          return shouldCollapse ? (
             <Collapsible
               key={item.title}
               asChild
@@ -124,7 +126,7 @@ export function NavMain({
                 tooltip={item.title}
                 isActive={isActive(item.url)}
               >
-                <Link href={item.url}>
+                <Link href={item.items?.[0]?.url || item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                   {item.comingSoon && (
@@ -146,8 +148,8 @@ export function NavMain({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ),
-        )}
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

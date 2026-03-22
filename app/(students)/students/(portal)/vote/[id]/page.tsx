@@ -2,16 +2,55 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Camera, LocateFixed, MapPin, ShieldAlert } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  LocateFixed,
+  MapPin,
+  ShieldAlert,
+  Vote,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { PortalHero, PortalPage } from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
-import { useStudentSessionDetailQuery, useSubmitVoteMutation } from "@/lib/queries/student";
+import {
+  useStudentSessionDetailQuery,
+  useSubmitVoteMutation,
+} from "@/lib/queries/student";
+import { ApiError } from "@/lib/api/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+
+type VoteStep = "ballot" | "verification" | "review";
+
+function getVoteErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.code === "ALREADY_VOTED") {
+      return "Your vote has already been recorded for this session.";
+    }
+    if (error.code === "GEOFENCE_VIOLATION") {
+      return "You are outside the approved voting radius for this session. Move into the allowed area and try again.";
+    }
+    if (error.code === "FACE_VERIFICATION_FAILED") {
+      const confidence = error.payload?.confidence;
+      return typeof confidence === "number"
+        ? `Face verification did not pass. Current confidence score: ${confidence.toFixed(1)}. Use a clearer selfie and try again.`
+        : error.message;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "We could not submit your vote. Please try again.";
+}
 
 export default function StudentVotePage() {
   const params = useParams();
@@ -20,9 +59,14 @@ export default function StudentVotePage() {
   const { data, isLoading, error } = useStudentSessionDetailQuery(sessionId);
   const submitVote = useSubmitVoteMutation();
 
-  const [selectedByCategory, setSelectedByCategory] = useState<Record<string, string>>({});
+  const [selectedByCategory, setSelectedByCategory] = useState<
+    Record<string, string>
+  >({});
   const [imageUrl, setImageUrl] = useState("");
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+  const [currentStep, setCurrentStep] = useState<VoteStep>("ballot");
   const [isUploading, setIsUploading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
@@ -33,9 +77,13 @@ export default function StudentVotePage() {
     [session?.candidates_by_position],
   );
 
+  const stepOrder: VoteStep[] = ["ballot", "verification", "review"];
+  const currentStepIndex = stepOrder.indexOf(currentStep);
+  const progress = ((currentStepIndex + 1) / stepOrder.length) * 100;
   const allCategoriesSelected =
     categories.length > 0 &&
     categories.every(([position]) => Boolean(selectedByCategory[position]));
+  const canContinueFromVerification = Boolean(imageUrl && location);
 
   if (isLoading) {
     return (
@@ -77,9 +125,12 @@ export default function StudentVotePage() {
   const handleUpload = async (file: File) => {
     setIsUploading(true);
     try {
-      const uploaded = await uploadImageToCloudinary(file, "univote/student-votes");
+      const uploaded = await uploadImageToCloudinary(
+        file,
+        "univote/student-votes",
+      );
       setImageUrl(uploaded);
-      toast.success("Selfie uploaded");
+      toast.success("Selfie uploaded successfully.");
     } catch (uploadError) {
       toast.error(
         uploadError instanceof Error ? uploadError.message : "Failed to upload image",
@@ -104,7 +155,11 @@ export default function StudentVotePage() {
           lng: position.coords.longitude,
         });
         setIsLocating(false);
-        toast.success("Location captured");
+        toast.success(
+          session.is_off_campus_allowed
+            ? "Location captured. This session allows flexible voting locations."
+            : "Location captured. You can now continue to vote review.",
+        );
       },
       (locationError) => {
         toast.error(locationError.message || "Failed to capture location");
@@ -116,186 +171,413 @@ export default function StudentVotePage() {
 
   const handleSubmitVote = async () => {
     if (!allCategoriesSelected || !imageUrl || !location) {
-      toast.error("Select all categories, upload a selfie, and capture your location.");
+      toast.error(
+        "Complete candidate selection, selfie upload, and location capture before submitting.",
+      );
       return;
     }
 
-    await submitVote.mutateAsync({
-      sessionId,
-      choices: categories.map(([position]) => ({
-        category: position,
-        candidate_id: selectedByCategory[position],
-      })),
-      imageUrl,
-      location,
-      deviceId:
-        typeof navigator !== "undefined" ? navigator.userAgent : "web-client",
-    });
+    try {
+      await submitVote.mutateAsync({
+        sessionId,
+        choices: categories.map(([position]) => ({
+          category: position,
+          candidate_id: selectedByCategory[position],
+        })),
+        imageUrl,
+        location,
+        deviceId:
+          typeof navigator !== "undefined" ? navigator.userAgent : "web-client",
+      });
 
-    toast.success("Vote submitted successfully");
-    router.replace(`/students/results/${sessionId}?fromVote=1`);
+      toast.success("Vote submitted successfully.");
+      router.replace(`/students/results/${sessionId}?fromVote=1`);
+    } catch (submitError) {
+      toast.error(getVoteErrorMessage(submitError));
+    }
   };
 
   return (
-    <PortalPage className="pb-20">
+    <PortalPage className="pb-24">
       <PortalHero
         eyebrow={<Badge variant="outline">Active ballot</Badge>}
         title={session.title}
-        description="Select one candidate per category, then verify your location and selfie before submitting."
+        description="Work through the ballot, identity verification, and final review in one guided voting flow."
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)]">
-        <div className="space-y-4">
-          {categories.map(([position, candidates]) => (
-            <Card key={position} className="border shadow-none">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{position}</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-2">
-                {candidates.map((candidate) => {
-                  const selected = selectedByCategory[position] === candidate.id;
+      <Card className="border shadow-none">
+        <CardContent className="space-y-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Voting progress
+              </p>
+              <p className="mt-1 text-sm text-foreground">
+                Step {currentStepIndex + 1} of {stepOrder.length}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                ["ballot", "Ballot"],
+                ["verification", "Verification"],
+                ["review", "Review"],
+              ].map(([value, label], index) => (
+                <Badge
+                  key={value}
+                  variant={currentStep === value ? "default" : "outline"}
+                  className="rounded-full px-3 py-1"
+                >
+                  {index + 1}. {label}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </CardContent>
+      </Card>
 
-                  return (
-                    <button
-                      key={candidate.id}
-                      type="button"
-                      onClick={() =>
-                        setSelectedByCategory((current) => ({
-                          ...current,
-                          [position]: candidate.id,
-                        }))
-                      }
-                      className={`rounded-2xl border p-3 text-left transition-colors ${
-                        selected
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-muted/20 text-foreground hover:border-foreground/40"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-background/70">
-                          {candidate.photo_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={candidate.photo_url}
-                              alt={candidate.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : null}
-                        </div>
-                        <div>
-                          <p className="font-semibold">{candidate.name}</p>
-                            <p className="mt-1 text-xs opacity-80">
-                              {candidate.bio || "No biography provided."}
-                            </p>
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <div className="space-y-4">
+          {currentStep === "ballot" ? (
+            <>
+              {categories.map(([position, candidates]) => (
+                <Card key={position} className="border shadow-none">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{position}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-2">
+                    {candidates.map((candidate) => {
+                      const selected = selectedByCategory[position] === candidate.id;
+
+                      return (
+                        <button
+                          key={candidate.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedByCategory((current) => ({
+                              ...current,
+                              [position]: candidate.id,
+                            }))
+                          }
+                          className={`rounded-2xl border p-3 text-left transition-colors ${
+                            selected
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border bg-muted/20 text-foreground hover:border-foreground/40"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-background/70">
+                              {candidate.photo_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={candidate.photo_url}
+                                  alt={candidate.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : null}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-semibold">{candidate.name}</p>
+                                {selected ? (
+                                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-xs opacity-80">
+                                {candidate.bio || "No biography provided."}
+                              </p>
+                            </div>
                           </div>
+                        </button>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : null}
+
+          {currentStep === "verification" ? (
+            <div className="grid gap-4">
+              <Card className="border shadow-none">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Selfie verification</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-2xl border bg-muted/20 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          Upload a clear selfie
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Face++ will compare this selfie against your registered
+                          facial profile before your vote is accepted.
+                        </p>
                       </div>
-                    </button>
-                  );
-                })}
+                      <label className="inline-flex cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) {
+                              void handleUpload(file);
+                            }
+                            event.target.value = "";
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={isUploading}
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          {isUploading ? "Uploading..." : "Upload selfie"}
+                        </Button>
+                      </label>
+                    </div>
+                    {imageUrl ? (
+                      <p className="mt-3 break-all text-xs text-muted-foreground">
+                        Upload ready: {imageUrl}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-2xl border bg-muted/20 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          Capture your location
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {session.is_off_campus_allowed
+                            ? "This session allows off-campus voting, but your location is still recorded for audit and verification."
+                            : "Your location must be inside the approved voting radius for this session."}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={captureLocation}
+                        disabled={isLocating}
+                      >
+                        <LocateFixed className="mr-2 h-4 w-4" />
+                        {isLocating ? "Locating..." : "Use current location"}
+                      </Button>
+                    </div>
+                    {location ? (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>
+                          {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+
+          {currentStep === "review" ? (
+            <Card className="border shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Final review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3">
+                  {categories.map(([position, candidates]) => {
+                    const selectedCandidate = candidates.find(
+                      (candidate) => candidate.id === selectedByCategory[position],
+                    );
+
+                    return (
+                      <div
+                        key={position}
+                        className="rounded-2xl border bg-muted/20 p-4"
+                      >
+                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                          {position}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {selectedCandidate?.name || "No candidate selected"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border bg-muted/20 p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                      Selfie
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {imageUrl ? "Ready for verification" : "Not uploaded"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border bg-muted/20 p-4">
+                    <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                      Location
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {location
+                        ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                        : "Not captured"}
+                    </p>
+                  </div>
+                </div>
+
+                {submitVote.error ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {getVoteErrorMessage(submitVote.error)}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
               </CardContent>
             </Card>
-          ))}
+          ) : null}
         </div>
 
         <div className="space-y-4">
-            <Card className="border shadow-none">
+          <Card className="border shadow-none">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Verification checklist</CardTitle>
+              <CardTitle className="text-sm">Voting checklist</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 text-sm">
               <div className="rounded-2xl border bg-muted/20 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Selfie upload</p>
-                    <p className="text-sm text-muted-foreground">
-                      Upload the selfie that will be used for face verification.
-                    </p>
-                  </div>
-                  <label className="inline-flex cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) {
-                          void handleUpload(file);
-                        }
-                        event.target.value = "";
-                      }}
-                    />
-                    <Button type="button" variant="outline" disabled={isUploading}>
-                      <Camera className="mr-2 h-4 w-4" />
-                      {isUploading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </label>
-                </div>
-                {imageUrl ? (
-                  <p className="mt-3 text-xs text-muted-foreground">{imageUrl}</p>
-                ) : null}
+                <p className="font-medium text-foreground">Ballot selection</p>
+                <p className="mt-1 text-muted-foreground">
+                  {Object.keys(selectedByCategory).length} of {categories.length}{" "}
+                  categories completed.
+                </p>
               </div>
-
               <div className="rounded-2xl border bg-muted/20 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Location capture</p>
-                    <p className="text-sm text-muted-foreground">
-                      Capture your current coordinates before you submit the ballot.
-                    </p>
-                  </div>
-                  <Button type="button" variant="outline" onClick={captureLocation} disabled={isLocating}>
-                    <LocateFixed className="mr-2 h-4 w-4" />
-                    {isLocating ? "Locating..." : "Use current location"}
-                  </Button>
-                </div>
-                {location ? (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    <span>
-                      {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                    </span>
-                  </div>
-                ) : null}
+                <p className="font-medium text-foreground">Selfie status</p>
+                <p className="mt-1 text-muted-foreground">
+                  {imageUrl
+                    ? "A selfie is ready for biometric verification."
+                    : "Upload a clear selfie to continue."}
+                </p>
               </div>
-
-              <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-                {Object.keys(selectedByCategory).length} of {categories.length} categories selected.
+              <div className="rounded-2xl border bg-muted/20 p-4">
+                <p className="font-medium text-foreground">Location status</p>
+                <p className="mt-1 text-muted-foreground">
+                  {location
+                    ? session.is_off_campus_allowed
+                      ? "Location captured. This session supports flexible locations."
+                      : "Location captured. Your position will be checked against the session radius."
+                    : "Capture your current coordinates before you submit."}
+                </p>
               </div>
+            </CardContent>
+          </Card>
 
-              {submitVote.error ? (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    {(submitVote.error as Error).message}
-                  </AlertDescription>
-                </Alert>
-              ) : null}
+          <Card className="border shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Session conditions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Status: <span className="font-medium text-foreground">{session.status}</span>
+              </p>
+              <p>
+                Location policy:{" "}
+                <span className="font-medium text-foreground">
+                  {session.is_off_campus_allowed
+                    ? "Off-campus voting allowed"
+                    : "Inside approved radius only"}
+                </span>
+              </p>
+              <p>
+                Submission rule: one successful vote only. Duplicate and concurrent
+                submissions are blocked automatically.
+              </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[4.5rem] z-30 px-3 lg:static lg:px-0">
-        <div className="mx-auto max-w-4xl">
+      <div className="fixed inset-x-0 bottom-[4.5rem] z-30 px-3 lg:static lg:mt-4 lg:px-0">
+        <div className="mx-auto max-w-5xl">
           <div className="rounded-2xl border bg-background/95 p-3 shadow-none backdrop-blur">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  Ready to submit
+                  Guided voting flow
                 </p>
                 <p className="truncate text-sm font-medium text-foreground">
-                  {allCategoriesSelected ? "All categories selected" : "Select every category to continue"}
+                  {currentStep === "ballot"
+                    ? allCategoriesSelected
+                      ? "Ballot complete. Continue to verification."
+                      : "Select one candidate in every category."
+                    : currentStep === "verification"
+                      ? canContinueFromVerification
+                        ? "Verification inputs complete. Continue to final review."
+                        : "Upload a selfie and capture your location."
+                      : "Submit your final vote once everything looks correct."}
                 </p>
               </div>
-              <Button
-                onClick={() => void handleSubmitVote()}
-                disabled={
-                  submitVote.isPending || !allCategoriesSelected || !imageUrl || !location
-                }
-                size="sm"
-                className="shrink-0"
-              >
-                {submitVote.isPending ? "Submitting..." : "Submit vote"}
-              </Button>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {currentStep !== "ballot" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentStep(stepOrder[currentStepIndex - 1] || "ballot")
+                    }
+                  >
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                ) : null}
+
+                {currentStep === "ballot" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!allCategoriesSelected}
+                    onClick={() => setCurrentStep("verification")}
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : null}
+
+                {currentStep === "verification" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!canContinueFromVerification}
+                    onClick={() => setCurrentStep("review")}
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : null}
+
+                {currentStep === "review" ? (
+                  <Button
+                    onClick={() => void handleSubmitVote()}
+                    disabled={
+                      submitVote.isPending ||
+                      !allCategoriesSelected ||
+                      !imageUrl ||
+                      !location
+                    }
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    <Vote className="mr-2 h-4 w-4" />
+                    {submitVote.isPending ? "Submitting..." : "Submit vote"}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

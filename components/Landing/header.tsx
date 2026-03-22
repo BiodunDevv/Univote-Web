@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import React, { useEffect, useState, useSyncExternalStore } from "react";
-import { Loader2, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { AnimatedThemeToggler } from "../theme-toggler";
@@ -97,16 +98,8 @@ export const HeroHeader = () => {
             <div className="flex items-center justify-end gap-2 sm:gap-3">
               {isCheckingSession ? (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="hidden md:inline-flex"
-                    disabled
-                  >
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    Checking
-                  </Button>
-                  <div className="hidden h-9 w-9 animate-pulse rounded-md bg-muted md:inline-flex" />
+                  <Skeleton className="hidden h-9 w-32 rounded-md md:block" />
+                  <Skeleton className="hidden size-9 rounded-md md:block" />
                 </>
               ) : activeHref ? (
                 <Button
@@ -192,10 +185,10 @@ export const HeroHeader = () => {
 
                     <div className="mt-6 space-y-3 border-t border-border/20 pt-6">
                       {isCheckingSession ? (
-                        <Button disabled className="w-full py-3 text-sm">
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                          Checking session
-                        </Button>
+                        <div className="space-y-3">
+                          <Skeleton className="h-11 w-full rounded-xl" />
+                          <Skeleton className="h-11 w-full rounded-xl" />
+                        </div>
                       ) : activeHref ? (
                         <Button
                           variant="default"

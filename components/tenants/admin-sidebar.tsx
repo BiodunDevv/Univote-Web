@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bell,
   Building2,
+  Fingerprint,
   FileBarChart,
   GraduationCap,
   LayoutDashboard,
@@ -103,19 +104,20 @@ const adminNavMain: NavItem[] = [
     title: "Candidates",
     url: "/dashboard/candidates",
     icon: Users,
-    items: [{ title: "All Candidates", url: "/dashboard/candidates" }],
   },
   {
     title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,
-    items: [{ title: "Overview", url: "/dashboard/analytics" }],
+    items: [
+      { title: "Overview", url: "/dashboard/analytics" },
+      { title: "Biometric Review", url: "/dashboard/biometrics" },
+    ],
   },
   {
     title: "Reports",
     url: "/dashboard/reports",
     icon: FileBarChart,
-    items: [{ title: "Generate Reports", url: "/dashboard/reports" }],
   },
 ];
 
@@ -124,6 +126,7 @@ const adminNavProjects = [
   { name: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { name: "Support", url: "/dashboard/support", icon: LifeBuoy },
   { name: "System Health", url: "/dashboard/system-health", icon: Activity },
+  { name: "Biometrics", url: "/dashboard/biometrics", icon: Fingerprint },
   { name: "Settings", url: "/dashboard/settings", icon: Settings2 },
 ];
 
@@ -134,7 +137,7 @@ function buildSearchItems(
   const results: SearchItem[] = [];
 
   navMain.forEach((item) => {
-    if (item.items?.length) {
+    if (item.items?.length && item.items.length > 1) {
       item.items.forEach((subItem) =>
         results.push({
           title: subItem.title,
@@ -147,7 +150,7 @@ function buildSearchItems(
 
     results.push({
       title: item.title,
-      url: item.url,
+      url: item.items?.[0]?.url || item.url,
       group: "Navigation",
     });
   });
@@ -271,7 +274,9 @@ export function AdminSidebar({
       adminNavProjects
         .filter((item) => {
           if (item.name === "Support") return canManageSupport;
-          if (item.name === "Reports") return advancedReportsEnabled;
+          if (item.name === "Biometrics") {
+            return canViewAnalytics && tenant?.entitlements?.face_verification !== false;
+          }
           return true;
         })
         .map((item) =>
@@ -288,8 +293,9 @@ export function AdminSidebar({
               : item,
         ),
     [
-      advancedReportsEnabled,
       canManageSupport,
+      canViewAnalytics,
+      tenant,
       unreadNotifications,
       unreadSupport,
     ],

@@ -40,6 +40,20 @@ export default function StudentPortalLayout({
     };
   }, [fetchProfile, hasHydrated, logout, router, student, token]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+      return;
+    }
+
+    void navigator.serviceWorker
+      .register("/student-portal-sw.js", {
+        scope: "/students",
+      })
+      .catch((error) => {
+        console.error("Student portal service worker registration failed:", error);
+      });
+  }, []);
+
   if (!hasHydrated || !token || !student) {
     return (
       <ChangingLoadingState

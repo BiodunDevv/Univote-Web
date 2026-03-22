@@ -66,14 +66,14 @@ export default function ContentSection() {
               <Image
                 src="https://media.istockphoto.com/id/1402684318/photo/group-of-young-people-stacking-hands-together-outdoor-community-of-multiracial-international.webp?a=1&b=1&s=612x612&w=0&k=20&c=_6QRq1bN8Q5JQ_jaSGbghg4fmELCUQuI-apGX7T341U="
                 className="hidden rounded-[15px] dark:block"
-                alt="payments illustration dark"
+                alt="university elections illustration dark"
                 width={1206}
                 height={612}
               />
               <Image
                 src="https://media.istockphoto.com/id/1402684318/photo/group-of-young-people-stacking-hands-together-outdoor-community-of-multiracial-international.webp?a=1&b=1&s=612x612&w=0&k=20&c=_6QRq1bN8Q5JQ_jaSGbghg4fmELCUQuI-apGX7T341U="
                 className="rounded-[15px] shadow dark:hidden"
-                alt="payments illustration light"
+                alt="university elections illustration light"
                 width={1206}
                 height={612}
               />

@@ -344,13 +344,16 @@ export default function PlatformTenantDetailPage() {
       </div>
 
       <Tabs defaultValue="review" className="w-full space-y-6">
-        <TabsList variant="line" className="w-full">
+        <TabsList
+          variant="line"
+          className="flex h-auto w-full flex-wrap justify-start gap-1"
+        >
           <TabsTrigger value="review">Review</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
         <TabsContent value="review" className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="grid gap-6 2xl:grid-cols-[1fr_360px]">
             <div className="space-y-4">
               <Card className="shadow-none">
                 <CardHeader className="pb-3">

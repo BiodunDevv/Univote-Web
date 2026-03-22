@@ -65,13 +65,6 @@ const workspaceLinks = [
     icon: Rocket,
   },
   {
-    href: "/super-admin/onboarding",
-    label: "Onboarding queue",
-    description:
-      "Move new institutions from payment to provisioning and activation.",
-    icon: Rocket,
-  },
-  {
     href: "/super-admin/testimonials",
     label: "Testimonials",
     description:
@@ -98,6 +91,13 @@ const workspaceLinks = [
     description:
       "Inspect privileged actions across tenants and platform operations.",
     icon: FileText,
+  },
+  {
+    href: "/super-admin/biometrics",
+    label: "Biometric monitoring",
+    description:
+      "Inspect FAR, FRR, accuracy, and verification review posture across universities.",
+    icon: ShieldCheck,
   },
 ];
 
@@ -525,7 +525,7 @@ export default function PlatformSettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Tenants that cleared payment and are waiting on platform
+              Universities that have completed onboarding and are waiting on platform
               activation review.
             </p>
           </CardContent>

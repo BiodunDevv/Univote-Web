@@ -31,6 +31,7 @@ import {
 } from "@/lib/tenant-config";
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -156,6 +157,9 @@ export default function StudentLoginPage() {
 
   return (
     <div className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto mb-4 flex max-w-6xl justify-end">
+        <AnimatedThemeToggler variant="header" className="h-9" />
+      </div>
       <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div className="hidden rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-8 shadow-none lg:block lg:p-10">
           <div className="inline-flex rounded-full border border-border/70 bg-muted/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">

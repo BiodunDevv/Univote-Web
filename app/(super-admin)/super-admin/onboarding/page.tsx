@@ -122,7 +122,7 @@ export default function PlatformOnboardingPage() {
               setStatus(value as keyof typeof tabConfig)
             }
           >
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="flex h-auto w-full max-w-md flex-wrap gap-1">
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="pending_approval">
                 Pending approval
@@ -175,7 +175,7 @@ function OnboardingTenantCard({
   return (
     <Card className="overflow-hidden border-border/60 shadow-none">
       <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-1">
             <CardTitle
               className="line-clamp-2 wrap-break-word text-xl"
@@ -301,7 +301,7 @@ function OnboardingTenantCard({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="text-xs text-muted-foreground">
             Demo requested: {tenant.onboarding?.demo_requested ? "Yes" : "No"}
           </div>
@@ -470,7 +470,7 @@ function ApplicationReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border p-4">

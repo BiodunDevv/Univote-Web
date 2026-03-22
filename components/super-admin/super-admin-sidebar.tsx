@@ -5,12 +5,12 @@ import {
   Activity,
   Building2,
   FileText,
+  Fingerprint,
   LayoutDashboard,
   LifeBuoy,
   Megaphone,
   Rocket,
   Settings2,
-  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -20,20 +20,15 @@ import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavSearch, type SearchItem } from "@/components/nav-search";
 import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-
-const PlatformLogo = ({ className }: { className?: string }) => (
-  <Shield className={className} />
-);
+import { LogoIcon } from "@/components/logo";
 
 type NavSubItem = {
   title: string;
@@ -76,7 +71,7 @@ const superAdminNavMain: NavItem[] = [
 const superAdminNavProjects = [
   { name: "Announcements", url: "/super-admin/announcements", icon: Megaphone },
   { name: "Testimonials", url: "/super-admin/testimonials", icon: Megaphone },
-  { name: "Onboarding", url: "/super-admin/onboarding", icon: Rocket },
+  { name: "Biometrics", url: "/super-admin/biometrics", icon: Fingerprint },
   { name: "Audit Logs", url: "/super-admin/audit-logs", icon: FileText },
   { name: "System Health", url: "/super-admin/system-health", icon: Activity },
   { name: "Settings", url: "/super-admin/settings", icon: Settings2 },
@@ -89,7 +84,7 @@ function buildSearchItems(
   const results: SearchItem[] = [];
 
   navMain.forEach((item) => {
-    if (item.items?.length) {
+    if (item.items?.length && item.items.length > 1) {
       item.items.forEach((subItem) =>
         results.push({
           title: subItem.title,
@@ -102,7 +97,7 @@ function buildSearchItems(
 
     results.push({
       title: item.title,
-      url: item.url,
+      url: item.items?.[0]?.url || item.url,
       group: "Navigation",
     });
   });
@@ -166,23 +161,23 @@ export function SuperAdminSidebar({
     avatar: "",
     role: admin?.role ?? "super_admin",
   };
+  const teams = React.useMemo(
+    () => [
+      {
+        name: "Univote Platform",
+        slug: "platform",
+        logo: LogoIcon,
+        active: true,
+        plan: "Super Admin Console",
+      },
+    ],
+    [],
+  );
 
   return (
     <Sidebar collapsible="icon" data-tour="admin-sidebar" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <PlatformLogo className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Univote Platform</span>
-                <span className="truncate text-xs">Super Admin Console</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <TeamSwitcher teams={teams} />
         <NavSearch items={searchItems} />
       </SidebarHeader>
       <SidebarContent>

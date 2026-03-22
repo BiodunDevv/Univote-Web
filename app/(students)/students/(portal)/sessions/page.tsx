@@ -47,9 +47,16 @@ export default function StudentSessionsPage() {
       />
 
       <Tabs value={status} onValueChange={setStatus}>
-        <TabsList variant="line" className="w-full justify-start overflow-x-auto">
+        <TabsList
+          variant="line"
+          className="flex h-auto w-full flex-wrap justify-start gap-1"
+        >
           {statusTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="px-3 text-xs">
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="rounded-xl border border-border/70 px-3 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
+            >
               {tab.label}
             </TabsTrigger>
           ))}

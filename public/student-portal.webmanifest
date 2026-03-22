@@ -1,0 +1,22 @@
+{
+  "name": "UniVote Student Portal",
+  "short_name": "UniVote",
+  "description": "Install the UniVote student portal for a faster voting experience.",
+  "start_url": "/students/login",
+  "scope": "/students",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/Darklogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/Whitelogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

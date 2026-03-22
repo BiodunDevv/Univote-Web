@@ -6,12 +6,11 @@ import {
   BadgeCheck,
   Building2,
   CheckCircle2,
-  Loader2,
-  ShieldCheck,
   Users,
   Vote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { HeroIllustration } from "../HeroIllustration";
@@ -51,11 +50,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
       : studentToken
         ? "Open Portal"
         : "Portal Login";
-  const proofItems = [
-    "University-ready student, admin, and super-admin access",
-    "Flexible identity, structure, and voting controls",
-    "Fast election setup, secure voting, and transparent results",
-  ];
   const metricCards = [
     {
       label: "Active tenants",
@@ -118,20 +112,16 @@ export function HeroSection({ stats }: HeroSectionProps) {
             </div>
 
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
-              <Button
-                className="h-11 rounded-xl px-5 text-sm"
-                asChild={!isCheckingSession}
-                disabled={isCheckingSession}
-              >
-                {isCheckingSession ? (
-                  <span className="inline-flex items-center">
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    {primaryLabel}
-                  </span>
-                ) : (
+              {isCheckingSession ? (
+                <>
+                  <Skeleton className="h-11 w-full rounded-xl sm:w-40" />
+                  <Skeleton className="h-11 w-full rounded-xl sm:w-44" />
+                </>
+              ) : (
+                <Button className="h-11 rounded-xl px-5 text-sm" asChild>
                   <Link href={primaryHref}>{primaryLabel}</Link>
-                )}
-              </Button>
+                </Button>
+              )}
               {!token && !studentToken ? (
                 <Button
                   variant="outline"

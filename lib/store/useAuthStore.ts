@@ -87,6 +87,7 @@ interface AuthState {
   unlinkOrganization: (tenantSlug: string) => Promise<TenantOrganization[]>;
   logout: () => void;
   updateAdmin: (updatedAdmin: Partial<AuthAdmin>) => void;
+  updateTenant: (updatedTenant: Partial<TenantContext>) => void;
   forgotPassword: (email: string, tenantSlug?: string | null) => Promise<void>;
   resetPassword: (
     email: string,
@@ -278,6 +279,32 @@ export const useAuthStore = create<AuthState>()(
 
           return {
             admin: nextAdmin,
+          };
+        });
+      },
+
+      updateTenant: (updatedTenant: Partial<TenantContext>) => {
+        set((state) => {
+          const nextTenant = state.tenant
+            ? { ...state.tenant, ...updatedTenant }
+            : null;
+
+          if (state.token && state.admin) {
+            syncSharedAdminContext({
+              token: state.token,
+              admin: state.admin,
+              tenant: nextTenant,
+              organizations: state.organizations,
+              membership: state.membership,
+            });
+          }
+
+          if (state.admin?.role !== "super_admin") {
+            setTenantSlugOverride(nextTenant?.slug ?? null);
+          }
+
+          return {
+            tenant: nextTenant,
           };
         });
       },

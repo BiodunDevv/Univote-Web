@@ -171,6 +171,139 @@ export type AdminFaceppTestResponse = {
   };
 };
 
+export type BiometricMetricSummary = {
+  total_attempts: number;
+  accepted_attempts: number;
+  rejected_attempts: number;
+  reviewed_attempts: number;
+  unlabeled_attempts: number;
+  false_accepts: number;
+  false_rejects: number;
+  correct_accepts: number;
+  correct_rejects: number;
+  total_genuine_attempts: number;
+  total_impostor_attempts: number;
+  far: number;
+  frr: number;
+  accuracy: number;
+};
+
+export type AdminBiometricMetricsResponse = {
+  threshold: number;
+  metrics: {
+    summary: BiometricMetricSummary;
+    trends: Array<{
+      date: string;
+      accepted: number;
+      rejected: number;
+    }>;
+    confidence_trend: Array<{
+      date: string;
+      average_confidence: number;
+    }>;
+    failure_reasons: Array<{
+      reason: string;
+      count: number;
+    }>;
+  };
+};
+
+export type AdminVerificationLogEntry = {
+  id: string;
+  tenant_id?: string | null;
+  user_id: {
+    id: string;
+    full_name: string;
+    matric_no?: string | null;
+    email?: string | null;
+  } | null;
+  session_id: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
+  reviewed_by: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  confidence_score: number | null;
+  threshold_used: number | null;
+  result: "accepted" | "rejected";
+  failure_reason: string | null;
+  is_genuine_attempt: boolean | null;
+  review_note?: string | null;
+  reviewed_at?: string | null;
+  provider: string;
+  device_id?: string | null;
+  ip_address?: string | null;
+  geo_location?: {
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  image_url?: string | null;
+  timestamp: string;
+};
+
+export type AdminVerificationLogsResponse = {
+  logs: AdminVerificationLogEntry[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+};
+
+export type TenantProfileSettingsResponse = {
+  tenant: TenantContext;
+  labels?: TenantContext["labels"];
+  identity?: TenantContext["identity"];
+  auth_policy?: TenantContext["auth_policy"];
+  participant_fields?: TenantContext["participant_fields"];
+  eligibility_policy?: TenantContext["eligibility_policy"];
+  entitlements?: TenantContext["entitlements"];
+};
+
+export type TenantIdentitySettingsResponse = {
+  identity: TenantContext["identity"];
+  labels?: TenantContext["labels"];
+  catalog?: Record<string, unknown>;
+  platform?: Record<string, unknown>;
+  entitlements?: TenantContext["entitlements"];
+};
+
+export type TenantLabelSettingsResponse = {
+  labels: TenantContext["labels"];
+  entitlements?: TenantContext["entitlements"];
+};
+
+export type TenantAuthPolicySettingsResponse = {
+  auth_policy: TenantContext["auth_policy"];
+  support?: {
+    allow_participant_tickets?: boolean;
+  };
+  notifications?: {
+    email_enabled?: boolean;
+    in_app_enabled?: boolean;
+    push_enabled?: boolean;
+  };
+  voting?: {
+    require_face_verification?: boolean;
+  };
+  participant_fields?: TenantContext["participant_fields"];
+  eligibility_policy?: TenantContext["eligibility_policy"];
+  entitlements?: TenantContext["entitlements"];
+};
+
+export type TenantParticipantFieldsResponse = {
+  participant_fields: TenantContext["participant_fields"];
+  eligibility_policy?: TenantContext["eligibility_policy"];
+  defaults?: Record<string, unknown>;
+  platform?: Record<string, unknown>;
+  entitlements?: TenantContext["entitlements"];
+};
+
 export type AdminStudentListResponse = {
   students: Student[];
   total: number;
@@ -980,6 +1113,126 @@ export function useAdminAdvancedSessionAnalyticsQuery(
   });
 }
 
+export function useAdminBiometricMetricsQuery(
+  filters: {
+    session_id?: string;
+    start_date?: string;
+    end_date?: string;
+  } = {},
+  options?: QueryHookOptions,
+) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.biometricMetrics(filters),
+    queryFn: ({ signal }) =>
+      apiRequest<AdminBiometricMetricsResponse>(
+        "/api/admin/settings/biometric-metrics",
+        {
+          auth: "admin",
+          params: filters,
+          signal,
+        },
+      ),
+  });
+}
+
+export function useAdminVerificationLogsQuery(
+  filters: {
+    page?: number;
+    limit?: number;
+    session_id?: string;
+    result?: string;
+    failure_reason?: string;
+    review_state?: "reviewed" | "pending";
+    start_date?: string;
+    end_date?: string;
+  } = {},
+  options?: QueryHookOptions,
+) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.verificationLogs(filters),
+    queryFn: ({ signal }) =>
+      apiRequest<AdminVerificationLogsResponse>(
+        "/api/admin/settings/verification-logs",
+        {
+          auth: "admin",
+          params: filters,
+          signal,
+        },
+      ),
+  });
+}
+
+export function useTenantProfileSettingsQuery(options?: QueryHookOptions) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.tenantProfile(),
+    queryFn: ({ signal }) =>
+      apiRequest<TenantProfileSettingsResponse>(
+        "/api/admin/settings/tenant-profile",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
+  });
+}
+
+export function useTenantIdentitySettingsQuery(options?: QueryHookOptions) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.identity(),
+    queryFn: ({ signal }) =>
+      apiRequest<TenantIdentitySettingsResponse>("/api/admin/settings/identity", {
+        auth: "admin",
+        signal,
+      }),
+  });
+}
+
+export function useTenantLabelSettingsQuery(options?: QueryHookOptions) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.labels(),
+    queryFn: ({ signal }) =>
+      apiRequest<TenantLabelSettingsResponse>("/api/admin/settings/labels", {
+        auth: "admin",
+        signal,
+      }),
+  });
+}
+
+export function useTenantAuthPolicySettingsQuery(options?: QueryHookOptions) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.authPolicy(),
+    queryFn: ({ signal }) =>
+      apiRequest<TenantAuthPolicySettingsResponse>(
+        "/api/admin/settings/auth-policy",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
+  });
+}
+
+export function useTenantParticipantFieldsQuery(options?: QueryHookOptions) {
+  return useQuery({
+    enabled: options?.enabled ?? true,
+    queryKey: queryKeys.settings.participantFields(),
+    queryFn: ({ signal }) =>
+      apiRequest<TenantParticipantFieldsResponse>(
+        "/api/admin/settings/participant-fields",
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
+  });
+}
+
 export function useAdminDirectoryQuery(
   filters: {
     page?: number;
@@ -1600,6 +1853,160 @@ export function useTestFaceppMutation() {
         auth: "admin",
         data: { image_url },
       }),
+  });
+}
+
+export function useUpdateBiometricThresholdMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (face_match_threshold: number) =>
+      apiRequest<{ message: string; threshold: number }>(
+        "/api/admin/settings/biometric-threshold",
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: { face_match_threshold },
+        },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["settings", "biometric-metrics"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.system(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateTenantProfileSettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      apiRequest<TenantProfileSettingsResponse>(
+        "/api/admin/settings/tenant-profile",
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.tenantProfile(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.system(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateTenantIdentitySettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      apiRequest<TenantIdentitySettingsResponse>("/api/admin/settings/identity", {
+        method: "PATCH",
+        auth: "admin",
+        data: payload,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.settings.identity() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.tenantProfile(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateTenantLabelSettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      apiRequest<TenantLabelSettingsResponse>("/api/admin/settings/labels", {
+        method: "PATCH",
+        auth: "admin",
+        data: payload,
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.settings.labels() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.tenantProfile(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateTenantAuthPolicySettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      apiRequest<TenantAuthPolicySettingsResponse>(
+        "/api/admin/settings/auth-policy",
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: payload,
+        },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.authPolicy(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.settings.tenantProfile(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useReviewVerificationLogMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      is_genuine_attempt,
+      review_note,
+    }: {
+      id: string;
+      is_genuine_attempt: boolean;
+      review_note?: string;
+    }) =>
+      apiRequest<{ message: string; log: AdminVerificationLogEntry }>(
+        `/api/admin/settings/verification-logs/${id}/review`,
+        {
+          method: "PATCH",
+          auth: "admin",
+          data: { is_genuine_attempt, review_note },
+        },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["settings", "verification-logs"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["settings", "biometric-metrics"],
+        }),
+      ]);
+    },
   });
 }
 
