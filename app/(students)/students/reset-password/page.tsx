@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
@@ -185,7 +186,11 @@ export default function StudentResetPasswordPage() {
                 className="w-full"
                 disabled={isLoading || success}
               >
-                {isLoading ? "Resetting password..." : "Reset password"}
+                {isLoading ? (
+                  <LoadingButtonContent label="Resetting password..." />
+                ) : (
+                  "Reset password"
+                )}
               </Button>
             </form>
 

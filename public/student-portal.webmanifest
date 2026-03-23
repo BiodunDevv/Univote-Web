@@ -10,13 +10,13 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/Darklogo.png",
+      "src": "/Whitelogo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/Whitelogo.png",
+      "src": "/Darklogo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

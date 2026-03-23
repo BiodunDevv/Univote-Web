@@ -5,9 +5,11 @@ import {
   PortalEmptyState,
   PortalHero,
   PortalPage,
+  PortalStackCard,
 } from "@/components/students/portal/portal-page";
 import { StudentSessionCard } from "@/components/students/portal/session-card";
 import { useStudentSessionsQuery } from "@/lib/queries/student";
+import { Badge } from "@/components/ui/badge";
 
 export default function StudentVoteLandingPage() {
   const activeQuery = useStudentSessionsQuery({ status: "active" });
@@ -33,27 +35,45 @@ export default function StudentVoteLandingPage() {
     <PortalPage>
       <PortalHero
         eyebrow="Vote"
-        title="Ready ballots"
-        description="Choose a session below to open its ballot. Active sessions are shown first."
+        title="Vote center"
+        description="Open an active ballot on your phone for the smoothest voting flow. Upcoming sessions stay here so you can review them early."
       />
 
-      {sessions.length === 0 ? (
-        <PortalEmptyState
-          title="No ready ballots"
-          description="There are no active or upcoming sessions available to vote in right now."
-        />
-      ) : (
-        <div className="grid gap-3">
-          {sessions.map((session) => (
-            <StudentSessionCard
-              key={session._id}
-              session={session}
-              href={`/students/vote/${session._id}`}
-              ctaLabel={session.status === "active" ? "Start voting" : "Review before voting"}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.12fr)_minmax(280px,0.88fr)]">
+        {sessions.length === 0 ? (
+          <PortalEmptyState
+            title="No ready ballots"
+            description="There are no active or upcoming sessions available to vote in right now."
+          />
+        ) : (
+          <div className="grid gap-3">
+            {sessions.map((session) => (
+              <StudentSessionCard
+                key={session._id}
+                session={session}
+                href={`/students/vote/${session._id}`}
+                ctaLabel={session.status === "active" ? "Start voting" : "Review before voting"}
+              />
+            ))}
+          </div>
+        )}
+
+        <PortalStackCard className="space-y-3">
+          <Badge variant="outline" className="w-fit">
+            Mobile-first voting
+          </Badge>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">
+              Use your phone to cast ballots
+            </p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              The full ballot flow uses your selfie and location in one seamless
+              mobile experience. Desktop still works for browsing sessions,
+              results, and your profile.
+            </p>
+          </div>
+        </PortalStackCard>
+      </div>
     </PortalPage>
   );
 }

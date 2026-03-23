@@ -1,5 +1,27 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+@keyframes book-open-left {
+  0%, 100% {
+    transform: perspective(120px) rotateY(0deg);
+    opacity: 0.75;
+  }
+  50% {
+    transform: perspective(120px) rotateY(-28deg);
+    opacity: 1;
+  }
+}
+
+@keyframes book-open-right {
+  0%, 100% {
+    transform: perspective(120px) rotateY(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: perspective(120px) rotateY(28deg);
+    opacity: 1;
+  }
+}
 @import "driver.js/dist/driver.css";
 
 @custom-variant dark (&:is(.dark *));

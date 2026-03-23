@@ -8,6 +8,7 @@ import {
   IconUserX,
 } from "@tabler/icons-react";
 import { CheckCircle2 } from "lucide-react";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,8 @@ export function StudentsRegistryTable({
   onMarkInactive,
   onDelete,
   onPreviewImage,
+  statusActionStudentId,
+  statusActionType,
 }: StudentsRegistryTableProps) {
   return (
     <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
@@ -81,6 +84,12 @@ export function StudentsRegistryTable({
       {students.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {students.map((student, index) => {
+            const isActivating =
+              statusActionStudentId === student._id &&
+              statusActionType === "activate";
+            const isDeactivating =
+              statusActionStudentId === student._id &&
+              statusActionType === "deactivate";
             const initials = student.full_name
               .split(" ")
               .map((name) => name[0])
@@ -173,21 +182,29 @@ export function StudentsRegistryTable({
                       <p>Level: {student.level || "Not set"}</p>
                     ) : null}
                     {showFaceField ? (
-                      <Badge
-                        variant={
-                          student.has_facial_data ? "default" : "outline"
-                        }
-                        className="mt-1"
-                      >
-                        {student.has_facial_data ? (
-                          <>
-                            <CheckCircle2 className="h-3 w-3" />
-                            Face ready
-                          </>
-                        ) : (
-                          "Face pending"
-                        )}
-                      </Badge>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <Badge
+                          variant={
+                            student.has_facial_data ? "default" : "outline"
+                          }
+                        >
+                          {student.has_facial_data ? (
+                            <>
+                              <CheckCircle2 className="h-3 w-3" />
+                              Face ready
+                            </>
+                          ) : (
+                            "Face pending"
+                          )}
+                        </Badge>
+                        <Badge variant="outline">
+                          {student.photo_review_status === "approved"
+                            ? "Photo approved"
+                            : student.photo_review_status === "rejected"
+                              ? "Photo rejected"
+                              : "Photo review pending"}
+                        </Badge>
+                      </div>
                     ) : null}
                   </div>
 
@@ -199,7 +216,7 @@ export function StudentsRegistryTable({
                       onClick={() => onView(student._id)}
                     >
                       <IconEye className="mr-2 h-4 w-4" />
-                      View
+                      Details
                     </Button>
                     {canManageStudents ? (
                       <>
@@ -217,20 +234,34 @@ export function StudentsRegistryTable({
                             variant="outline"
                             size="sm"
                             className="w-full"
+                            disabled={isDeactivating || isActivating}
                             onClick={() => onMarkInactive(student._id)}
                           >
-                            <IconUserX className="mr-2 h-4 w-4" />
-                            Inactive
+                            {isDeactivating ? (
+                              <LoadingButtonContent label="Deactivating..." />
+                            ) : (
+                              <>
+                                <IconUserX className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </>
+                            )}
                           </Button>
                         ) : (
                           <Button
                             variant="outline"
                             size="sm"
                             className="w-full"
+                            disabled={isActivating || isDeactivating}
                             onClick={() => onMarkActive(student._id)}
                           >
-                            <IconUserCheck className="mr-2 h-4 w-4" />
-                            Active
+                            {isActivating ? (
+                              <LoadingButtonContent label="Activating..." />
+                            ) : (
+                              <>
+                                <IconUserCheck className="mr-2 h-4 w-4" />
+                                Activate
+                              </>
+                            )}
                           </Button>
                         )}
                         <Button

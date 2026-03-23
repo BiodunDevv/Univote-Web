@@ -25,7 +25,10 @@ export default function StudentResultsPage() {
     );
   }, [sessionsQuery.data?.sessions]);
 
-  if (sessionsQuery.isLoading || historyQuery.isLoading) {
+  if (
+    (sessionsQuery.isLoading && !sessionsQuery.data) ||
+    (historyQuery.isLoading && !historyQuery.data)
+  ) {
     return (
       <ChangingLoadingState
         messages={[
@@ -42,7 +45,8 @@ export default function StudentResultsPage() {
       <PortalHero
         eyebrow="Results"
         title="Tallies and history"
-        description="Review live and final tallies, then switch to your vote history without leaving the page."
+        description="Review live races, final standings, and your recorded vote history in one election board."
+        className="rounded-[2rem] p-4 sm:p-5"
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -73,7 +77,7 @@ export default function StudentResultsPage() {
           ) : (
             <div className="grid gap-3">
               {resultSessions.map((session) => (
-                <Card key={session._id} className="rounded-[1.5rem] border shadow-none">
+                <Card key={session._id} className="rounded-[1.75rem] border shadow-none">
                   <CardHeader className="pb-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="text-[11px]">{session.status}</Badge>
@@ -87,6 +91,14 @@ export default function StudentResultsPage() {
                     <p className="text-sm text-muted-foreground">
                       {session.description || "No description provided."}
                     </p>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full border bg-muted/20 px-2.5 py-1">
+                        {session.status === "active" ? "Live board available" : "Final board available"}
+                      </span>
+                      <span className="rounded-full border bg-muted/20 px-2.5 py-1">
+                        {session.has_voted ? "Your vote recorded" : "View-only access"}
+                      </span>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Ends {formatDateTime(session.end_time)}
                     </p>

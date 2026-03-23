@@ -57,4 +57,6 @@ export type StudentsRegistryTableProps = {
   onMarkInactive: (studentId: string) => void;
   onDelete: (studentId: string) => void;
   onPreviewImage: (preview: StudentImagePreview) => void;
+  statusActionStudentId?: string | null;
+  statusActionType?: "activate" | "deactivate" | null;
 };

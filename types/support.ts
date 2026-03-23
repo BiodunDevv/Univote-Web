@@ -9,6 +9,7 @@ export type SupportTicketCategory =
   | "technical";
 
 export interface SupportActorSnapshot {
+  id?: string;
   name: string;
   email?: string | null;
   matric_no?: string | null;

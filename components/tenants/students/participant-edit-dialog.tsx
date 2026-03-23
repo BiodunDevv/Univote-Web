@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { BadgeCheck, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -146,11 +146,11 @@ export function ParticipantEditDialog({
       <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="text-sm font-semibold">
-            Edit {participantLabels.singular}
+            {participantLabels.singular} details
           </SheetTitle>
           <SheetDescription className="text-xs">
-            Update profile details and access state without leaving the
-            registry.
+            Review profile data, approve the submitted photo, and update access
+            state without leaving the registry.
           </SheetDescription>
         </SheetHeader>
 
@@ -205,9 +205,33 @@ export function ParticipantEditDialog({
                     onChange={(event) => setPhotoUrl(event.target.value.trim())}
                     placeholder="Paste image URL"
                   />
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full border border-border/70 bg-background px-3 py-1">
+                      {student.photo_review_status === "approved"
+                        ? "Photo approved"
+                        : student.photo_review_status === "rejected"
+                          ? "Photo rejected"
+                          : "Photo review pending"}
+                    </span>
+                    {student.has_facial_data ? (
+                      <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-700">
+                        Face verified
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-border/70 bg-background px-3 py-1">
+                        Face verification pending
+                      </span>
+                    )}
+                  </div>
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted/20">
-                    <Upload className="h-3.5 w-3.5" />
-                    {isUploadingPhoto ? "Uploading..." : "Upload image"}
+                    {isUploadingPhoto ? (
+                      <LoadingButtonContent label="Uploading image..." />
+                    ) : (
+                      <>
+                        <Upload className="h-3.5 w-3.5" />
+                        Upload image
+                      </>
+                    )}
                     <input
                       type="file"
                       accept="image/*"
@@ -218,6 +242,39 @@ export function ParticipantEditDialog({
                       }
                     />
                   </label>
+                  {student.photo_review_status !== "approved" && photoUrl ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-fit"
+                      disabled={updateParticipant.isPending}
+                      onClick={async () => {
+                        try {
+                          await updateParticipant.mutateAsync({
+                            photo_review_status: "approved",
+                          });
+                          await onUpdated();
+                          toast.success("Student photo approved");
+                          onOpenChange(false);
+                        } catch (error) {
+                          toast.error(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to approve student photo",
+                          );
+                        }
+                      }}
+                    >
+                      {updateParticipant.isPending ? (
+                        <LoadingButtonContent label="Approving photo..." />
+                      ) : (
+                        <>
+                          <BadgeCheck className="mr-2 h-4 w-4" />
+                          Approve photo
+                        </>
+                      )}
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -315,7 +372,7 @@ export function ParticipantEditDialog({
                 {updateParticipant.isPending ? (
                   <LoadingButtonContent label="Saving changes..." />
                 ) : (
-                  "Save changes"
+                  "Save updates"
                 )}
               </Button>
             </SheetFooter>

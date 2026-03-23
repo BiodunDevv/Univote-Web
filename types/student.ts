@@ -14,6 +14,7 @@ export interface Student {
   level?: string | null;
   photo_url?: string | null;
   has_facial_data?: boolean;
+  photo_review_status?: "pending" | "approved" | "rejected";
   is_active: boolean;
   has_voted_sessions?: string[];
   is_logged_in?: boolean;

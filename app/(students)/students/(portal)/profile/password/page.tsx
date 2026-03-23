@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useUpdateStudentPasswordMutation } from "@/lib/queries/student";
 import { PortalHero, PortalPage } from "@/components/students/portal/portal-page";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,7 +92,11 @@ export default function StudentProfilePasswordPage() {
 
           <div className="flex justify-end">
             <Button onClick={() => void handleSave()} disabled={updatePassword.isPending}>
-              {updatePassword.isPending ? "Updating..." : "Update password"}
+              {updatePassword.isPending ? (
+                <LoadingButtonContent label="Updating password..." />
+              ) : (
+                "Update password"
+              )}
             </Button>
           </div>
         </CardContent>

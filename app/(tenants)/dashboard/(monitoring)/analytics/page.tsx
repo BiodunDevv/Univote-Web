@@ -24,7 +24,10 @@ import {
   useAdminVerificationLogsQuery,
   useReviewVerificationLogMutation,
 } from "@/lib/queries/admin";
-import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import {
+  ChangingLoadingState,
+  LoadingButtonContent,
+} from "@/components/shared/changing-loading-state";
 import {
   TenantAccessRestricted,
   TenantMetricCard,
@@ -442,7 +445,11 @@ export default function AnalyticsPage() {
                           }
                         }}
                       >
-                        {reviewAction === log.id ? "Saving..." : "Mark genuine"}
+                        {reviewAction === log.id ? (
+                          <LoadingButtonContent label="Saving..." />
+                        ) : (
+                          "Mark genuine"
+                        )}
                       </Button>
                       <Button
                         size="sm"
@@ -460,7 +467,11 @@ export default function AnalyticsPage() {
                           }
                         }}
                       >
-                        {reviewAction === log.id ? "Saving..." : "Mark impostor"}
+                        {reviewAction === log.id ? (
+                          <LoadingButtonContent label="Saving..." />
+                        ) : (
+                          "Mark impostor"
+                        )}
                       </Button>
                     </div>
                   </div>

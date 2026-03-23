@@ -14,6 +14,8 @@ export interface StudentPortalUser {
   college: string;
   level: string;
   photo_url?: string | null;
+  last_profile_photo_updated_at?: string | null;
+  next_profile_photo_update_at?: string | null;
   has_facial_data: boolean;
   has_voted_sessions?: string[];
   is_logged_in?: boolean;

@@ -106,6 +106,7 @@ export function useUpdateSupportTicketMutation(scope: SupportScope, ticketId: st
       priority?: SupportTicketPriority;
       category?: SupportTicketCategory;
       assigned_admin_id?: string | null;
+      profile_photo_reset?: boolean;
     }) =>
       apiRequest<{ ticket: SupportConversationResponse["ticket"] }>(
         `/api/support/tickets/${ticketId}`,

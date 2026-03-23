@@ -155,6 +155,10 @@ export function SupportDesk({
     [ticketsQuery.data?.tickets],
   );
   const deepLinkedTicketId = searchParams.get("ticket");
+  const prefillCreate = searchParams.get("create");
+  const prefillSubject = searchParams.get("subject");
+  const prefillDescription = searchParams.get("description");
+  const prefillCategory = searchParams.get("category");
   const effectiveSelectedTicketId =
     deepLinkedTicketId &&
     tickets.some((ticket) => ticket.id === deepLinkedTicketId)
@@ -380,6 +384,40 @@ export function SupportDesk({
       setTicketAction(null);
     }
   };
+
+  const handleResetPhotoCooldown = async () => {
+    if (!effectiveSelectedTicketId) return;
+
+    try {
+      setTicketAction("save");
+      await updateTicket.mutateAsync({
+        profile_photo_reset: true,
+      });
+      toast.success("Student photo reset unlocked");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reset photo lock",
+      );
+    } finally {
+      setTicketAction(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!canCreate || prefillCreate !== "1") return;
+
+    setCreateOpen(true);
+    setCreateForm((current) => ({
+      ...current,
+      subject: prefillSubject || current.subject,
+      description: prefillDescription || current.description,
+      category: CATEGORY_OPTIONS.includes(
+        (prefillCategory || current.category) as SupportTicketCategory,
+      )
+        ? ((prefillCategory || current.category) as SupportTicketCategory)
+        : current.category,
+    }));
+  }, [canCreate, prefillCategory, prefillCreate, prefillDescription, prefillSubject]);
 
   if (overviewQuery.isLoading || ticketsQuery.isLoading) {
     return (
@@ -745,6 +783,19 @@ export function SupportDesk({
                     "Save"
                   )}
                 </Button>
+                {selectedConversation.ticket.requester_type === "student" &&
+                selectedConversation.ticket.category === "account" &&
+                /photo reset/i.test(selectedConversation.ticket.subject) ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => void handleResetPhotoCooldown()}
+                    disabled={Boolean(ticketAction)}
+                  >
+                    Unlock photo
+                  </Button>
+                ) : null}
               </div>
             ) : selectedConversation &&
               !canManage &&
@@ -838,6 +889,19 @@ export function SupportDesk({
                   "Save"
                 )}
               </Button>
+              {selectedConversation.ticket.requester_type === "student" &&
+              selectedConversation.ticket.category === "account" &&
+              /photo reset/i.test(selectedConversation.ticket.subject) ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => void handleResetPhotoCooldown()}
+                  disabled={Boolean(ticketAction)}
+                >
+                  Unlock photo
+                </Button>
+              ) : null}
             </div>
           ) : null}
 

@@ -23,6 +23,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -53,8 +61,16 @@ export default function StudentLoginPage() {
   const ref = searchParams.get("ref") || "/students/home";
   const restrictionReason = searchParams.get("reason");
 
-  const { login, token, hasHydrated, isLoading, error, clearError, tenant } =
-    useStudentAuthStore();
+  const {
+    login,
+    token,
+    student,
+    hasHydrated,
+    isLoading,
+    error,
+    clearError,
+    tenant,
+  } = useStudentAuthStore();
   const { canInstall, isPrompting, promptInstall } =
     useStudentPwaInstallState();
 
@@ -64,6 +80,8 @@ export default function StudentLoginPage() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstLoginPromptOpen, setFirstLoginPromptOpen] = useState(false);
+  const [postLoginRoute, setPostLoginRoute] = useState(ref);
 
   const organizationsQuery = usePublicOrganizationsQuery(search);
   const selectedOrganizationQuery = usePublicOrganizationQuery(
@@ -119,10 +137,10 @@ export default function StudentLoginPage() {
         : null;
 
   useEffect(() => {
-    if (hasHydrated && token) {
+    if (hasHydrated && token && !student?.first_login && !firstLoginPromptOpen) {
       router.replace(ref);
     }
-  }, [hasHydrated, token, router, ref]);
+  }, [firstLoginPromptOpen, hasHydrated, ref, router, student?.first_login, token]);
 
   useEffect(() => {
     if (hostTenantSlug) {
@@ -145,10 +163,9 @@ export default function StudentLoginPage() {
         });
       }
       if (result.requiresPasswordChange) {
-        toast.warning("Temporary password in use", {
-          description:
-            "You can continue into the portal now, but you should change the default password immediately.",
-        });
+        setPostLoginRoute(ref);
+        setFirstLoginPromptOpen(true);
+        return;
       }
       router.replace(ref);
     } catch (submitError) {
@@ -177,6 +194,15 @@ export default function StudentLoginPage() {
     clearError();
   };
 
+  const routeToCreatePassword = () => {
+    const query = new URLSearchParams();
+    query.set("ref", postLoginRoute);
+    if (hostTenantSlug || selectedOrgSlug) {
+      query.set("organization", hostTenantSlug || selectedOrgSlug);
+    }
+    router.push(`/students/create-password?${query.toString()}`);
+  };
+
   return (
     <div className="min-h-svh overflow-x-hidden bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <div className="mx-auto mb-4 flex max-w-6xl items-center justify-between gap-3">
@@ -189,8 +215,7 @@ export default function StudentLoginPage() {
         <AnimatedThemeToggler variant="header" className="h-9" />
       </div>
       <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-        <div className="relative overflow-hidden rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none sm:p-6 lg:p-10 hidden md:block">
-          <div className="absolute inset-x-0 top-0 h-28 bg-linear-to-b from-primary/8 to-transparent" />
+        <div className="relative overflow-hidden rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none hidden md:block">
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />
@@ -236,10 +261,10 @@ export default function StudentLoginPage() {
                   Selected university
                 </p>
                 <p className="mt-1 text-base font-semibold text-foreground">
-                  {selectedOrganization.name}
+                  University Name: {selectedOrganization.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {selectedOrganization.slug}
+                  University Slug: {selectedOrganization.slug}
                 </p>
               </div>
             ) : null}
@@ -262,7 +287,7 @@ export default function StudentLoginPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 p-5 sm:p-6">
+              <CardContent className="space-y-4 p-3">
                 {canInstall ? (
                   <Button
                     type="button"
@@ -363,7 +388,7 @@ export default function StudentLoginPage() {
                   ) : null}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-5 p-5 sm:p-6">
+              <CardContent className="space-y-3 p-3">
                 {canInstall ? (
                   <Button
                     type="button"
@@ -460,10 +485,14 @@ export default function StudentLoginPage() {
                     className="h-11 w-full rounded-2xl"
                     disabled={isLoading}
                   >
-                    {isLoading
-                      ? "Signing in..."
-                      : `Continue to ${labels.singular.toLowerCase()} portal`}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {isLoading ? (
+                      <LoadingButtonContent label="Signing in..." />
+                    ) : (
+                      <>
+                        Continue to {labels.singular.toLowerCase()} portal
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </form>
 
@@ -491,6 +520,41 @@ export default function StudentLoginPage() {
           )}
         </Card>
       </div>
+
+      <Dialog
+        open={firstLoginPromptOpen}
+        onOpenChange={setFirstLoginPromptOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Secure your account</DialogTitle>
+            <DialogDescription>
+              You just signed in with the default password for the first time.
+              Change it now for better security, or continue and update it from
+              your profile immediately after entry.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+            Recommended: create a new password now so your student portal stays
+            protected before you continue.
+          </div>
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFirstLoginPromptOpen(false);
+                router.replace(postLoginRoute);
+              }}
+            >
+              Continue with current password
+            </Button>
+            <Button type="button" onClick={routeToCreatePassword}>
+              Change password now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

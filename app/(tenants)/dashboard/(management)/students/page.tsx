@@ -101,6 +101,12 @@ export function StudentsPage() {
     null,
   );
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [statusActionStudentId, setStatusActionStudentId] = useState<
+    string | null
+  >(null);
+  const [statusActionType, setStatusActionType] = useState<
+    "activate" | "deactivate" | null
+  >(null);
 
   const canManageStudents =
     admin?.role === "super_admin" ||
@@ -411,6 +417,8 @@ export function StudentsPage() {
 
   const handleMarkActive = async (studentId: string) => {
     try {
+      setStatusActionStudentId(studentId);
+      setStatusActionType("activate");
       await activateStudent.mutateAsync(studentId);
       await refreshCurrentView();
       toast.success(`${participantLabels.singular} marked active`);
@@ -420,11 +428,16 @@ export function StudentsPage() {
           ? error.message
           : `Failed to mark ${participantLabels.singular.toLowerCase()} active`;
       toast.error("Update failed", { description: message });
+    } finally {
+      setStatusActionStudentId(null);
+      setStatusActionType(null);
     }
   };
 
   const handleMarkInactive = async (studentId: string) => {
     try {
+      setStatusActionStudentId(studentId);
+      setStatusActionType("deactivate");
       await deactivateStudent.mutateAsync(studentId);
       await refreshCurrentView();
       toast.success(`${participantLabels.singular} marked inactive`);
@@ -434,6 +447,9 @@ export function StudentsPage() {
           ? error.message
           : `Failed to mark ${participantLabels.singular.toLowerCase()} inactive`;
       toast.error("Update failed", { description: message });
+    } finally {
+      setStatusActionStudentId(null);
+      setStatusActionType(null);
     }
   };
 
@@ -830,9 +846,7 @@ export function StudentsPage() {
                       return prev.filter((id) => id !== studentId);
                     });
                   }}
-                  onView={(studentId: string) =>
-                    router.push(`/dashboard/students/${studentId}`)
-                  }
+                  onView={(studentId: string) => setEditingStudentId(studentId)}
                   onEdit={(studentId: string) => setEditingStudentId(studentId)}
                   onMarkActive={(studentId: string) =>
                     void handleMarkActive(studentId)
@@ -844,6 +858,8 @@ export function StudentsPage() {
                     void handleDeleteStudent(studentId)
                   }
                   onPreviewImage={setPreviewImage}
+                  statusActionStudentId={statusActionStudentId}
+                  statusActionType={statusActionType}
                 />
               </div>
 

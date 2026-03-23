@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
@@ -123,7 +124,11 @@ export default function StudentForgotPasswordPage() {
                 className="w-full"
                 disabled={isLoading || success}
               >
-                {isLoading ? "Sending reset code..." : "Send reset code"}
+                {isLoading ? (
+                  <LoadingButtonContent label="Sending reset code..." />
+                ) : (
+                  "Send reset code"
+                )}
               </Button>
             </form>
 

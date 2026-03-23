@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
 
@@ -117,7 +118,11 @@ export default function StudentCreatePasswordPage() {
               ) : null}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Securing account..." : "Create password"}
+                {isLoading ? (
+                  <LoadingButtonContent label="Securing account..." />
+                ) : (
+                  "Create password"
+                )}
               </Button>
             </form>
           </CardContent>

@@ -14,7 +14,10 @@ import {
   Vote,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import {
+  ChangingLoadingState,
+  LoadingButtonContent,
+} from "@/components/shared/changing-loading-state";
 import { PortalPage } from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import {
@@ -28,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type VoteStep = "ballot" | "verification" | "review";
 type SelfieStatus = "idle" | "choosing" | "uploading" | "ready" | "error";
@@ -36,6 +40,12 @@ function getVoteErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.code === "ALREADY_VOTED") {
       return "Your vote has already been recorded for this session.";
+    }
+    if (error.code === "MOBILE_DEVICE_REQUIRED") {
+      return "This ballot can only be completed from a mobile device. Open the student app on your phone and try again.";
+    }
+    if (error.code === "NO_REGISTERED_FACE") {
+      return "Your face verification profile is not enrolled or needs to be refreshed. Please contact your university administrator.";
     }
     if (error.code === "GEOFENCE_VIOLATION") {
       return "You are outside the approved voting radius for this session. Move into the allowed area and try again.";
@@ -61,6 +71,8 @@ export default function StudentVotePage() {
   const sessionId = params.id as string;
   const { data, isLoading, error } = useStudentSessionDetailQuery(sessionId);
   const submitVote = useSubmitVoteMutation();
+  const isMobile = useIsMobile();
+  const [hasMounted, setHasMounted] = useState(false);
 
   const [selectedByCategory, setSelectedByCategory] = useState<
     Record<string, string>
@@ -92,6 +104,10 @@ export default function StudentVotePage() {
   const canContinueFromVerification = Boolean(imageUrl && location);
 
   useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
@@ -116,6 +132,40 @@ export default function StudentVotePage() {
       <Card className="border shadow-none">
         <CardContent className="p-6 text-sm text-muted-foreground">
           {(error as Error | undefined)?.message || "Ballot could not be loaded."}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasMounted) {
+    return (
+      <ChangingLoadingState
+        messages={[
+          "Preparing ballot workspace...",
+          "Checking device requirements...",
+        ]}
+      />
+    );
+  }
+
+  if (!isMobile) {
+    return (
+      <Card className="border shadow-none">
+        <CardContent className="space-y-3 p-6">
+          <Badge variant="outline">Mobile required</Badge>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">
+              Open this ballot on your mobile device
+            </p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              The live voting experience is optimized for a phone so selfie and
+              location verification stay smooth. You can still browse sessions
+              and results on desktop.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => router.replace("/students/vote")}>
+            Back to vote center
+          </Button>
         </CardContent>
       </Card>
     );
@@ -236,7 +286,9 @@ export default function StudentVotePage() {
         imageUrl,
         location,
         deviceId:
-          typeof navigator !== "undefined" ? navigator.userAgent : "web-client",
+          typeof navigator !== "undefined"
+            ? navigator.userAgent
+            : "mobile-client",
       });
 
       toast.success("Vote submitted successfully.");
@@ -713,8 +765,14 @@ export default function StudentVotePage() {
                     size="sm"
                     className="shrink-0"
                   >
-                    <Vote className="mr-2 h-4 w-4" />
-                    {submitVote.isPending ? "Submitting..." : "Submit vote"}
+                    {submitVote.isPending ? (
+                      <LoadingButtonContent label="Submitting vote..." />
+                    ) : (
+                      <>
+                        <Vote className="mr-2 h-4 w-4" />
+                        Submit vote
+                      </>
+                    )}
                   </Button>
                 ) : null}
               </div>

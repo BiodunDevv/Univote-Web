@@ -19,7 +19,10 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSettingsStore } from "@/lib/store/useSettingsStore";
-import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
+import {
+  ChangingLoadingState,
+  LoadingButtonContent,
+} from "@/components/shared/changing-loading-state";
 import {
   TenantMetricCard,
   TenantMetricGrid,
@@ -451,7 +454,11 @@ function SettingsContent() {
                       disabled={profileSaving}
                       className="h-10"
                     >
-                      {profileSaving ? "Saving..." : "Save profile changes"}
+                      {profileSaving ? (
+                        <LoadingButtonContent label="Saving profile changes..." />
+                      ) : (
+                        "Save profile changes"
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -781,7 +788,11 @@ function SettingsContent() {
                     disabled={passwordSaving}
                     className="h-10"
                   >
-                    {passwordSaving ? "Updating..." : "Update password"}
+                    {passwordSaving ? (
+                      <LoadingButtonContent label="Updating password..." />
+                    ) : (
+                      "Update password"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -961,7 +972,11 @@ function SettingsContent() {
                     disabled={emailTesting}
                     className="h-10"
                   >
-                    {emailTesting ? "Sending..." : "Send test email"}
+                    {emailTesting ? (
+                      <LoadingButtonContent label="Sending test email..." />
+                    ) : (
+                      "Send test email"
+                    )}
                   </Button>
                 </TenantSectionCard>
               </div>

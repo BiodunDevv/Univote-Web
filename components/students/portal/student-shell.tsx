@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   formatParticipantIdentifier,
   getTenantParticipantLabels,
@@ -79,20 +80,65 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("student");
   const participantLabels = getTenantParticipantLabels(tenant);
+  const isMobile = useIsMobile();
 
   const pageTitle = useMemo(() => titleFromPath(pathname), [pathname]);
-  const isVoteRoute =
-    pathname === "/students/vote" || pathname.startsWith("/students/vote/");
+  const isVoteRoute = /^\/students\/vote\/[^/]+/.test(pathname);
   const isSupportRoute =
     pathname === "/students/support" ||
     pathname.startsWith("/students/support/");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!isMobile || isVoteRoute) return;
+
+    let startY = 0;
+    let pulling = false;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY > 0 || isRefreshing) return;
+      startY = event.touches[0]?.clientY || 0;
+      pulling = true;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (!pulling || window.scrollY > 0) return;
+      const currentY = event.touches[0]?.clientY || 0;
+      setPullDistance(Math.max(0, Math.min(88, currentY - startY)));
+    };
+
+    const handleTouchEnd = () => {
+      if (pullDistance >= 72 && !isRefreshing) {
+        setIsRefreshing(true);
+        router.refresh();
+        window.setTimeout(() => {
+          setIsRefreshing(false);
+          setPullDistance(0);
+        }, 900);
+      } else {
+        setPullDistance(0);
+      }
+      pulling = false;
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isMobile, isRefreshing, isVoteRoute, pullDistance, router]);
   const initials = student?.full_name
     ?.split(" ")
     .slice(0, 2)
@@ -164,6 +210,24 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh overflow-x-hidden bg-muted/20">
+      {isMobile && !isVoteRoute ? (
+        <div className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center">
+          <div
+            className={cn(
+              "rounded-full border bg-background/95 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur transition-all duration-200",
+              pullDistance > 8 || isRefreshing
+                ? "translate-y-0 opacity-100"
+                : "-translate-y-3 opacity-0",
+            )}
+          >
+            {isRefreshing
+              ? "Refreshing student app..."
+              : pullDistance >= 72
+                ? "Release to refresh"
+                : "Pull down to refresh"}
+          </div>
+        </div>
+      ) : null}
       <div className="mx-auto min-h-svh w-full max-w-[1680px] px-2 pb-28 pt-2 sm:px-4 sm:pt-3 lg:pb-8">
         <aside
           className="fixed inset-y-4 z-20 hidden w-72 lg:block"

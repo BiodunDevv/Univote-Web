@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  CalendarClock,
+  ChevronRight,
   Headset,
+  LockKeyhole,
   Mail,
   Palette,
   ShieldCheck,
@@ -90,6 +93,11 @@ export default function StudentProfilePage() {
       ? `Level ${data.level}`
       : null,
   ].filter(Boolean);
+  const nextPhotoUpdateLabel = data.next_profile_photo_update_at
+    ? new Date(data.next_profile_photo_update_at).toLocaleDateString("en-NG", {
+        dateStyle: "medium",
+      })
+    : null;
 
   return (
     <PortalPage>
@@ -122,72 +130,155 @@ export default function StudentProfilePage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <PortalStackCard className="space-y-3">
-          <p className="text-sm font-semibold text-foreground">{participantLabels.singular} details</p>
-          {data.email ? (
-            <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span>{data.email}</span>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.06fr)_minmax(300px,0.94fr)]">
+        <PortalStackCard className="space-y-4 rounded-[2rem] p-4">
+          <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+            <Avatar className="h-20 w-20 rounded-[1.5rem] border bg-muted/40">
+              <AvatarImage
+                src={showPhotoField ? data.photo_url || undefined : undefined}
+                alt={data.full_name}
+              />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-foreground">{data.full_name}</p>
+              <p className="text-sm text-muted-foreground">
+                {resolvedParticipantIdentifier}
+              </p>
+              {profileMeta.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {profileMeta.join(" • ")}
+                </p>
+              ) : null}
             </div>
-          ) : null}
-          {profileMeta.length > 0 ? (
-            <div className="flex items-center gap-3 text-sm">
-              <UserRound className="h-4 w-4 text-muted-foreground" />
-              <span>{profileMeta.join(" • ")}</span>
-            </div>
-          ) : null}
-          {showFaceField ? (
-            <div className="flex items-center gap-3 text-sm">
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {data.has_facial_data
-                  ? "Face verification ready"
-                  : "Face data not registered"}
-              </span>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">{participantLabels.singular} details</p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Keep your identity and verification details current so sign-in and
+              ballot verification stay smooth.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {data.email ? (
+              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span>{data.email}</span>
+              </div>
+            ) : null}
+            {profileMeta.length > 0 ? (
+              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm">
+                <UserRound className="h-4 w-4 text-muted-foreground" />
+                <span>{profileMeta.join(" • ")}</span>
+              </div>
+            ) : null}
+            {showFaceField ? (
+              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm sm:col-span-2">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  {data.has_facial_data
+                    ? "Face verification ready"
+                    : "Face data not registered"}
+                </span>
+              </div>
+            ) : null}
+          </div>
+          {showPhotoField ? (
+            <div className="rounded-[1.5rem] border border-primary/15 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-background text-primary shadow-sm">
+                  <CalendarClock className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    Profile photo update window
+                  </p>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {nextPhotoUpdateLabel
+                      ? `Your next self-service photo update opens on ${nextPhotoUpdateLabel}. If you need an earlier change, request a reset from the edit profile screen.`
+                      : "Your profile photo is currently available for self-service update from the edit profile screen."}
+                  </p>
+                </div>
+              </div>
             </div>
           ) : null}
         </PortalStackCard>
 
-        <Card className="border shadow-none">
+        <Card className="rounded-[2rem] border shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Quick actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p className="text-sm text-muted-foreground">
               {showPhotoField
-                ? "Keep your email and profile photo up to date so verification and alerts continue to work cleanly."
-                : "Keep your account details up to date so alerts and access recovery continue to work cleanly."}
+                ? "Keep your details current so login recovery, profile approval, and voting verification stay smooth."
+                : "Keep your account details current so alerts and access recovery continue to work cleanly."}
             </p>
             <div className="grid gap-2">
-              <Button variant="outline" className="justify-start" onClick={() => router.push("/students/support")}>
-                <Headset className="mr-2 h-4 w-4" />
-                Support
+              <Button
+                variant="outline"
+                className="justify-between rounded-2xl"
+                onClick={() => router.push("/students/profile/edit")}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <UserRound className="h-4 w-4" />
+                  Edit profile
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Button>
               <Button
                 variant="outline"
-                className="relative justify-start"
+                className="justify-between rounded-2xl"
+                onClick={() => router.push("/students/profile/password")}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <LockKeyhole className="h-4 w-4" />
+                  Password
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Button>
+              <Button
+                variant="outline"
+                className="relative justify-between rounded-2xl"
                 onClick={() => router.push("/students/notifications")}
               >
-                <Bell className="mr-2 h-4 w-4" />
-                Notifications
-                <NotificationCountBadge
-                  count={unreadNotifications}
-                  className="absolute right-2 top-2"
-                />
+                <span className="inline-flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                </span>
+                <div className="flex items-center gap-2">
+                  <NotificationCountBadge
+                    count={unreadNotifications}
+                    className="static"
+                  />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
               </Button>
-              <AnimatedThemeToggler
-                variant="with-text"
-                className="justify-start rounded-xl border border-input bg-background px-3"
-              />
-              <div className="flex items-center gap-3 rounded-xl border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-                <Palette className="h-4 w-4" />
-                <span>Choose the theme that feels best for your device.</span>
+              <Button
+                variant="outline"
+                className="justify-between rounded-2xl"
+                onClick={() => router.push("/students/support")}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Headset className="h-4 w-4" />
+                  Support
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Button>
+              <div className="rounded-2xl border bg-muted/20 p-3">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                  Theme
+                </div>
+                <AnimatedThemeToggler
+                  variant="with-text"
+                  className="justify-start rounded-xl border border-input bg-background px-3"
+                />
               </div>
             </div>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full rounded-2xl"
               onClick={async () => {
                 await logout();
                 router.replace("/students/login");

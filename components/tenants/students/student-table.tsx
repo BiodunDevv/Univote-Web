@@ -174,6 +174,13 @@ function StudentPreviewDrawer({
                 <Badge variant={student.has_facial_data ? "default" : "outline"}>
                   {student.has_facial_data ? "Face ready" : "Face pending"}
                 </Badge>
+                <Badge variant="outline">
+                  {student.photo_review_status === "approved"
+                    ? "Photo approved"
+                    : student.photo_review_status === "rejected"
+                      ? "Photo rejected"
+                      : "Photo review pending"}
+                </Badge>
               </div>
             </div>
           </div>
@@ -248,6 +255,16 @@ function StudentPreviewDrawer({
                 {student.has_facial_data
                   ? "This record can participate in face-verified voting checks."
                   : "Upload or capture a face record before strict verification is enforced."}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Photo review:{" "}
+                <span className="font-medium text-foreground">
+                  {student.photo_review_status === "approved"
+                    ? "Approved"
+                    : student.photo_review_status === "rejected"
+                      ? "Rejected"
+                      : "Pending approval"}
+                </span>
               </p>
             </div>
           </div>

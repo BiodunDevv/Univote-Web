@@ -26,7 +26,7 @@ export default function StudentHomePage() {
   const { data, isLoading, error } = useStudentDashboardQuery();
   const participantLabels = getTenantParticipantLabels(data?.tenant);
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <ChangingLoadingState
         messages={[
