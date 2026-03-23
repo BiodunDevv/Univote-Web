@@ -215,7 +215,7 @@ export default function StudentLoginPage() {
         <AnimatedThemeToggler variant="header" className="h-9" />
       </div>
       <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-        <div className="relative overflow-hidden rounded-[2rem] border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none hidden md:block">
+        <div className="relative overflow-hidden rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none hidden md:block">
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />

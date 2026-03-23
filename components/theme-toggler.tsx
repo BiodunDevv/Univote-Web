@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 type Props = {
   className?: string;
-  variant?: "icon-only" | "with-text" | "header";
+  variant?: "icon-only" | "with-text" | "header" | "mobile";
   enableShortcut?: boolean;
   shortcutLabel?: string;
 };
@@ -163,6 +163,43 @@ export const AnimatedThemeToggler = ({
           <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
         </span>
         <span>{isDarkMode ? "Dark mode" : "Light mode"}</span>
+      </Button>
+    );
+  }
+
+  if (variant === "mobile") {
+    return (
+      <Button
+        ref={buttonRef}
+        type="button"
+        onClick={() => void changeTheme()}
+        variant="ghost"
+        className={cn(
+          "h-12 w-full justify-between rounded-2xl border border-input/80 bg-background px-3 text-left hover:bg-muted/30",
+          className,
+        )}
+        aria-label="Toggle theme"
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+            <SunDim className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-foreground">
+              Appearance
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Tap to switch theme
+            </span>
+          </span>
+        </span>
+        <Badge
+          variant="secondary"
+          className="rounded-lg px-2.5 py-1 text-[11px]"
+        >
+          {isDarkMode ? "Dark" : "Light"}
+        </Badge>
       </Button>
     );
   }

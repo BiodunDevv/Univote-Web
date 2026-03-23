@@ -46,7 +46,7 @@ export default function StudentSessionsPage() {
         eyebrow="Sessions"
         title="Session center"
         description="Track live, upcoming, and completed sessions in one mobile-friendly space."
-        className="rounded-[2rem] p-4 sm:p-5"
+        className="p-4 sm:p-5"
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -89,7 +89,7 @@ export default function StudentSessionsPage() {
       <Tabs value={status} onValueChange={setStatus}>
         <TabsList
           variant="line"
-          className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-[1.4rem] border bg-card/60 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-[1.4rem] bg-card/60 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {statusTabs.map((tab) => (
             <TabsTrigger

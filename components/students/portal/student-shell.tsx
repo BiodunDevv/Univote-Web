@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -90,6 +90,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullDistanceRef = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -102,31 +103,51 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
     let startY = 0;
     let pulling = false;
+    let maybePull = false;
 
     const handleTouchStart = (event: TouchEvent) => {
       if (window.scrollY > 0 || isRefreshing) return;
       startY = event.touches[0]?.clientY || 0;
       pulling = true;
+      maybePull = true;
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (!pulling || window.scrollY > 0) return;
+      if (!pulling || window.scrollY > 0 || !maybePull) return;
       const currentY = event.touches[0]?.clientY || 0;
-      setPullDistance(Math.max(0, Math.min(88, currentY - startY)));
+      const distance = Math.max(0, Math.min(88, currentY - startY));
+      pullDistanceRef.current = distance;
+      setPullDistance(distance);
     };
 
     const handleTouchEnd = () => {
-      if (pullDistance >= 72 && !isRefreshing) {
+      const distance = pullDistanceRef.current;
+      if (distance >= 64 && !isRefreshing) {
         setIsRefreshing(true);
-        router.refresh();
+
+        const isStandalone =
+          window.matchMedia("(display-mode: standalone)").matches ||
+          // iOS Safari standalone PWA flag
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Boolean((window.navigator as any).standalone);
+
+        if (isStandalone) {
+          window.location.reload();
+        } else {
+          router.refresh();
+        }
+
         window.setTimeout(() => {
           setIsRefreshing(false);
+          pullDistanceRef.current = 0;
           setPullDistance(0);
-        }, 900);
+        }, 450);
       } else {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
       }
       pulling = false;
+      maybePull = false;
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -138,7 +159,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isMobile, isRefreshing, isVoteRoute, pullDistance, router]);
+  }, [isMobile, isRefreshing, isVoteRoute, router]);
   const initials = student?.full_name
     ?.split(" ")
     .slice(0, 2)
@@ -167,8 +188,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-svh overflow-x-hidden bg-background">
         <div className="sticky top-0 z-40 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur xl:px-6">
-            <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -187,11 +208,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                     : "Voting flow"}
                 </p>
               </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
                 className="hidden h-9 rounded-xl px-3 text-xs sm:inline-flex"
                 onClick={openWebsite}
               >
@@ -311,6 +332,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-3">
                 <Avatar size="lg">
                   <AvatarImage
+                    className="object-cover"
                     src={student?.photo_url || undefined}
                     alt={student?.full_name || participantLabels.singular}
                   />
@@ -338,7 +360,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           </Card>
         </aside>
 
-        <main className="min-w-0 lg:ml-[19.25rem]">
+        <main className="min-w-0 lg:ml-77">
           <div className="sticky top-0 z-30 mb-3 shrink-0">
             <div
               className={cn(
@@ -425,6 +447,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
+                        className="object-cover"
                         src={student?.photo_url || undefined}
                         alt={student?.full_name || "Participant"}
                       />

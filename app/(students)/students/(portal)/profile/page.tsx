@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -9,13 +10,14 @@ import {
   LockKeyhole,
   Mail,
   Palette,
+  LogOut,
   ShieldCheck,
   UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   PortalEmptyState,
-  PortalHero,
   PortalPage,
   PortalStackCard,
 } from "@/components/students/portal/portal-page";
@@ -26,6 +28,7 @@ import { NotificationCountBadge } from "@/components/notifications/notification-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   formatParticipantIdentifier,
@@ -33,11 +36,54 @@ import {
   shouldShowTenantParticipantFieldInProfile,
 } from "@/lib/tenant-config";
 
+type SettingActionProps = {
+  icon: LucideIcon;
+  label: string;
+  description: string;
+  onClick: () => void;
+  trailing?: ReactNode;
+};
+
+function SettingAction({
+  icon: Icon,
+  label,
+  description,
+  onClick,
+  trailing,
+}: SettingActionProps) {
+  return (
+    <Button
+      variant="ghost"
+      className="h-auto w-full justify-between rounded-2xl px-3 py-3"
+      onClick={onClick}
+    >
+      <span className="flex min-w-0 items-center gap-3 text-left">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-muted/40 text-muted-foreground">
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold text-foreground">
+            {label}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {description}
+          </span>
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-2">
+        {trailing}
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </span>
+    </Button>
+  );
+}
+
 export default function StudentProfilePage() {
   const router = useRouter();
   const { logout, tenant } = useStudentAuthStore();
   const { data, isLoading, error } = useStudentProfileQuery();
-  const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("student");
+  const { data: unreadNotifications = 0 } =
+    useNotificationSummaryQuery("student");
   const participantLabels = getTenantParticipantLabels(tenant);
   const showPhotoField = shouldShowTenantParticipantFieldInProfile(
     tenant,
@@ -64,7 +110,9 @@ export default function StudentProfilePage() {
     return (
       <PortalEmptyState
         title="Profile unavailable"
-        description={(error as Error | undefined)?.message || "Profile is unavailable."}
+        description={
+          (error as Error | undefined)?.message || "Profile is unavailable."
+        }
       />
     );
   }
@@ -98,82 +146,52 @@ export default function StudentProfilePage() {
         dateStyle: "medium",
       })
     : null;
+  const participantDetailSummary =
+    profileMeta.length > 0 ? profileMeta.join(" • ") : null;
 
   return (
     <PortalPage>
-      <PortalHero
-        eyebrow={`${participantLabels.singular} profile`}
-        title={
+      <div className="mx-auto w-full max-w-full space-y-4">
+        <PortalStackCard className="space-y-4 rounded-2xl border p-4 shadow-none">
           <div className="flex items-center gap-3">
-            <Avatar size="lg">
+            <Avatar className="h-20 w-20 rounded-full border bg-muted/40">
               <AvatarImage
+                className="object-cover"
                 src={showPhotoField ? data.photo_url || undefined : undefined}
                 alt={data.full_name}
               />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div className="min-w-0">
-              <span className="block truncate">{data.full_name}</span>
-            </div>
-          </div>
-        }
-        description={[resolvedParticipantIdentifier, ...profileMeta].join(" • ")}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => router.push("/students/profile/edit")}>
-              Edit profile
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => router.push("/students/profile/password")}>
-              Password
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.06fr)_minmax(300px,0.94fr)]">
-        <PortalStackCard className="space-y-4 rounded-[2rem] p-4">
-          <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-            <Avatar className="h-20 w-20 rounded-[1.5rem] border bg-muted/40">
-              <AvatarImage
-                src={showPhotoField ? data.photo_url || undefined : undefined}
-                alt={data.full_name}
-              />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <p className="text-base font-semibold text-foreground">{data.full_name}</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 space-y-1">
+              <p className="truncate text-lg font-semibold text-foreground">
+                {data.full_name}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
                 {resolvedParticipantIdentifier}
               </p>
-              {profileMeta.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  {profileMeta.join(" • ")}
+              {participantDetailSummary ? (
+                <p className="truncate text-xs text-muted-foreground">
+                  {participantDetailSummary}
                 </p>
               ) : null}
             </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">{participantLabels.singular} details</p>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Keep your identity and verification details current so sign-in and
-              ballot verification stay smooth.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+
+          <div className="grid gap-2 sm:grid-cols-2">
             {data.email ? (
-              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm">
+              <div className="flex items-center gap-2 rounded-2xl border bg-muted/20 px-3 py-2 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{data.email}</span>
+                <span className="truncate">{data.email}</span>
               </div>
             ) : null}
-            {profileMeta.length > 0 ? (
-              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm">
-                <UserRound className="h-4 w-4 text-muted-foreground" />
-                <span>{profileMeta.join(" • ")}</span>
-              </div>
-            ) : null}
+            <div className="flex items-center gap-2 rounded-2xl border bg-muted/20 px-3 py-2 text-sm">
+              <UserRound className="h-4 w-4 text-muted-foreground" />
+              <span className="truncate">
+                {participantLabels.singular} account
+              </span>
+            </div>
             {showFaceField ? (
-              <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 px-3 py-3 text-sm sm:col-span-2">
+              <div className="flex items-center gap-2 rounded-2xl border bg-muted/20 px-3 py-2 text-sm sm:col-span-2">
                 <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                 <span>
                   {data.has_facial_data
@@ -183,20 +201,21 @@ export default function StudentProfilePage() {
               </div>
             ) : null}
           </div>
+
           {showPhotoField ? (
-            <div className="rounded-[1.5rem] border border-primary/15 bg-primary/5 p-4">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-background text-primary shadow-sm">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-primary">
                   <CalendarClock className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">
-                    Profile photo update window
+                    Photo update window
                   </p>
-                  <p className="text-sm leading-6 text-muted-foreground">
+                  <p className="text-xs leading-5 text-muted-foreground">
                     {nextPhotoUpdateLabel
-                      ? `Your next self-service photo update opens on ${nextPhotoUpdateLabel}. If you need an earlier change, request a reset from the edit profile screen.`
-                      : "Your profile photo is currently available for self-service update from the edit profile screen."}
+                      ? `Next self-service update: ${nextPhotoUpdateLabel}. Need it sooner? Request a reset in Edit profile.`
+                      : "Your profile photo can be updated from Edit profile."}
                   </p>
                 </div>
               </div>
@@ -204,86 +223,67 @@ export default function StudentProfilePage() {
           ) : null}
         </PortalStackCard>
 
-        <Card className="rounded-[2rem] border shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Quick actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
+        <Card className="rounded-2xl border shadow-none">
+          <CardHeader className="pb-2 px-4">
+            <CardTitle className="text-base">Settings</CardTitle>
             <p className="text-sm text-muted-foreground">
-              {showPhotoField
-                ? "Keep your details current so login recovery, profile approval, and voting verification stay smooth."
-                : "Keep your account details current so alerts and access recovery continue to work cleanly."}
+              Manage your account and app preferences.
             </p>
-            <div className="grid gap-2">
-              <Button
-                variant="outline"
-                className="justify-between rounded-2xl"
+          </CardHeader>
+          <CardContent className="space-y-4 px-3 pb-3 sm:px-4 sm:pb-4">
+            <div className="rounded-2xl border bg-card p-1">
+              <SettingAction
+                icon={UserRound}
+                label="Edit profile"
+                description="Update personal and identity details"
                 onClick={() => router.push("/students/profile/edit")}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <UserRound className="h-4 w-4" />
-                  Edit profile
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <Button
-                variant="outline"
-                className="justify-between rounded-2xl"
+              />
+              <Separator className="my-1" />
+              <SettingAction
+                icon={LockKeyhole}
+                label="Password"
+                description="Change your sign-in password"
                 onClick={() => router.push("/students/profile/password")}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <LockKeyhole className="h-4 w-4" />
-                  Password
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <Button
-                variant="outline"
-                className="relative justify-between rounded-2xl"
-                onClick={() => router.push("/students/notifications")}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  Notifications
-                </span>
-                <div className="flex items-center gap-2">
+              />
+              <Separator className="my-1" />
+              <SettingAction
+                icon={Bell}
+                label="Notifications"
+                description="View alerts and updates"
+                trailing={
                   <NotificationCountBadge
                     count={unreadNotifications}
                     className="static"
                   />
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="justify-between rounded-2xl"
+                }
+                onClick={() => router.push("/students/notifications")}
+              />
+              <Separator className="my-1" />
+              <SettingAction
+                icon={Headset}
+                label="Support"
+                description="Get help with account or voting"
                 onClick={() => router.push("/students/support")}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Headset className="h-4 w-4" />
-                  Support
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <div className="rounded-2xl border bg-muted/20 p-3">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Palette className="h-4 w-4 text-muted-foreground" />
-                  Theme
-                </div>
-                <AnimatedThemeToggler
-                  variant="with-text"
-                  className="justify-start rounded-xl border border-input bg-background px-3"
-                />
-              </div>
+              />
             </div>
+
+            <div className="rounded-2xl border bg-muted/20 p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <Palette className="h-4 w-4 text-muted-foreground" />
+                Theme
+              </div>
+              <AnimatedThemeToggler variant="mobile" />
+            </div>
+
             <Button
               variant="outline"
-              className="w-full rounded-2xl"
+              className="w-full justify-center gap-2 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={async () => {
                 await logout();
                 router.replace("/students/login");
               }}
             >
+              <LogOut className="h-4 w-4" />
               Log out
             </Button>
           </CardContent>

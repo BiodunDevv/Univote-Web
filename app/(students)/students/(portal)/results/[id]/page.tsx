@@ -73,7 +73,7 @@ export default function StudentResultDetailPage() {
         }
         title={session.title}
         description={session.description || "No session description provided."}
-        className="rounded-[2rem] p-4 sm:p-5"
+        className="p-4 sm:p-5"
       />
 
       {error ? (

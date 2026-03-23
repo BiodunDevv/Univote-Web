@@ -46,7 +46,7 @@ export default function StudentResultsPage() {
         eyebrow="Results"
         title="Tallies and history"
         description="Review live races, final standings, and your recorded vote history in one election board."
-        className="rounded-[2rem] p-4 sm:p-5"
+        className="p-4 sm:p-5"
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -56,13 +56,13 @@ export default function StudentResultsPage() {
         >
           <TabsTrigger
             value="results"
-            className="rounded-xl border border-border/70 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
+              className="shrink-0 rounded-xl border border-transparent px-3 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
           >
             Session results
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className="rounded-xl border border-border/70 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
+              className="shrink-0 rounded-xl border border-transparent px-3 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
           >
             Vote history
           </TabsTrigger>

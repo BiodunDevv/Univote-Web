@@ -30,7 +30,7 @@ export function PortalHero({
   return (
     <section
       className={cn(
-        "rounded-3xl border bg-linear-to-br from-card via-card to-muted/30 p-3 shadow-none",
+        "rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-3 shadow-none",
         className,
       )}
     >

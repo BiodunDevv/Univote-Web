@@ -28,7 +28,7 @@ export function StudentSessionCard({
   compact = false,
 }: StudentSessionCardProps) {
   return (
-    <Card className="overflow-hidden rounded-3xl border shadow-none">
+    <Card className="overflow-hidden rounded-2xl border shadow-none">
       <CardContent
         className={cn("space-y-3 p-3", compact ? "sm:p-3" : "sm:p-4")}
       >
