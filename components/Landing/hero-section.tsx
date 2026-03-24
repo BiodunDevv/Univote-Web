@@ -104,7 +104,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
                   Built for
                 </p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
-                  Campuses, faculties, departments, councils
+                  Universities, colleges, departments
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/85 px-3 py-2 shadow-sm backdrop-blur">
@@ -112,7 +112,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
                   Identity
                 </p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
-                  Matric no, member ID, email, employee ID
+                  Matric number, email, department, level
                 </p>
               </div>
             </div>
