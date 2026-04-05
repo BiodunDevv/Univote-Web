@@ -7,7 +7,8 @@ import { SessionCandidate } from "@/types/session";
 
 type CandidateCardGridProps = {
   candidates: SessionCandidate[];
-  canManage: boolean;
+  canEdit: boolean;
+  canCreate: boolean;
   onView: (candidate: SessionCandidate) => void;
   onEdit: (candidate: SessionCandidate) => void;
   onCreate: () => void;
@@ -15,7 +16,8 @@ type CandidateCardGridProps = {
 
 export function CandidateCardGrid({
   candidates,
-  canManage,
+  canEdit,
+  canCreate,
   onView,
   onEdit,
   onCreate,
@@ -33,7 +35,7 @@ export function CandidateCardGrid({
               Start building the ballot by adding the first candidate.
             </p>
           </div>
-          {canManage ? (
+          {canCreate ? (
             <Button type="button" variant="outline" onClick={onCreate}>
               Add Candidate
             </Button>
@@ -96,7 +98,7 @@ export function CandidateCardGrid({
                   <Eye className="mr-2 h-3.5 w-3.5" />
                   View
                 </Button>
-                {canManage ? (
+                {canEdit ? (
                   <Button
                     type="button"
                     variant="outline"

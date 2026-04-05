@@ -50,6 +50,11 @@ type SessionBuilderProps = {
     payload: CandidateMutationDto,
   ) => Promise<SessionCandidate>;
   onDeleteCandidate?: (candidateId: string) => Promise<void>;
+  candidatePermissions?: {
+    canCreate: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+  };
 };
 
 export function SessionBuilder({
@@ -64,6 +69,7 @@ export function SessionBuilder({
   onCreateCandidate,
   onUpdateCandidate,
   onDeleteCandidate,
+  candidatePermissions,
 }: SessionBuilderProps) {
   const { tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
@@ -396,6 +402,9 @@ export function SessionBuilder({
           categories={normalizedFormData.categories}
           persistence={mode === "create" ? "local" : "remote"}
           canManage
+          canCreateCandidate={candidatePermissions?.canCreate ?? true}
+          canEditCandidate={candidatePermissions?.canEdit ?? true}
+          canDeleteCandidate={candidatePermissions?.canDelete ?? true}
           onCandidatesChange={(candidates) =>
             updateFormData((prev) => ({ ...prev, candidates }))
           }

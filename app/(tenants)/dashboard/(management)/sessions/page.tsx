@@ -260,7 +260,7 @@ export default function SessionsPage() {
         eyebrow="Tenant sessions"
         icon={<Vote className="h-5 w-5" />}
         title="Session Management"
-        subtitle="Create, review, manage, and retire voting sessions with one consistent operational surface. Editing is available only while a session is still upcoming."
+        subtitle="Create, review, manage, and retire voting sessions with one consistent operational surface. Upcoming sessions allow full editing, while live sessions stay in a safe edit mode."
         actions={
           <Button
             onClick={() => router.push("/dashboard/sessions/create")}
@@ -515,7 +515,7 @@ export default function SessionsPage() {
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </Button>
-                    {session.status === "upcoming" ? (
+                    {session.status !== "ended" ? (
                       <Button
                         variant="outline"
                         size="sm"

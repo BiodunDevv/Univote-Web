@@ -21,6 +21,9 @@ type SessionCandidateManagerProps = {
   candidates: SessionCandidate[];
   categories: string[];
   canManage: boolean;
+  canCreateCandidate?: boolean;
+  canEditCandidate?: boolean;
+  canDeleteCandidate?: boolean;
   persistence: "local" | "remote";
   onCandidatesChange: (candidates: SessionCandidate[]) => void;
   onCreateCandidate?: (
@@ -50,6 +53,9 @@ export function SessionCandidateManager({
   candidates,
   categories,
   canManage,
+  canCreateCandidate,
+  canEditCandidate,
+  canDeleteCandidate,
   persistence,
   onCandidatesChange,
   onCreateCandidate,
@@ -66,6 +72,9 @@ export function SessionCandidateManager({
   );
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const allowCreate = canCreateCandidate ?? canManage;
+  const allowEdit = canEditCandidate ?? canManage;
+  const allowDelete = canDeleteCandidate ?? canManage;
 
   const keyedCandidates = useMemo(
     () =>
@@ -84,7 +93,7 @@ export function SessionCandidateManager({
     if (!initialMode) return;
 
     if (initialMode === "create") {
-      if (!canManage) return;
+      if (!allowCreate) return;
       setSelectedCandidateKey(null);
       setSheetMode("create");
       setSheetOpen(true);
@@ -99,9 +108,9 @@ export function SessionCandidateManager({
     if (!target) return;
 
     setSelectedCandidateKey(target.key);
-    setSheetMode(canManage ? initialMode : "view");
+    setSheetMode(allowEdit ? initialMode : "view");
     setSheetOpen(true);
-  }, [canManage, initialCandidateId, initialMode, keyedCandidates]);
+  }, [allowCreate, allowEdit, initialCandidateId, initialMode, keyedCandidates]);
 
   useEffect(() => {
     onSheetStateChange?.({
@@ -120,7 +129,7 @@ export function SessionCandidateManager({
   };
 
   const openEdit = (candidate: SessionCandidate) => {
-    if (!canManage) return;
+    if (!allowEdit) return;
     const target = keyedCandidates.find((item) => item.candidate === candidate);
     if (!target) return;
     setSelectedCandidateKey(target.key);
@@ -129,7 +138,7 @@ export function SessionCandidateManager({
   };
 
   const openCreate = () => {
-    if (!canManage) return;
+    if (!allowCreate) return;
     setSelectedCandidateKey(null);
     setSheetMode("create");
     setSheetOpen(true);
@@ -225,7 +234,7 @@ export function SessionCandidateManager({
             <CardTitle className="text-sm font-semibold">{title}</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           </div>
-          {canManage ? (
+          {allowCreate ? (
             <Button
               type="button"
               variant="outline"
@@ -240,7 +249,8 @@ export function SessionCandidateManager({
         <CardContent className="space-y-4">
           <CandidateCardGrid
             candidates={candidates}
-            canManage={canManage}
+            canEdit={allowEdit}
+            canCreate={allowCreate}
             onView={openView}
             onEdit={openEdit}
             onCreate={openCreate}
@@ -253,7 +263,7 @@ export function SessionCandidateManager({
         mode={sheetMode}
         candidate={activeCandidate}
         categories={categories}
-        canManage={canManage}
+        canManage={allowEdit}
         isSaving={submitting}
         onOpenChange={(open) => {
           setSheetOpen(open);
@@ -264,7 +274,7 @@ export function SessionCandidateManager({
         onModeChange={setSheetMode}
         onSubmit={handleSubmit}
         onDelete={
-          canManage && sheetMode !== "create"
+          allowDelete && allowEdit && sheetMode !== "create"
             ? async () => setShowDeleteDialog(true)
             : undefined
         }

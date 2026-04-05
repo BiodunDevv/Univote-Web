@@ -64,7 +64,7 @@ export default function EditSessionPage() {
   }, [hasHydrated, router, token]);
 
   useEffect(() => {
-    if (currentSession && currentSession.status !== "upcoming") {
+    if (currentSession && currentSession.status === "ended") {
       router.replace(`/dashboard/sessions/${sessionId}`);
     }
   }, [currentSession, router, sessionId]);
@@ -152,9 +152,11 @@ export default function EditSessionPage() {
       mode="edit"
       title="Edit Session Wizard"
       description={
-        needsStructureData
-          ? "Update this session using the same college and department eligibility workflow as session creation."
-          : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
+        currentSession.status === "active"
+          ? "This session is live. You can update presentation and operational fields, but ballot structure, schedule, eligibility, and candidate deletion stay locked while votes are being recorded."
+          : needsStructureData
+            ? "Update this session using the same college and department eligibility workflow as session creation."
+            : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
       }
       colleges={colleges}
       initialData={initialData}
@@ -184,6 +186,13 @@ export default function EditSessionPage() {
       onDeleteCandidate={(candidateId) =>
         deleteCandidate.mutateAsync(candidateId)
       }
+      candidatePermissions={{
+        canCreate: currentSession.status === "upcoming",
+        canEdit:
+          currentSession.status === "upcoming" ||
+          currentSession.status === "active",
+        canDelete: currentSession.status === "upcoming",
+      }}
     />
   );
 }

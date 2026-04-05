@@ -6,6 +6,9 @@ type CandidatesStepProps = {
   categories: string[];
   persistence: "local" | "remote";
   canManage: boolean;
+  canCreateCandidate?: boolean;
+  canEditCandidate?: boolean;
+  canDeleteCandidate?: boolean;
   onCandidatesChange: (candidates: SessionCandidate[]) => void;
   onCreateCandidate?: (
     payload: CandidateMutationDto,
@@ -22,6 +25,9 @@ export function CandidatesStep({
   categories,
   persistence,
   canManage,
+  canCreateCandidate,
+  canEditCandidate,
+  canDeleteCandidate,
   onCandidatesChange,
   onCreateCandidate,
   onUpdateCandidate,
@@ -34,6 +40,9 @@ export function CandidatesStep({
       candidates={candidates}
       categories={categories}
       canManage={canManage}
+      canCreateCandidate={canCreateCandidate}
+      canEditCandidate={canEditCandidate}
+      canDeleteCandidate={canDeleteCandidate}
       persistence={persistence}
       onCandidatesChange={onCandidatesChange}
       onCreateCandidate={onCreateCandidate}

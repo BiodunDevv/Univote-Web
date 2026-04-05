@@ -287,7 +287,8 @@ export default function SessionDetailsPage() {
       sessionId,
     ],
   );
-  const canManageCandidates = session?.status === "upcoming";
+  const canManageCandidates =
+    session?.status === "upcoming" || session?.status === "active";
   const categoryCoverage = useMemo(
     () =>
       new Set(displayedCandidates.map((candidate) => candidate.position)).size,
@@ -515,7 +516,7 @@ function SessionDetailsLoaded({
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            {canManageCandidates && currentSession.status === "upcoming" ? (
+            {currentSession.status !== "ended" ? (
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -657,7 +658,11 @@ function SessionDetailsLoaded({
                   {categoryCoverage} categories covered
                 </Badge>
                 <Badge variant="outline">
-                  {canManageCandidates ? "Editing enabled" : "Read-only mode"}
+                  {currentSession.status === "upcoming"
+                    ? "Full editing enabled"
+                    : currentSession.status === "active"
+                      ? "Safe live editing"
+                      : "Read-only mode"}
                 </Badge>
               </div>
             </div>
@@ -668,6 +673,9 @@ function SessionDetailsLoaded({
               candidates={displayedCandidates}
               categories={currentSession.categories}
               canManage={canManageCandidates}
+              canCreateCandidate={currentSession.status === "upcoming"}
+              canEditCandidate={currentSession.status !== "ended"}
+              canDeleteCandidate={currentSession.status === "upcoming"}
               persistence="remote"
               onCandidatesChange={setCandidates}
               onCreateCandidate={(payload) => createCandidate(payload)}
