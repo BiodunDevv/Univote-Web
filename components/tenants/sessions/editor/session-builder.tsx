@@ -55,6 +55,7 @@ type SessionBuilderProps = {
     canEdit: boolean;
     canDelete: boolean;
   };
+  liveEditGuidance?: string[];
 };
 
 export function SessionBuilder({
@@ -70,6 +71,7 @@ export function SessionBuilder({
   onUpdateCandidate,
   onDeleteCandidate,
   candidatePermissions,
+  liveEditGuidance,
 }: SessionBuilderProps) {
   const { tenant } = useAuthStore();
   const participantLabels = getTenantParticipantLabels(tenant);
@@ -440,6 +442,18 @@ export function SessionBuilder({
             <div className="mt-2 inline-flex items-center rounded-full border bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
               Smart flow: Basics | Schedule | Eligibility | Ballot | Review
             </div>
+            {liveEditGuidance && liveEditGuidance.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-border/70 bg-background/80 p-3">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  Live session edit rules
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  {liveEditGuidance.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
           <Button
             variant="outline"

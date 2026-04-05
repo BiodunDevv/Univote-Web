@@ -173,12 +173,14 @@ export function useSubmitVoteMutation() {
       imageUrl,
       location,
       deviceId,
+      livenessSessionId,
     }: {
       sessionId: string;
       choices: Array<{ candidate_id: string; category: string }>;
       imageUrl: string;
       location: { lat: number; lng: number };
       deviceId?: string;
+      livenessSessionId?: string;
     }) =>
       apiRequest("/api/vote", {
         method: "POST",
@@ -190,6 +192,7 @@ export function useSubmitVoteMutation() {
           lat: location.lat,
           lng: location.lng,
           device_id: deviceId,
+          liveness_session_id: livenessSessionId,
         },
       }),
     onSuccess: async (_, variables) => {
@@ -218,4 +221,40 @@ export function useSubmitVoteMutation() {
       ]);
     },
   });
+}
+
+export type StudentVoteLivenessSession = {
+  session_id: string;
+  provider: string;
+  region: string;
+  configured: boolean;
+  required: boolean;
+};
+
+export type StudentVoteLivenessResult = {
+  session_id: string;
+  provider: string;
+  passed: boolean;
+  confidence: number | null;
+  threshold: number | null;
+  status: string | null;
+};
+
+export function useCreateVoteLivenessSessionMutation() {
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<StudentVoteLivenessSession>("/api/vote/liveness/session", {
+        method: "POST",
+        auth: "student",
+      }),
+  });
+}
+
+export function fetchVoteLivenessSessionResult(sessionId: string) {
+  return apiRequest<StudentVoteLivenessResult>(
+    `/api/vote/liveness/session/${sessionId}`,
+    {
+      auth: "student",
+    },
+  );
 }

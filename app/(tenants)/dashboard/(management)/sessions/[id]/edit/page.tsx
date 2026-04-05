@@ -23,7 +23,32 @@ import {
   useUpdateCandidateMutation,
   useUpdateSessionMutation,
 } from "@/lib/queries/admin";
+import { ApiError } from "@/lib/api/client";
 import { isTenantEligibilityDimensionEnabled } from "@/lib/tenant-config";
+
+function getSessionUpdateErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    const restrictedFields = Array.isArray(error.payload?.restricted_fields)
+      ? error.payload.restricted_fields.join(", ")
+      : null;
+
+    if (error.code === "ELIGIBILITY_DIMENSION_DISABLED") {
+      return error.message;
+    }
+
+    if (restrictedFields) {
+      return `${error.message} Restricted fields: ${restrictedFields}.`;
+    }
+
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "We could not save this session right now. Please review your changes and try again.";
+}
 
 export default function EditSessionPage() {
   const router = useRouter();
@@ -153,7 +178,7 @@ export default function EditSessionPage() {
       title="Edit Session Wizard"
       description={
         currentSession.status === "active"
-          ? "This session is live. You can update presentation and operational fields, but ballot structure, schedule, eligibility, and candidate deletion stay locked while votes are being recorded."
+          ? "This session is live. You can still update presentation and operational fields, extend the closing time, and widen eligibility coverage. Ballot structure and candidate deletion remain locked while votes are being recorded."
           : needsStructureData
             ? "Update this session using the same college and department eligibility workflow as session creation."
             : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
@@ -164,19 +189,23 @@ export default function EditSessionPage() {
       onCancel={() => router.push(`/dashboard/sessions/${sessionId}`)}
       onSubmit={async (formData, eligibleCollegeIds) => {
         const payload = buildSessionPayload(formData, eligibleCollegeIds);
-        await updateSession.mutateAsync({
-          title: payload.title,
-          description: payload.description,
-          start_time: payload.start_time,
-          end_time: payload.end_time,
-          location: payload.location,
-          categories: payload.categories,
-          eligible_college: payload.eligible_college,
-          eligible_departments: payload.eligible_departments,
-          eligible_levels: payload.eligible_levels,
-          is_off_campus_allowed: payload.is_off_campus_allowed,
-          results_public: payload.results_public,
-        });
+        try {
+          await updateSession.mutateAsync({
+            title: payload.title,
+            description: payload.description,
+            start_time: payload.start_time,
+            end_time: payload.end_time,
+            location: payload.location,
+            categories: payload.categories,
+            eligible_college: payload.eligible_college,
+            eligible_departments: payload.eligible_departments,
+            eligible_levels: payload.eligible_levels,
+            is_off_campus_allowed: payload.is_off_campus_allowed,
+            results_public: payload.results_public,
+          });
+        } catch (submitError) {
+          throw new Error(getSessionUpdateErrorMessage(submitError));
+        }
         router.push(`/dashboard/sessions/${sessionId}`);
       }}
       onCreateCandidate={(payload) => createCandidate.mutateAsync(payload)}
@@ -193,6 +222,16 @@ export default function EditSessionPage() {
           currentSession.status === "active",
         canDelete: currentSession.status === "upcoming",
       }}
+      liveEditGuidance={
+        currentSession.status === "active"
+          ? [
+              "You can extend the closing time, but you cannot shorten a live session.",
+              "Eligibility can only be widened while voting is live. Existing departments and levels cannot be removed.",
+              "You can update title, description, location, off-campus access, and results visibility.",
+              "Ballot structure, candidate creation, and candidate deletion remain locked to protect recorded votes.",
+            ]
+          : undefined
+      }
     />
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
+import { Amplify } from "aws-amplify";
+import "@aws-amplify/ui-react-liveness/styles.css";
 import {
   Camera,
   CheckCircle2,
@@ -10,6 +13,7 @@ import {
   LocateFixed,
   MapPin,
   RotateCcw,
+  ScanFace,
   ShieldAlert,
   Vote,
 } from "lucide-react";
@@ -21,6 +25,8 @@ import {
 import { PortalPage } from "@/components/students/portal/portal-page";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import {
+  fetchVoteLivenessSessionResult,
+  useCreateVoteLivenessSessionMutation,
   useStudentSessionDetailQuery,
   useSubmitVoteMutation,
 } from "@/lib/queries/student";
@@ -35,6 +41,36 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 type VoteStep = "ballot" | "verification" | "review";
 type SelfieStatus = "idle" | "choosing" | "uploading" | "ready" | "error";
+type LivenessStatus =
+  | "idle"
+  | "preparing"
+  | "ready"
+  | "verifying"
+  | "passed"
+  | "failed"
+  | "unsupported";
+
+const FaceLivenessDetector = dynamic(
+  () =>
+    import("@aws-amplify/ui-react-liveness").then((mod) => mod.FaceLivenessDetector),
+  { ssr: false },
+);
+
+const awsIdentityPoolId =
+  process.env.NEXT_PUBLIC_AWS_COGNITO_IDENTITY_POOL_ID || "";
+const awsGuestRegion = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1";
+const hasAwsLivenessWebConfig = Boolean(awsIdentityPoolId);
+
+if (hasAwsLivenessWebConfig) {
+  Amplify.configure({
+    Auth: {
+      Cognito: {
+        identityPoolId: awsIdentityPoolId,
+        allowGuestAccess: true,
+      },
+    },
+  });
+}
 
 function getVoteErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
@@ -56,6 +92,15 @@ function getVoteErrorMessage(error: unknown) {
         ? `Face verification did not pass. Current confidence score: ${confidence.toFixed(1)}. Use a clearer selfie and try again.`
         : error.message;
     }
+    if (error.code === "LIVENESS_REQUIRED") {
+      return "Complete the live presence check before submitting your vote.";
+    }
+    if (error.code === "LIVENESS_FAILED") {
+      return "Live presence verification did not pass. Retry the liveness check and try again.";
+    }
+    if (error.code === "LIVENESS_SESSION_EXPIRED") {
+      return "Your liveness session expired. Start a new liveness check and submit again.";
+    }
   }
 
   if (error instanceof Error) {
@@ -71,8 +116,8 @@ export default function StudentVotePage() {
   const sessionId = params.id as string;
   const { data, isLoading, error } = useStudentSessionDetailQuery(sessionId);
   const submitVote = useSubmitVoteMutation();
+  const createLivenessSession = useCreateVoteLivenessSessionMutation();
   const isMobile = useIsMobile();
-  const [hasMounted, setHasMounted] = useState(false);
 
   const [selectedByCategory, setSelectedByCategory] = useState<
     Record<string, string>
@@ -86,6 +131,13 @@ export default function StudentVotePage() {
   const [isLocating, setIsLocating] = useState(false);
   const [selfieStatus, setSelfieStatus] = useState<SelfieStatus>("idle");
   const [selfieError, setSelfieError] = useState("");
+  const [livenessStatus, setLivenessStatus] = useState<LivenessStatus>(
+    hasAwsLivenessWebConfig ? "idle" : "unsupported",
+  );
+  const [livenessError, setLivenessError] = useState("");
+  const [livenessSessionId, setLivenessSessionId] = useState("");
+  const [livenessRegion, setLivenessRegion] = useState(awsGuestRegion);
+  const [livenessConfidence, setLivenessConfidence] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const session = data?.session;
@@ -101,11 +153,9 @@ export default function StudentVotePage() {
   const allCategoriesSelected =
     categories.length > 0 &&
     categories.every(([position]) => Boolean(selectedByCategory[position]));
-  const canContinueFromVerification = Boolean(imageUrl && location);
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+  const canContinueFromVerification = Boolean(
+    imageUrl && location && livenessStatus === "passed",
+  );
 
   useEffect(() => {
     return () => {
@@ -134,17 +184,6 @@ export default function StudentVotePage() {
           {(error as Error | undefined)?.message || "Ballot could not be loaded."}
         </CardContent>
       </Card>
-    );
-  }
-
-  if (!hasMounted) {
-    return (
-      <ChangingLoadingState
-        messages={[
-          "Preparing ballot workspace...",
-          "Checking device requirements...",
-        ]}
-      />
     );
   }
 
@@ -239,6 +278,66 @@ export default function StudentVotePage() {
     setSelfieStatus("idle");
   };
 
+  const startLivenessCheck = async () => {
+    if (!hasAwsLivenessWebConfig) {
+      setLivenessStatus("unsupported");
+      setLivenessError(
+        "AWS web liveness is not configured yet. Add a Cognito Identity Pool to enable secure live verification.",
+      );
+      return;
+    }
+
+    setLivenessError("");
+    setLivenessConfidence(null);
+    setLivenessStatus("preparing");
+
+    try {
+      const session = await createLivenessSession.mutateAsync();
+      setLivenessSessionId(session.session_id);
+      setLivenessRegion(session.region || awsGuestRegion);
+      setLivenessStatus("ready");
+    } catch (sessionError) {
+      setLivenessStatus("failed");
+      setLivenessError(getVoteErrorMessage(sessionError));
+    }
+  };
+
+  const pollLivenessResult = async (sessionIdToCheck: string) => {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const result = await fetchVoteLivenessSessionResult(sessionIdToCheck);
+
+      if (result.status === "SUCCEEDED" || result.passed) {
+        setLivenessConfidence(result.confidence ?? null);
+        setLivenessStatus(result.passed ? "passed" : "failed");
+        setLivenessError(
+          result.passed
+            ? ""
+            : "Live presence verification did not pass. Retry the check before submitting.",
+        );
+        return result;
+      }
+
+      if (result.status === "FAILED" || result.status === "EXPIRED") {
+        setLivenessStatus("failed");
+        setLivenessConfidence(result.confidence ?? null);
+        setLivenessError(
+          result.status === "EXPIRED"
+            ? "Your liveness session expired. Start a new live check."
+            : "Live presence verification did not pass. Retry the check before submitting.",
+        );
+        return result;
+      }
+
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 1500);
+      });
+    }
+
+    throw new Error(
+      "AWS liveness verification is still processing. Please retry in a moment.",
+    );
+  };
+
   const captureLocation = async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by this browser.");
@@ -269,9 +368,9 @@ export default function StudentVotePage() {
   };
 
   const handleSubmitVote = async () => {
-    if (!allCategoriesSelected || !imageUrl || !location) {
+    if (!allCategoriesSelected || !imageUrl || !location || livenessStatus !== "passed") {
       toast.error(
-        "Complete candidate selection, selfie upload, and location capture before submitting.",
+        "Complete candidate selection, selfie upload, live presence verification, and location capture before submitting.",
       );
       return;
     }
@@ -285,6 +384,7 @@ export default function StudentVotePage() {
         })),
         imageUrl,
         location,
+        livenessSessionId,
         deviceId:
           typeof navigator !== "undefined"
             ? navigator.userAgent
@@ -571,6 +671,116 @@ export default function StudentVotePage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="border shadow-none">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Live presence check</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-2xl border bg-muted/20 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          Confirm that you are physically present
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Univote uses AWS liveness before face comparison so a
+                          still photo cannot be used to impersonate another student.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={
+                          createLivenessSession.isPending ||
+                          livenessStatus === "verifying"
+                        }
+                        onClick={() => void startLivenessCheck()}
+                      >
+                        <ScanFace className="mr-2 h-4 w-4" />
+                        {createLivenessSession.isPending
+                          ? "Preparing..."
+                          : livenessStatus === "passed"
+                            ? "Run again"
+                            : "Start live check"}
+                      </Button>
+                    </div>
+
+                    {livenessStatus === "ready" && livenessSessionId ? (
+                      <div className="mt-4 overflow-hidden rounded-2xl border bg-background">
+                        <FaceLivenessDetector
+                          sessionId={livenessSessionId}
+                          region={livenessRegion}
+                          onAnalysisComplete={async () => {
+                            setLivenessStatus("verifying");
+                            await pollLivenessResult(livenessSessionId)
+                              .then((result) => {
+                                if (result.passed) {
+                                  toast.success("AWS liveness passed.");
+                                } else {
+                                  toast.error(
+                                    "AWS liveness did not pass. Retry before voting.",
+                                  );
+                                }
+                              })
+                              .catch((pollError: unknown) => {
+                                setLivenessStatus("failed");
+                                setLivenessError(getVoteErrorMessage(pollError));
+                                toast.error(getVoteErrorMessage(pollError));
+                              });
+                          }}
+                          onError={(livenessUiError: unknown) => {
+                            setLivenessStatus("failed");
+                            setLivenessError(getVoteErrorMessage(livenessUiError));
+                          }}
+                        />
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 rounded-2xl border bg-background/70 p-4">
+                      <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                        Liveness status
+                      </p>
+                      <p
+                        className={cn(
+                          "mt-1 text-sm font-semibold",
+                          livenessStatus === "failed"
+                            ? "text-destructive"
+                            : "text-foreground",
+                        )}
+                      >
+                        {livenessStatus === "idle"
+                          ? "Waiting to start"
+                          : livenessStatus === "preparing"
+                            ? "Creating AWS liveness session"
+                            : livenessStatus === "ready"
+                              ? "Complete the live camera check"
+                              : livenessStatus === "verifying"
+                                ? "Checking liveness result"
+                                : livenessStatus === "passed"
+                                  ? "Live presence confirmed"
+                                  : livenessStatus === "unsupported"
+                                    ? "AWS web liveness is not configured"
+                                    : "Liveness failed"}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {livenessStatus === "passed"
+                          ? typeof livenessConfidence === "number"
+                            ? `AWS liveness passed with confidence ${livenessConfidence.toFixed(1)}.`
+                            : "Liveness passed and your live capture is ready for face comparison."
+                          : livenessStatus === "unsupported"
+                            ? "Add the public Cognito Identity Pool configuration to enable AWS liveness on the student app."
+                            : "Use the live camera flow on your phone. Static pictures and gallery images should not be enough to complete this step."}
+                      </p>
+                      {livenessError ? (
+                        <Alert variant="destructive" className="mt-3">
+                          <AlertDescription>{livenessError}</AlertDescription>
+                        </Alert>
+                      ) : null}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           ) : null}
 
@@ -622,6 +832,18 @@ export default function StudentVotePage() {
                     </p>
                   </div>
                 </div>
+                <div className="rounded-2xl border bg-muted/20 p-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Liveness
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    {livenessStatus === "passed"
+                      ? "Live presence confirmed"
+                      : livenessStatus === "unsupported"
+                        ? "Configuration required"
+                        : "Not completed"}
+                  </p>
+                </div>
 
                 {submitVote.error ? (
                   <Alert variant="destructive">
@@ -664,6 +886,16 @@ export default function StudentVotePage() {
                       ? "Location captured. This session supports flexible locations."
                       : "Location captured. Your position will be checked against the session radius."
                     : "Capture your current coordinates before you submit."}
+                </p>
+              </div>
+              <div className="rounded-2xl border bg-muted/20 p-4">
+                <p className="font-medium text-foreground">Liveness status</p>
+                <p className="mt-1 text-muted-foreground">
+                  {livenessStatus === "passed"
+                    ? "AWS liveness passed. Your live capture will be used for face comparison."
+                    : livenessStatus === "unsupported"
+                      ? "AWS web liveness needs Cognito guest credentials before this ballot can complete securely."
+                      : "Complete the live presence check before you submit."}
                 </p>
               </div>
             </CardContent>
@@ -710,7 +942,7 @@ export default function StudentVotePage() {
                     : currentStep === "verification"
                       ? canContinueFromVerification
                         ? "Verification inputs complete. Continue to final review."
-                        : "Upload a selfie and capture your location."
+                        : "Upload a selfie, complete liveness, and capture your location."
                       : "Submit your final vote once everything looks correct."}
                 </p>
               </div>
@@ -761,7 +993,8 @@ export default function StudentVotePage() {
                       submitVote.isPending ||
                       !allCategoriesSelected ||
                       !imageUrl ||
-                      !location
+                      !location ||
+                      livenessStatus !== "passed"
                     }
                     size="sm"
                     className="shrink-0"
