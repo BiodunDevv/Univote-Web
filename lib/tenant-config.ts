@@ -94,9 +94,6 @@ export function formatParticipantIdentifier(
   const fallbackKeys = [
     "display_identifier",
     "matric_no",
-    "member_id",
-    "employee_id",
-    "username",
     "email",
   ];
 

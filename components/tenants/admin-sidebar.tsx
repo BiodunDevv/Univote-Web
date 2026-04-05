@@ -11,7 +11,6 @@ import {
   FileBarChart,
   GraduationCap,
   LayoutDashboard,
-  LifeBuoy,
   Settings2,
   UserCog,
   Users,
@@ -25,7 +24,6 @@ import { NavSearch, type SearchItem } from "@/components/nav-search";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
-import { useSupportOverviewQuery } from "@/lib/queries/support";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
@@ -124,7 +122,6 @@ const adminNavMain: NavItem[] = [
 const adminNavProjects = [
   { name: "Announcements", url: "/dashboard/announcements", icon: Megaphone },
   { name: "Notifications", url: "/dashboard/notifications", icon: Bell },
-  { name: "Support", url: "/dashboard/support", icon: LifeBuoy },
   { name: "System Health", url: "/dashboard/system-health", icon: Activity },
   { name: "Biometrics", url: "/dashboard/biometrics", icon: Fingerprint },
   { name: "Settings", url: "/dashboard/settings", icon: Settings2 },
@@ -172,8 +169,6 @@ export function AdminSidebar({
   const { admin, tenant, membership } = useAuthStore();
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("admin");
-  const supportOverviewQuery = useSupportOverviewQuery("admin");
-  const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
   const canManageStudents = hasAnyTenantPermission(membership, [
     "students.manage",
     "tenant.manage",
@@ -194,10 +189,6 @@ export function AdminSidebar({
   ]);
   const canViewAnalytics = hasAnyTenantPermission(membership, [
     "analytics.view",
-    "tenant.manage",
-  ]);
-  const canManageSupport = hasAnyTenantPermission(membership, [
-    "support.manage",
     "tenant.manage",
   ]);
   const canExportReports = hasAnyTenantPermission(membership, [
@@ -273,7 +264,6 @@ export function AdminSidebar({
     () =>
       adminNavProjects
         .filter((item) => {
-          if (item.name === "Support") return canManageSupport;
           if (item.name === "Biometrics") {
             return canViewAnalytics && tenant?.entitlements?.face_verification !== false;
           }
@@ -285,19 +275,12 @@ export function AdminSidebar({
                 ...item,
                 badge: unreadNotifications > 0 ? unreadNotifications : null,
               }
-            : item.name === "Support"
-              ? {
-                  ...item,
-                  badge: unreadSupport > 0 ? unreadSupport : null,
-                }
               : item,
         ),
     [
-      canManageSupport,
       canViewAnalytics,
       tenant,
       unreadNotifications,
-      unreadSupport,
     ],
   );
 

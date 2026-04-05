@@ -1,38 +1,28 @@
 "use client";
 
-import { SupportDesk } from "@/components/support/support-desk";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { TenantAccessRestricted } from "@/components/tenants/shared";
-import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
+import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 
 export default function TenantSupportPage() {
-  const { admin, membership } = useAuthStore();
-  const isSuperAdmin = admin?.role === "super_admin";
-  const canManageSupport = isSuperAdmin
-    ? true
-    : hasAnyTenantPermission(membership, ["support.manage", "tenant.manage"]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const openTicket = useAdminChatWidgetStore((state) => state.openTicket);
 
-  if (!canManageSupport) {
-    return (
-      <TenantAccessRestricted
-        title="Support access restricted"
-        subtitle="Your university role does not allow support queue management."
-      />
-    );
-  }
+  useEffect(() => {
+    openTicket(searchParams.get("ticket"));
+    router.replace("/dashboard");
+  }, [openTicket, router, searchParams]);
 
   return (
-    <SupportDesk
-      scope="admin"
-      title={isSuperAdmin ? "Support Queue" : "Support Inbox"}
-      description={
-        isSuperAdmin
-          ? "Inspect support tickets across tenants from the dashboard shell."
-          : "Manage tenant support tickets, continue ticket conversations, and track queue posture."
-      }
-      allowCreate={!isSuperAdmin}
-      showTenant={isSuperAdmin}
-      showQueueFilters
+    <ChangingLoadingState
+      fullHeight
+      messages={[
+        "Opening support sheet...",
+        "Preparing conversation inbox...",
+        "Returning to dashboard...",
+      ]}
     />
   );
 }

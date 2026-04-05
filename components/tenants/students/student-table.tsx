@@ -68,13 +68,31 @@ function getStudentInitials(name: string) {
 function getStudentIdentifier(student: Student) {
   return (
     student.display_identifier ||
-    student.member_id ||
-    student.employee_id ||
-    student.username ||
     student.matric_no ||
     student.email ||
     "No identifier"
   );
+}
+
+function isFaceEnrolled(student: Student) {
+  return Boolean(
+    student.has_facial_data ||
+      student.face_enrollment_status === "enrolled" ||
+      (student.last_face_enrolled_at && !student.last_face_enrollment_error),
+  );
+}
+
+function formatEnrollmentTimestamp(date?: string | null) {
+  if (!date) return "AWS face enrollment will appear here after a successful save.";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return "AWS face enrollment recorded.";
+  }
+  return `AWS face enrolled on ${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(parsed)}.`;
 }
 
 function StudentAvatar({
@@ -85,6 +103,7 @@ function StudentAvatar({
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = React.useState(false);
+  const enrolled = isFaceEnrolled(student);
 
   return (
     <div
@@ -104,7 +123,7 @@ function StudentAvatar({
       ) : (
         <span>{getStudentInitials(student.full_name)}</span>
       )}
-      {student.has_facial_data ? (
+      {enrolled ? (
         <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-background bg-emerald-500 text-[9px] text-white">
           ✓
         </span>
@@ -141,6 +160,8 @@ function StudentPreviewDrawer({
     return null;
   }
 
+  const enrolled = isFaceEnrolled(student);
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange} direction={isMobile ? "bottom" : "right"}>
       <DrawerContent className={isMobile ? "max-h-[92vh]" : "h-screen w-full sm:max-w-lg"}>
@@ -171,15 +192,15 @@ function StudentPreviewDrawer({
                 >
                   {student.is_active ? "Active" : "Inactive"}
                 </Badge>
-                <Badge variant={student.has_facial_data ? "default" : "outline"}>
-                  {student.has_facial_data ? "Face ready" : "Face pending"}
+                <Badge variant={enrolled ? "default" : "outline"}>
+                  {enrolled ? "Face enrolled" : "Face pending"}
                 </Badge>
                 <Badge variant="outline">
-                  {student.photo_review_status === "approved"
-                    ? "Photo approved"
-                    : student.photo_review_status === "rejected"
-                      ? "Photo rejected"
-                      : "Photo review pending"}
+                  {enrolled
+                    ? "AWS ready"
+                    : student.face_enrollment_status === "failed"
+                      ? "Enrollment failed"
+                      : "Enrollment pending"}
                 </Badge>
               </div>
             </div>
@@ -249,23 +270,31 @@ function StudentPreviewDrawer({
                 <p className={compactUi.typography.sectionTitle}>Verification</p>
               </div>
               <p className="mt-2 text-sm font-semibold">
-                {student.has_facial_data ? "Face verification enrolled" : "Face verification pending"}
+                {enrolled ? "Face verification enrolled" : "Face verification pending"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {student.has_facial_data
+                {enrolled
                   ? "This record can participate in face-verified voting checks."
                   : "Upload or capture a face record before strict verification is enforced."}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Photo review:{" "}
+                Enrollment status:{" "}
                 <span className="font-medium text-foreground">
-                  {student.photo_review_status === "approved"
-                    ? "Approved"
-                    : student.photo_review_status === "rejected"
-                      ? "Rejected"
-                      : "Pending approval"}
+                  {student.face_enrollment_status === "enrolled"
+                    ? "Enrolled"
+                    : student.face_enrollment_status === "failed"
+                      ? "Failed"
+                      : "Pending"}
                 </span>
               </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {formatEnrollmentTimestamp(student.last_face_enrolled_at)}
+              </p>
+              {student.last_face_enrollment_error ? (
+                <p className="mt-2 text-xs text-destructive">
+                  {student.last_face_enrollment_error}
+                </p>
+              ) : null}
             </div>
           </div>
 

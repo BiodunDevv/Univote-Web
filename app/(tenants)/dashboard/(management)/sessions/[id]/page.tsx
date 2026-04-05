@@ -515,16 +515,16 @@ function SessionDetailsLoaded({
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            {canManageCandidates ? (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  router.push(`/dashboard/sessions/${sessionId}/edit`)
-                }
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Session
-              </Button>
+            {canManageCandidates && currentSession.status === "upcoming" ? (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    router.push(`/dashboard/sessions/${sessionId}/edit`)
+                  }
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Session
+                </Button>
             ) : null}
           </div>
         </div>

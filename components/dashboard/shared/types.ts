@@ -19,9 +19,6 @@ export type DashboardRecentSession = {
 
 export type DashboardTopVoter = {
   matric_no?: string | null;
-  member_id?: string | null;
-  employee_id?: string | null;
-  username?: string | null;
   email?: string | null;
   display_identifier?: string | null;
   full_name: string;

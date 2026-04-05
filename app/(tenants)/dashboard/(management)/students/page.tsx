@@ -205,9 +205,6 @@ export function StudentsPage() {
         student.email,
         student.display_identifier,
         student.matric_no,
-        student.member_id,
-        student.employee_id,
-        student.username,
       ]
         .filter(Boolean)
         .join(" ")
@@ -265,6 +262,13 @@ export function StudentsPage() {
     .sort((left, right) => right.total - left.total)
     .slice(0, 6);
   const busiestDepartments = (overview?.by_department || []).slice(0, 6);
+  const collegeCodeMap = useMemo(
+    () =>
+      Object.fromEntries(
+        (overview?.colleges || []).map((college) => [college.name, college.code]),
+      ),
+    [overview?.colleges],
+  );
   const initialLoadingMessages = [
     `Loading ${participantLabels.singular.toLowerCase()} registry...`,
     showCollegeField || showDepartmentField
@@ -826,6 +830,7 @@ export function StudentsPage() {
               <div className="w-full min-w-0 max-w-full overflow-hidden">
                 <StudentsRegistryTable
                   students={students}
+                  collegeCodeMap={collegeCodeMap}
                   rowStartIndex={(pagination.page - 1) * pagination.limit}
                   selectedIds={selectedIds}
                   canManageStudents={canManageStudents}

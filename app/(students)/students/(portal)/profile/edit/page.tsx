@@ -78,9 +78,13 @@ export default function StudentProfileEditPage() {
   }
 
   const nextPhotoUpdateAt = profileQuery.data.next_profile_photo_update_at;
+  const hasApprovedPhotoReset = Boolean(
+    profileQuery.data.profile_photo_reset_granted_at,
+  );
   const cooldownBlocked =
     typeof nextPhotoUpdateAt === "string" &&
     new Date(nextPhotoUpdateAt).getTime() > Date.now() &&
+    !hasApprovedPhotoReset &&
     photoUrl !== (profileQuery.data.photo_url || "");
   const initials = (fullName || profileQuery.data.full_name)
     .split(" ")
@@ -89,13 +93,15 @@ export default function StudentProfileEditPage() {
     .join("")
     .toUpperCase();
   const photoPreview = photoUrl || profileQuery.data.photo_url || "";
-  const nextPhotoUpdateText = profileQuery.data.next_profile_photo_update_at
-    ? `Next self-service update opens ${new Date(
-        profileQuery.data.next_profile_photo_update_at,
-      ).toLocaleDateString("en-NG", {
-        dateStyle: "medium",
-      })}.`
-    : "You can update your photo now. After a successful change, the next self-service update opens in six months.";
+  const nextPhotoUpdateText = hasApprovedPhotoReset
+    ? "Your support-approved photo reset is active. You can make one profile photo update now, and the approval will be consumed after a successful save."
+    : profileQuery.data.next_profile_photo_update_at
+      ? `Next self-service update opens ${new Date(
+          profileQuery.data.next_profile_photo_update_at,
+        ).toLocaleDateString("en-NG", {
+          dateStyle: "medium",
+        })}.`
+      : "You can update your photo now. After a successful change, the next self-service update opens in six months.";
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -129,8 +135,8 @@ export default function StudentProfileEditPage() {
         category: "account",
         priority: "medium",
       });
-      toast.success("Photo reset request sent");
-      router.push(`/students/support?ticket=${response.ticket?.id || ""}`);
+      toast.success("Photo reset request sent for review");
+      router.push(`/students/profile?tab=support&ticket=${response.ticket?.id || ""}`);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -257,8 +263,10 @@ export default function StudentProfileEditPage() {
               <span>
                 {nextPhotoUpdateText}
                 {cooldownBlocked
-                  ? " Need an earlier change? Use the reset request button."
-                  : ""}
+                  ? " Need an earlier change? Send a reset request and the support team can approve or decline it in your support thread."
+                  : hasApprovedPhotoReset
+                    ? " Make sure the image is a clear single-person facial photo. Random pictures or non-face images will be rejected automatically."
+                    : ""}
               </span>
             </div>
           </CardContent>

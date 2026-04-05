@@ -56,11 +56,12 @@ export interface DashboardStats {
 }
 
 export interface SystemConfig {
-  facepp: {
+  biometrics: {
     configured: boolean;
-    base_url: string;
-    has_api_key: boolean;
-    has_api_secret: boolean;
+    region?: string;
+    similarity_threshold?: number;
+    liveness_required?: boolean;
+    liveness_threshold?: number;
   };
   email: {
     configured: boolean;
@@ -88,7 +89,7 @@ export interface SystemConfig {
 export interface DatabaseStats {
   students: {
     total: number;
-    with_face_token: number;
+    with_face_enrollment: number;
     with_photo: number;
     active: number;
   };
@@ -116,10 +117,10 @@ export interface SystemHealth {
       status: string;
       message: string;
     };
-    facepp: {
+    aws_rekognition: {
       status: string;
       message: string;
-      base_url: string;
+      region?: string;
     };
     email: {
       status: string;
@@ -200,7 +201,7 @@ interface SettingsStore {
   getAuditActions: (token: string) => Promise<string[]>;
   cleanupAuditLogs: (token: string, days_old: number) => Promise<number>;
   testEmail: (token: string, recipient_email: string) => Promise<void>;
-  testFacepp: (token: string, image_url: string) => Promise<unknown>;
+  testBiometric: (token: string, image_url: string) => Promise<unknown>;
   exportData: (
     token: string,
     data_type: string,
@@ -547,11 +548,11 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     }
   },
 
-  testFacepp: async (token: string, image_url: string) => {
+  testBiometric: async (token: string, image_url: string) => {
     set({ loading: true, error: null });
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/settings/test-facepp`,
+        `${API_BASE_URL}/api/admin/settings/test-biometric`,
         {
           method: "POST",
           headers: {
@@ -564,7 +565,7 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to test Face++");
+        throw new Error(error.error || "Failed to test biometrics");
       }
 
       const data = await response.json();

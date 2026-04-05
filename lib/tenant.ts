@@ -99,6 +99,11 @@ export function getResolvedTenantSlug() {
   );
 }
 
+export function clearTenantSlugOverride() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(TENANT_OVERRIDE_KEY);
+}
+
 function getTenantRootDomain(hostname: string) {
   const normalized = hostname.toLowerCase().replace(/\.$/, "");
   const configuredRootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN

@@ -11,7 +11,6 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Kbd } from "@/components/ui/kbd";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
-import { AdminChatWidget } from "@/components/support/admin-chat-widget";
 import {
   getTenantParticipantLabels,
   isTenantParticipantFieldEnabled,
@@ -29,7 +28,7 @@ const segmentLabels: Record<string, string> = {
   admins: "Admins",
   settings: "Settings",
   "audit-logs": "Audit Logs",
-  "facepp-test": "Face++ Testing",
+  "facepp-test": "Biometric Testing",
   analytics: "Analytics",
   reports: "Reports",
   notifications: "Notifications",
@@ -111,10 +110,6 @@ export function DashboardShellHeader({
     rootSegment === "super-admin"
       ? "/super-admin/notifications"
       : "/dashboard/notifications";
-  const supportPath =
-    rootSegment === "super-admin"
-      ? "/super-admin/support"
-      : "/dashboard/support";
   const permissions = React.useMemo(
     () =>
       new Set([
@@ -203,21 +198,6 @@ export function DashboardShellHeader({
           visible: true,
         },
         {
-          value: supportPath,
-          label: "Support",
-          match: (path: string) => path.startsWith("/dashboard/support"),
-          visible:
-            permissions.size === 0 ||
-            permissions.has("support.manage") ||
-            permissions.has("tenant.manage"),
-        },
-        {
-          value: "/dashboard/announcements",
-          label: "Announcements",
-          match: (path: string) => path.startsWith("/dashboard/announcements"),
-          visible: true,
-        },
-        {
           value: "/dashboard/application",
           label: "Application",
           match: (path: string) => path.startsWith("/dashboard/application"),
@@ -228,7 +208,6 @@ export function DashboardShellHeader({
       participantLabels.plural,
       permissions,
       structureEnabled,
-      supportPath,
       tenant,
     ],
   );
@@ -279,16 +258,6 @@ export function DashboardShellHeader({
         label: "Notifications",
         match: (path: string) => path.startsWith("/super-admin/notifications"),
       },
-      {
-        value: "/super-admin/support",
-        label: "Support",
-        match: (path: string) => path.startsWith("/super-admin/support"),
-      },
-      {
-        value: "/super-admin/audit-logs",
-        label: "Audit Logs",
-        match: (path: string) => path.startsWith("/super-admin/audit-logs"),
-      },
     ],
     [],
   );
@@ -320,10 +289,9 @@ export function DashboardShellHeader({
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2">
-            <AdminChatWidget
-              supportPath={supportPath}
-              showTenant={rootSegment === "super-admin"}
-            />
+            {rootSegment !== "super-admin" ? (
+              <AdminChatWidget showTenant={false} />
+            ) : null}
             <Button
               variant="outline"
               asChild

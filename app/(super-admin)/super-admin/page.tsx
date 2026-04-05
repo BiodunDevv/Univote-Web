@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import { Building2, Fingerprint } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { AdminChatOverviewCard } from "@/components/support/admin-chat-overview-card";
 import {
   TenantMetricCard,
   TenantMetricGrid,
@@ -59,7 +58,7 @@ export default function SuperAdminOverviewPage() {
         messages={[
           "Loading platform overview...",
           "Checking tenant lifecycle health...",
-          "Preparing operations and support insights...",
+          "Preparing platform operations insights...",
         ]}
       />
     );
@@ -100,7 +99,7 @@ export default function SuperAdminOverviewPage() {
         eyebrow="Platform operations"
         icon={<Building2 className="h-5 w-5" />}
         title="Platform overview"
-        subtitle="Monitor university lifecycle, active admin coverage, support demand, and the operating posture of the entire Univote platform."
+        subtitle="Monitor university lifecycle, active admin coverage, biometric health, and the operating posture of the entire Univote platform."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
@@ -155,8 +154,7 @@ export default function SuperAdminOverviewPage() {
         />
       </TenantMetricGrid>
 
-      <div className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
-        <AdminChatOverviewCard supportPath="/super-admin/support" showTenant />
+      <div className="grid gap-3">
         <TenantSectionCard
           title="Newest universities"
           description="Inspect access posture, onboarding progress, and open each university for deeper operational review."

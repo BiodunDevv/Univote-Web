@@ -32,6 +32,27 @@ import {
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import type { Student } from "@/types/student";
 
+function isFaceEnrolled(student: Student) {
+  return Boolean(
+    student.has_facial_data ||
+      student.face_enrollment_status === "enrolled" ||
+      (student.last_face_enrolled_at && !student.last_face_enrollment_error),
+  );
+}
+
+function formatEnrollmentTimestamp(date?: string | null) {
+  if (!date) return "AWS enrollment will run when this record is saved with a valid photo.";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return "AWS face enrollment recorded for this student.";
+  }
+  return `AWS face enrolled on ${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(parsed)}.`;
+}
+
 type StudentsOverviewLite = {
   colleges: Array<{
     id: string;
@@ -75,6 +96,7 @@ export function ParticipantEditDialog({
   const [photoUrl, setPhotoUrl] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const enrolled = student ? isFaceEnrolled(student) : false;
 
   useEffect(() => {
     if (!student) return;
@@ -149,8 +171,8 @@ export function ParticipantEditDialog({
             {participantLabels.singular} details
           </SheetTitle>
           <SheetDescription className="text-xs">
-            Review profile data, approve the submitted photo, and update access
-            state without leaving the registry.
+            Review profile data, update the student record, and monitor AWS face
+            enrollment without leaving the registry.
           </SheetDescription>
         </SheetHeader>
 
@@ -207,22 +229,30 @@ export function ParticipantEditDialog({
                   />
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full border border-border/70 bg-background px-3 py-1">
-                      {student.photo_review_status === "approved"
-                        ? "Photo approved"
-                        : student.photo_review_status === "rejected"
-                          ? "Photo rejected"
-                          : "Photo review pending"}
+                      {enrolled
+                        ? "AWS enrollment complete"
+                        : student.face_enrollment_status === "failed"
+                          ? "Enrollment failed"
+                          : "Enrollment pending"}
                     </span>
-                    {student.has_facial_data ? (
+                    {enrolled ? (
                       <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-700">
-                        Face verified
+                        Face enrolled
                       </span>
                     ) : (
                       <span className="rounded-full border border-border/70 bg-background px-3 py-1">
-                        Face verification pending
+                        Face not enrolled
                       </span>
                     )}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatEnrollmentTimestamp(student.last_face_enrolled_at)}
+                  </p>
+                  {student.last_face_enrollment_error ? (
+                    <p className="text-xs text-destructive">
+                      {student.last_face_enrollment_error}
+                    </p>
+                  ) : null}
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted/20">
                     {isUploadingPhoto ? (
                       <LoadingButtonContent label="Uploading image..." />
@@ -242,39 +272,10 @@ export function ParticipantEditDialog({
                       }
                     />
                   </label>
-                  {student.photo_review_status !== "approved" && photoUrl ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="w-fit"
-                      disabled={updateParticipant.isPending}
-                      onClick={async () => {
-                        try {
-                          await updateParticipant.mutateAsync({
-                            photo_review_status: "approved",
-                          });
-                          await onUpdated();
-                          toast.success("Student photo approved");
-                          onOpenChange(false);
-                        } catch (error) {
-                          toast.error(
-                            error instanceof Error
-                              ? error.message
-                              : "Failed to approve student photo",
-                          );
-                        }
-                      }}
-                    >
-                      {updateParticipant.isPending ? (
-                        <LoadingButtonContent label="Approving photo..." />
-                      ) : (
-                        <>
-                          <BadgeCheck className="mr-2 h-4 w-4" />
-                          Approve photo
-                        </>
-                      )}
-                    </Button>
-                  ) : null}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <BadgeCheck className="h-4 w-4" />
+                    Saving this record will attempt AWS face enrollment automatically.
+                  </div>
                 </div>
               </div>
             </div>

@@ -11,7 +11,7 @@ export interface TenantLabelsSettings {
 }
 
 export interface TenantIdentifierMetadata {
-  key: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+  key: "matric_no" | "email";
   label: string;
   placeholder: string;
 }

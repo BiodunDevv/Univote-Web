@@ -38,6 +38,7 @@ export type StudentImagePreview = {
 
 export type StudentsRegistryTableProps = {
   students: Student[];
+  collegeCodeMap?: Record<string, string>;
   rowStartIndex?: number;
   selectedIds: string[];
   canManageStudents: boolean;

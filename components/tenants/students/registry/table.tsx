@@ -15,27 +15,72 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { StudentsRegistryTableProps } from "./types";
 
+function isFaceEnrolled(student: {
+  has_facial_data?: boolean;
+  face_enrollment_status?: "pending" | "failed" | "enrolled";
+  last_face_enrolled_at?: string | null;
+  last_face_enrollment_error?: string | null;
+}) {
+  return Boolean(
+    student.has_facial_data ||
+      student.face_enrollment_status === "enrolled" ||
+      (student.last_face_enrolled_at && !student.last_face_enrollment_error),
+  );
+}
+
+function formatEnrollmentLabel(date?: string | null) {
+  if (!date) return "Enrollment recorded";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Enrollment recorded";
+  return `Enrolled ${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(parsed)}`;
+}
+
 function getStudentIdentifier(student: {
   display_identifier?: string | null;
   matric_no?: string | null;
-  member_id?: string | null;
-  employee_id?: string | null;
-  username?: string | null;
   email?: string | null;
 }) {
   return (
     student.display_identifier ||
-    student.member_id ||
-    student.employee_id ||
-    student.username ||
     student.matric_no ||
     student.email ||
     "No identifier"
   );
 }
 
+function formatCollegeLabel(student: {
+  college?: string | null;
+  college_code?: string | null;
+}, collegeCodeMap?: Record<string, string>) {
+  if (student.college_code) {
+    return student.college_code;
+  }
+
+  if (student.college && collegeCodeMap?.[student.college]) {
+    return collegeCodeMap[student.college];
+  }
+
+  if (!student.college) {
+    return "Not used";
+  }
+
+  const code = student.college
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((word) => !["of", "and", "&", "the"].includes(word.toLowerCase()))
+    .map((word) => word[0]?.toUpperCase() || "")
+    .join("");
+
+  return code || student.college;
+}
+
 export function StudentsRegistryTable({
   students,
+  collegeCodeMap,
   rowStartIndex = 0,
   selectedIds,
   canManageStudents,
@@ -96,6 +141,7 @@ export function StudentsRegistryTable({
               .join("")
               .toUpperCase()
               .slice(0, 2);
+            const enrolled = isFaceEnrolled(student);
 
             return (
               <Card
@@ -170,7 +216,7 @@ export function StudentsRegistryTable({
                     <p className="break-all">{student.email}</p>
                     {showCollegeField ? (
                       <p className="line-clamp-2 wrap-break-word">
-                        College: {student.college || "Not used"}
+                        College: {formatCollegeLabel(student, collegeCodeMap)}
                       </p>
                     ) : null}
                     {showDepartmentField ? (
@@ -182,28 +228,36 @@ export function StudentsRegistryTable({
                       <p>Level: {student.level || "Not set"}</p>
                     ) : null}
                     {showFaceField ? (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        <Badge
-                          variant={
-                            student.has_facial_data ? "default" : "outline"
-                          }
-                        >
-                          {student.has_facial_data ? (
-                            <>
-                              <CheckCircle2 className="h-3 w-3" />
-                              Face ready
-                            </>
-                          ) : (
-                            "Face pending"
-                          )}
-                        </Badge>
-                        <Badge variant="outline">
-                          {student.photo_review_status === "approved"
-                            ? "Photo approved"
-                            : student.photo_review_status === "rejected"
-                              ? "Photo rejected"
-                              : "Photo review pending"}
-                        </Badge>
+                      <div className="mt-1 space-y-1.5">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant={enrolled ? "default" : "outline"}>
+                            {enrolled ? (
+                              <>
+                                <CheckCircle2 className="h-3 w-3" />
+                                Face enrolled
+                              </>
+                            ) : (
+                              "Face not enrolled"
+                            )}
+                          </Badge>
+                          <Badge variant="outline">
+                            {enrolled
+                              ? "AWS ready"
+                              : student.face_enrollment_status === "failed"
+                                ? "Enrollment failed"
+                                : "Awaiting enrollment"}
+                          </Badge>
+                        </div>
+                        {enrolled ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            {formatEnrollmentLabel(student.last_face_enrolled_at)}
+                          </p>
+                        ) : null}
+                        {student.last_face_enrollment_error ? (
+                          <p className="text-[11px] text-destructive">
+                            {student.last_face_enrollment_error}
+                          </p>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

@@ -42,26 +42,12 @@ export interface PublicOrganization {
     participant_plural: string;
   };
   identity?: {
-    primary_identifier:
-      | "matric_no"
-      | "email"
-      | "member_id"
-      | "employee_id"
-      | "username";
-    allowed_identifiers?: Array<
-      "matric_no" | "email" | "member_id" | "employee_id" | "username"
-    >;
-    recovery_identifiers?: Array<
-      "matric_no" | "email" | "member_id" | "employee_id" | "username"
-    >;
-    display_identifier?:
-      | "matric_no"
-      | "email"
-      | "member_id"
-      | "employee_id"
-      | "username";
+    primary_identifier: "matric_no" | "email";
+    allowed_identifiers?: Array<"matric_no" | "email">;
+    recovery_identifiers?: Array<"matric_no" | "email">;
+    display_identifier?: "matric_no" | "email";
     login?: {
-      key: "matric_no" | "email" | "member_id" | "employee_id" | "username";
+      key: "matric_no" | "email";
       label: string;
       placeholder: string;
     };

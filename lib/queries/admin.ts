@@ -59,9 +59,6 @@ type AdminDashboardData = {
   }>;
   top_voters: Array<{
     matric_no?: string | null;
-    member_id?: string | null;
-    employee_id?: string | null;
-    username?: string | null;
     email?: string | null;
     display_identifier?: string | null;
     full_name: string;
@@ -151,19 +148,16 @@ export type AdminAuditActionsResponse = {
   total: number;
 };
 
-export type AdminFaceppTestResponse = {
+export type AdminBiometricTestResponse = {
   message: string;
   test_result: {
     success: boolean;
     face_detected: boolean;
-    face_token: string;
-    face_rectangle: {
-      top: number;
-      left: number;
-      width: number;
-      height: number;
-    };
-    image_id: string;
+    face_count?: number;
+    quality?: {
+      brightness?: number | null;
+      sharpness?: number | null;
+    } | null;
   };
   configuration: {
     configured: boolean;
@@ -579,9 +573,6 @@ export type AdminAnalyticsOverviewResponse = {
   };
   top_voters: Array<{
     matric_no?: string | null;
-    member_id?: string | null;
-    employee_id?: string | null;
-    username?: string | null;
     email?: string | null;
     display_identifier?: string | null;
     full_name: string;
@@ -1845,10 +1836,10 @@ export function useTestEmailMutation() {
   });
 }
 
-export function useTestFaceppMutation() {
+export function useTestBiometricMutation() {
   return useMutation({
     mutationFn: (image_url: string) =>
-      apiRequest<AdminFaceppTestResponse>("/api/admin/settings/test-facepp", {
+      apiRequest<AdminBiometricTestResponse>("/api/admin/settings/test-biometric", {
         method: "POST",
         auth: "admin",
         data: { image_url },

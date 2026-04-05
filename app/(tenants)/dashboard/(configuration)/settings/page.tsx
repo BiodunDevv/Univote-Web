@@ -909,12 +909,12 @@ function SettingsContent() {
                     </span>
                     <Badge
                       variant={
-                        systemConfig?.facepp.configured
+                        systemConfig?.biometrics.configured
                           ? "default"
                           : "secondary"
                       }
                     >
-                      {systemConfig?.facepp.configured
+                      {systemConfig?.biometrics.configured
                         ? "Configured"
                         : "Pending"}
                     </Badge>

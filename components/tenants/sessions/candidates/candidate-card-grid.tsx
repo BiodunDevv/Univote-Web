@@ -44,7 +44,7 @@ export function CandidateCardGrid({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       {candidates.map((candidate, index) => {
         const key = candidate._id || candidate.client_id || `${candidate.name}-${index}`;
         return (

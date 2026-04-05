@@ -434,8 +434,9 @@ export default function StudentVotePage() {
                           Upload a clear selfie
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Face++ will compare this selfie against your registered
-                          facial profile before your vote is accepted.
+                          AWS biometric verification will compare this selfie
+                          against your registered facial profile before your
+                          vote is accepted.
                         </p>
                       </div>
                       <input

@@ -3,9 +3,6 @@ import type { TenantContext } from "@/types/tenant";
 export interface StudentPortalUser {
   id: string;
   matric_no?: string | null;
-  member_id?: string | null;
-  employee_id?: string | null;
-  username?: string | null;
   display_identifier?: string | null;
   full_name: string;
   email: string;
@@ -15,8 +12,11 @@ export interface StudentPortalUser {
   level: string;
   photo_url?: string | null;
   last_profile_photo_updated_at?: string | null;
+  profile_photo_reset_granted_at?: string | null;
   next_profile_photo_update_at?: string | null;
   has_facial_data: boolean;
+  face_enrollment_status?: "pending" | "failed" | "enrolled";
+  last_face_enrollment_error?: string | null;
   has_voted_sessions?: string[];
   is_logged_in?: boolean;
   first_login?: boolean;
@@ -44,9 +44,6 @@ export interface StudentDashboardResponse {
   tenant?: TenantContext | null;
   student_info: {
     matric_no?: string | null;
-    member_id?: string | null;
-    employee_id?: string | null;
-    username?: string | null;
     display_identifier?: string | null;
     full_name: string;
     email: string;
@@ -55,6 +52,8 @@ export interface StudentDashboardResponse {
     level: string;
     photo_url?: string | null;
     has_facial_data: boolean;
+    face_enrollment_status?: "pending" | "failed" | "enrolled";
+    last_face_enrollment_error?: string | null;
     first_login?: boolean;
     member_since?: string;
     last_login?: string | null;

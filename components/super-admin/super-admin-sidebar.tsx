@@ -7,7 +7,6 @@ import {
   FileText,
   Fingerprint,
   LayoutDashboard,
-  LifeBuoy,
   Megaphone,
   Rocket,
   Settings2,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
-import { useSupportOverviewQuery } from "@/lib/queries/support";
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavSearch, type SearchItem } from "@/components/nav-search";
@@ -55,15 +53,6 @@ const superAdminNavMain: NavItem[] = [
     items: [
       { title: "Tenant Directory", url: "/super-admin/tenants" },
       { title: "Onboarding Queue", url: "/super-admin/onboarding" },
-    ],
-  },
-  {
-    title: "Support",
-    url: "/super-admin/support",
-    icon: LifeBuoy,
-    items: [
-      { title: "Support Queue", url: "/super-admin/support" },
-      { title: "Notifications", url: "/super-admin/notifications" },
     ],
   },
 ];
@@ -117,38 +106,8 @@ export function SuperAdminSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const { admin } = useAuthStore();
-  const { data: unreadNotifications = 0 } =
-    useNotificationSummaryQuery("admin");
-  const supportOverviewQuery = useSupportOverviewQuery("admin");
-  const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
-
-  const navMain = React.useMemo(
-    () =>
-      superAdminNavMain.map((item) =>
-        item.title === "Support"
-          ? {
-              ...item,
-              badge: unreadSupport > 0 ? unreadSupport : null,
-              items:
-                item.items?.map((subItem) =>
-                  subItem.title === "Notifications"
-                    ? {
-                        ...subItem,
-                        badge:
-                          unreadNotifications > 0 ? unreadNotifications : null,
-                      }
-                    : subItem.title === "Support Queue"
-                      ? {
-                          ...subItem,
-                          badge: unreadSupport > 0 ? unreadSupport : null,
-                        }
-                      : subItem,
-                ) || item.items,
-            }
-          : item,
-      ),
-    [unreadNotifications, unreadSupport],
-  );
+  useNotificationSummaryQuery("admin");
+  const navMain = React.useMemo(() => superAdminNavMain, []);
 
   const searchItems = React.useMemo(
     () => buildSearchItems(navMain, superAdminNavProjects),

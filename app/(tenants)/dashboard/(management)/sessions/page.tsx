@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Edit,
   Eye,
+  Globe,
+  Layers3,
   MapPin,
   Plus,
   Search,
@@ -25,14 +27,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
   useAdminSessionSummaryQuery,
@@ -48,6 +42,7 @@ import {
   TenantSectionCard,
 } from "@/components/tenants/shared";
 import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
+import { cn } from "@/lib/utils";
 
 const INITIAL_LOADING_MESSAGES = [
   "Getting all sessions...",
@@ -160,13 +155,13 @@ export default function SessionsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-500/10 text-green-700 dark:text-green-300";
+        return "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
       case "upcoming":
-        return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
+        return "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300";
       case "ended":
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-300";
+        return "border-border bg-muted/60 text-muted-foreground";
       default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-300";
+        return "border-border bg-muted/60 text-muted-foreground";
     }
   };
 
@@ -213,6 +208,32 @@ export default function SessionsPage() {
     return "Location not set";
   };
 
+  const getSessionWindowLabel = (session: (typeof sessions)[number]) => {
+    if (session.status === "active") return "Voting is live now";
+    if (session.status === "upcoming") return "Scheduled to open soon";
+    return "Voting window has ended";
+  };
+
+  const getEligibilitySummary = (session: (typeof sessions)[number]) => {
+    const parts: string[] = [];
+    if (session.eligible_college) parts.push(session.eligible_college);
+    if (session.eligible_departments?.length) {
+      parts.push(
+        session.eligible_departments.length === 1
+          ? session.eligible_departments[0]
+          : `${session.eligible_departments.length} departments`,
+      );
+    }
+    if (session.eligible_levels?.length) {
+      parts.push(
+        session.eligible_levels.length === 1
+          ? `${session.eligible_levels[0]} level`
+          : `${session.eligible_levels.length} levels`,
+      );
+    }
+    return parts.length > 0 ? parts.join(" • ") : "All eligible students";
+  };
+
   if (!hasHydrated || !token) {
     return <ChangingLoadingState messages={["Preparing your session..."]} />;
   }
@@ -239,7 +260,7 @@ export default function SessionsPage() {
         eyebrow="Tenant sessions"
         icon={<Vote className="h-5 w-5" />}
         title="Session Management"
-        subtitle="Create, review, edit, and retire voting sessions with one consistent operational surface."
+        subtitle="Create, review, manage, and retire voting sessions with one consistent operational surface. Editing is available only while a session is still upcoming."
         actions={
           <Button
             onClick={() => router.push("/dashboard/sessions/create")}
@@ -343,142 +364,150 @@ export default function SessionsPage() {
 
           <TenantSectionCard
             title="Session registry"
-            description="Table view for lifecycle state, schedule, turnout snapshot, location, and candidate setup."
+            description="Card-based registry for lifecycle state, schedule, turnout, eligibility, and candidate setup."
             contentClassName="space-y-4 overflow-hidden"
           >
-            <div className="w-full min-w-0 max-w-full overflow-hidden">
-              <div className="hidden w-full max-w-full overflow-x-auto rounded-lg border md:block">
-                <Table className="min-w-[1100px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Session</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Window</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Turnout</TableHead>
-                      <TableHead>Setup</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {visibleSessions.map((session) => (
-                      <TableRow key={session._id}>
-                        <TableCell>
-                          <p className="text-sm font-semibold">
-                            {session.title}
-                          </p>
-                          <p className="line-clamp-1 text-xs text-muted-foreground">
-                            {session.description || "No description"}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={getStatusColor(session.status)}
-                          >
-                            {session.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-xs">
-                            {formatSessionDateTime(session.start_time)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            to {formatSessionDateTime(session.end_time)}
-                          </p>
-                        </TableCell>
-                        <TableCell className="max-w-[220px] truncate text-xs">
-                          {formatLocation(session.location)}
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm font-medium">
-                            {(session.students_voted || 0).toLocaleString()}{" "}
-                            voted
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {(session.total_votes || 0).toLocaleString()}{" "}
-                            ballots
-                          </p>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {(session.categories?.length || 0).toLocaleString()}{" "}
-                          categories
-                          <br />
-                          {(
-                            session.candidates?.length || 0
-                          ).toLocaleString()}{" "}
-                          candidates
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                router.push(
-                                  `/dashboard/sessions/${session._id}`,
-                                )
-                              }
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {session.status !== "active" ? (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    router.push(
-                                      `/dashboard/sessions/${session._id}/edit`,
-                                    )
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleDelete(session._id, session.title)
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            ) : null}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:hidden">
+            <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               {visibleSessions.map((session) => (
                 <div
                   key={session._id}
-                  className="rounded-2xl border border-border/70 bg-background p-3"
+                  className="flex h-full flex-col rounded-3xl border border-border/70 bg-card/70 p-4 shadow-none"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold">{session.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatSessionDate(session.start_time)}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={cn("capitalize", getStatusColor(session.status))}
+                        >
+                          {session.status}
+                        </Badge>
+                        {session.results_public ? (
+                          <Badge variant="outline">Results public</Badge>
+                        ) : (
+                          <Badge variant="outline">Results private</Badge>
+                        )}
+                      </div>
+                      <p className="text-base font-semibold leading-tight text-foreground">
+                        {session.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {getSessionWindowLabel(session)}
                       </p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={getStatusColor(session.status)}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 rounded-full"
+                      onClick={() =>
+                        router.push(`/dashboard/sessions/${session._id}`)
+                      }
                     >
-                      {session.status}
-                    </Badge>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <p className="text-xs font-medium uppercase tracking-[0.14em]">
+                          Window
+                        </p>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-foreground">
+                        {formatSessionDateTime(session.start_time)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Ends {formatSessionDateTime(session.end_time)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <p className="text-xs font-medium uppercase tracking-[0.14em]">
+                          Location
+                        </p>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-foreground">
+                        {formatLocation(session.location)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {session.is_off_campus_allowed
+                          ? "Off-campus voting allowed"
+                          : "On-campus presence required"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-background p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                        Turnout
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        {(session.students_voted || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        students voted
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                        Ballots
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        {(session.total_votes || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        accepted ballots
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                        Setup
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        {(session.candidates?.length || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        candidates across {(session.categories?.length || 0).toLocaleString()} categories
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl border border-border/70 bg-background p-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Layers3 className="h-4 w-4" />
+                      <p className="text-xs font-medium uppercase tracking-[0.14em]">
+                        Eligibility
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                      {getEligibilitySummary(session)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                        <Vote className="h-3 w-3" />
+                        {session.categories?.length || 0} ballot categories
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                        <Globe className="h-3 w-3" />
+                        {session.results_public ? "Public results" : "Restricted results"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                    {session.description || "No session description provided."}
+                  </p>
+
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="flex-1 min-w-[120px]"
                       onClick={() =>
                         router.push(`/dashboard/sessions/${session._id}`)
                       }
@@ -486,6 +515,30 @@ export default function SessionsPage() {
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </Button>
+                    {session.status === "upcoming" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-[120px]"
+                        onClick={() =>
+                          router.push(`/dashboard/sessions/${session._id}/edit`)
+                        }
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                    ) : null}
+                    {session.status !== "active" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-[120px] text-destructive"
+                        onClick={() => handleDelete(session._id, session.title)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}

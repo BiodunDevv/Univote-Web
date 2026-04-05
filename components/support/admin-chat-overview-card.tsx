@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, LifeBuoy, MessageSquareText } from "lucide-react";
+import { LifeBuoy, MessageSquareText } from "lucide-react";
 import {
   useSupportOverviewQuery,
   useSupportTicketsQuery,
@@ -15,14 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 type AdminChatOverviewCardProps = {
-  supportPath: string;
+  supportPath?: string;
   showTenant?: boolean;
 };
 
 export function AdminChatOverviewCard({
-  supportPath,
+  supportPath: _supportPath,
   showTenant = false,
 }: AdminChatOverviewCardProps) {
+  void _supportPath;
   const { openTicket } = useAdminChatWidgetStore();
   const overviewQuery = useSupportOverviewQuery("admin");
   const ticketsQuery = useSupportTicketsQuery("admin", { limit: 12 });
@@ -66,7 +66,8 @@ export function AdminChatOverviewCard({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Review the queue, jump into the compact chat panel, or open the full support inbox.
+              Review the queue and jump straight into the live support sheet
+              from the dashboard.
             </p>
           </div>
           <div className="rounded-xl border border-border/70 bg-muted/30 p-2 text-muted-foreground">
@@ -145,13 +146,7 @@ export function AdminChatOverviewCard({
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => openTicket(latestTicket?.id ?? null)}>
-            Open compact chat
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href={supportPath}>
-              Full inbox
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            Open support sheet
           </Button>
         </div>
       </CardContent>

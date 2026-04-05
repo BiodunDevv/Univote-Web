@@ -3,7 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { LifeBuoy, ListFilter, MessageSquarePlus, Send } from "lucide-react";
+import {
+  CheckCircle2,
+  LifeBuoy,
+  ListFilter,
+  MessageSquarePlus,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -74,6 +81,7 @@ type SupportDeskProps = {
   showQueueFilters?: boolean;
   compact?: boolean;
   fullScreen?: boolean;
+  preferredTicketId?: string | null;
 };
 
 const STATUS_OPTIONS: SupportTicketStatus[] = [
@@ -106,6 +114,7 @@ export function SupportDesk({
   showQueueFilters = false,
   compact = false,
   fullScreen = false,
+  preferredTicketId = null,
 }: SupportDeskProps) {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -131,9 +140,9 @@ export function SupportDesk({
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
-  const [ticketAction, setTicketAction] = useState<"save" | "close" | null>(
-    null,
-  );
+  const [ticketAction, setTicketAction] = useState<
+    "save" | "close" | "approve" | "decline" | null
+  >(null);
   const [createForm, setCreateForm] = useState({
     subject: "",
     description: "",
@@ -163,6 +172,9 @@ export function SupportDesk({
     deepLinkedTicketId &&
     tickets.some((ticket) => ticket.id === deepLinkedTicketId)
       ? deepLinkedTicketId
+      : preferredTicketId &&
+          tickets.some((ticket) => ticket.id === preferredTicketId)
+        ? preferredTicketId
       : selectedTicketId &&
           tickets.some((ticket) => ticket.id === selectedTicketId)
         ? selectedTicketId
@@ -182,14 +194,32 @@ export function SupportDesk({
     effectiveSelectedTicketId || "",
   );
 
+  const isAdminScope = scope === "admin";
+  const isSuperAdmin = admin?.role === "super_admin";
   const canManage = overviewQuery.data?.permissions.can_manage ?? false;
+  const canModerateQueue = canManage && !isSuperAdmin;
   const canCreate =
     allowCreate && (overviewQuery.data?.permissions.can_create ?? true);
   const selectedConversation = conversationQuery.data;
   const compactMode = compact || scope === "student";
   const fullScreenMode = fullScreen && scope === "student";
-  const isAdminScope = scope === "admin";
-  const isSuperAdmin = admin?.role === "super_admin";
+  const isPhotoResetTicket = Boolean(
+    selectedConversation &&
+      selectedConversation.ticket.requester_type === "student" &&
+      selectedConversation.ticket.category === "account" &&
+      /photo reset/i.test(selectedConversation.ticket.subject),
+  );
+  const photoResetDecisionStatus =
+    selectedConversation?.ticket.photo_reset_decision_status ?? null;
+  const canReviewPhotoReset = Boolean(
+    canModerateQueue &&
+      isPhotoResetTicket &&
+      selectedConversation &&
+      photoResetDecisionStatus !== "approved" &&
+      photoResetDecisionStatus !== "declined" &&
+      !["resolved", "closed"].includes(selectedConversation.ticket.status),
+  );
+  const isAuditOnlyView = isAdminScope && isSuperAdmin;
 
   const tenantAdminQuery = useTenantAdminUsersQuery(
     {
@@ -198,7 +228,7 @@ export function SupportDesk({
       is_active: true,
     },
     {
-      enabled: isAdminScope && canManage && !isSuperAdmin,
+      enabled: isAdminScope && canModerateQueue,
     },
   );
   const globalAdminQuery = useAdminDirectoryQuery(
@@ -403,6 +433,32 @@ export function SupportDesk({
     }
   };
 
+  const handlePhotoResetDecision = async (
+    decision: "accepted" | "declined",
+  ) => {
+    if (!effectiveSelectedTicketId) return;
+
+    try {
+      setTicketAction(decision === "accepted" ? "approve" : "decline");
+      await updateTicket.mutateAsync({
+        photo_reset_decision: decision,
+      });
+      toast.success(
+        decision === "accepted"
+          ? "Photo reset request approved"
+          : "Photo reset request declined",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update photo reset request",
+      );
+    } finally {
+      setTicketAction(null);
+    }
+  };
+
   useEffect(() => {
     if (!canCreate || prefillCreate !== "1") return;
 
@@ -417,7 +473,13 @@ export function SupportDesk({
         ? ((prefillCategory || current.category) as SupportTicketCategory)
         : current.category,
     }));
-  }, [canCreate, prefillCategory, prefillCreate, prefillDescription, prefillSubject]);
+  }, [
+    canCreate,
+    prefillCategory,
+    prefillCreate,
+    prefillDescription,
+    prefillSubject,
+  ]);
 
   if (overviewQuery.isLoading || ticketsQuery.isLoading) {
     return (
@@ -460,14 +522,14 @@ export function SupportDesk({
           onSelect?.();
         }}
         className={cn(
-          "w-full rounded-2xl px-3 py-2.5 text-left transition-colors",
+          "w-full min-w-0 overflow-hidden rounded-2xl px-3 py-2.5 text-left transition-colors",
           isActive ? "bg-foreground text-background" : "hover:bg-muted/40",
         )}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-start justify-between gap-2">
           <p
             className={cn(
-              "line-clamp-1 text-sm font-medium",
+              "min-w-0 flex-1 truncate text-sm font-medium",
               isActive ? "text-background" : "text-foreground",
             )}
           >
@@ -511,14 +573,14 @@ export function SupportDesk({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border bg-background">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden border-y bg-background sm:rounded-2xl sm:border">
       {topLevelError ? (
         <div className="shrink-0 border-b bg-destructive/10 px-4 py-2 text-xs text-destructive">
           {topLevelError}
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1">
         {/* ── Left sidebar: ticket list (md+) ── */}
         <aside className="hidden w-64 shrink-0 flex-col border-r md:flex xl:w-72">
           {/* Sidebar header */}
@@ -619,9 +681,9 @@ export function SupportDesk({
         </aside>
 
         {/* ── Right: conversation ── */}
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Conversation top bar */}
-          <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2.5">
+          <div className="sticky top-0 z-10 flex min-w-0 shrink-0 items-center gap-2 border-b bg-background/95 px-3 py-3 backdrop-blur supports-backdrop-filter:bg-background/80">
             {/* Mobile: slide-over Sheet trigger */}
             <Sheet open={mobileQueueOpen} onOpenChange={setMobileQueueOpen}>
               <SheetTrigger asChild>
@@ -636,7 +698,7 @@ export function SupportDesk({
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="flex w-[80vw] max-w-xs flex-col gap-0 p-0"
+                className="flex w-screen max-w-none flex-col gap-0 p-0 sm:w-[88vw] sm:max-w-sm"
               >
                 <SheetTitle className="sr-only">Support tickets</SheetTitle>
                 {/* Sheet header */}
@@ -701,10 +763,10 @@ export function SupportDesk({
             </Sheet>
 
             {/* Active ticket info */}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               {selectedConversation ? (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <p className="truncate text-sm font-semibold text-foreground">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
                     {selectedConversation.ticket.subject}
                   </p>
                   <Badge variant="secondary" className="shrink-0 text-[10px]">
@@ -720,7 +782,7 @@ export function SupportDesk({
             </div>
 
             {/* Admin manage controls in top bar */}
-            {selectedConversation && canManage ? (
+            {selectedConversation && canModerateQueue ? (
               <div className="hidden shrink-0 items-center gap-2 md:flex">
                 <Select
                   value={manageStatus}
@@ -783,9 +845,42 @@ export function SupportDesk({
                     "Save"
                   )}
                 </Button>
-                {selectedConversation.ticket.requester_type === "student" &&
-                selectedConversation.ticket.category === "account" &&
-                /photo reset/i.test(selectedConversation.ticket.subject) ? (
+                {canReviewPhotoReset ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => void handlePhotoResetDecision("accepted")}
+                      disabled={Boolean(ticketAction)}
+                    >
+                      {ticketAction === "approve" ? (
+                        <LoadingButtonContent label="Approving…" />
+                      ) : (
+                        <>
+                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                          Approve
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => void handlePhotoResetDecision("declined")}
+                      disabled={Boolean(ticketAction)}
+                    >
+                      {ticketAction === "decline" ? (
+                        <LoadingButtonContent label="Declining…" />
+                      ) : (
+                        <>
+                          <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                          Decline
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : isPhotoResetTicket && photoResetDecisionStatus !== "approved" && photoResetDecisionStatus !== "declined" ? (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -793,8 +888,27 @@ export function SupportDesk({
                     onClick={() => void handleResetPhotoCooldown()}
                     disabled={Boolean(ticketAction)}
                   >
-                    Unlock photo
+                    {ticketAction === "save" ? (
+                      <LoadingButtonContent label="Unlocking…" />
+                    ) : (
+                      "Unlock photo"
+                    )}
                   </Button>
+                ) : isPhotoResetTicket ? (
+                  <Badge
+                    variant={
+                      photoResetDecisionStatus === "approved"
+                        ? "secondary"
+                        : "outline"
+                    }
+                    className="text-[10px]"
+                  >
+                    {photoResetDecisionStatus === "approved"
+                      ? "Approved"
+                      : photoResetDecisionStatus === "declined"
+                        ? "Declined"
+                        : "Pending review"}
+                  </Badge>
                 ) : null}
               </div>
             ) : selectedConversation &&
@@ -830,8 +944,8 @@ export function SupportDesk({
           </div>
 
           {/* Admin manage controls on mobile (below bar) */}
-          {selectedConversation && canManage ? (
-            <div className="flex shrink-0 flex-wrap gap-2 border-b bg-muted/20 px-3 py-2 md:hidden">
+          {selectedConversation && canModerateQueue ? (
+            <div className="grid shrink-0 grid-cols-2 gap-2 border-b bg-muted/20 px-3 py-2 md:hidden">
               <Select
                 value={manageStatus}
                 onValueChange={(value) =>
@@ -843,7 +957,7 @@ export function SupportDesk({
                   })
                 }
               >
-                <SelectTrigger className="h-7 flex-1 text-xs">
+                <SelectTrigger className="h-9 w-full text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -865,7 +979,7 @@ export function SupportDesk({
                   })
                 }
               >
-                <SelectTrigger className="h-7 flex-1 text-xs">
+                <SelectTrigger className="h-9 w-full text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -879,7 +993,7 @@ export function SupportDesk({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-9 text-xs"
                 onClick={() => void handleUpdateTicket()}
                 disabled={Boolean(ticketAction)}
               >
@@ -889,24 +1003,84 @@ export function SupportDesk({
                   "Save"
                 )}
               </Button>
-              {selectedConversation.ticket.requester_type === "student" &&
-              selectedConversation.ticket.category === "account" &&
-              /photo reset/i.test(selectedConversation.ticket.subject) ? (
+              {canReviewPhotoReset ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-9 text-xs"
+                    onClick={() => void handlePhotoResetDecision("accepted")}
+                    disabled={Boolean(ticketAction)}
+                  >
+                    {ticketAction === "approve" ? (
+                      <LoadingButtonContent label="Approving…" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                        Approve
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs"
+                    onClick={() => void handlePhotoResetDecision("declined")}
+                    disabled={Boolean(ticketAction)}
+                  >
+                    {ticketAction === "decline" ? (
+                      <LoadingButtonContent label="Declining…" />
+                    ) : (
+                      <>
+                        <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                        Decline
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : isPhotoResetTicket && photoResetDecisionStatus !== "approved" && photoResetDecisionStatus !== "declined" ? (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-9 text-xs"
                   onClick={() => void handleResetPhotoCooldown()}
                   disabled={Boolean(ticketAction)}
                 >
-                  Unlock photo
+                  {ticketAction === "save" ? (
+                    <LoadingButtonContent label="Unlocking…" />
+                  ) : (
+                    "Unlock photo"
+                  )}
                 </Button>
+              ) : isPhotoResetTicket ? (
+                <div className="col-span-2">
+                  <Badge
+                    variant={
+                      photoResetDecisionStatus === "approved"
+                        ? "secondary"
+                        : "outline"
+                    }
+                    className="text-[10px]"
+                  >
+                    {photoResetDecisionStatus === "approved"
+                      ? "Approved"
+                      : photoResetDecisionStatus === "declined"
+                        ? "Declined"
+                        : "Pending review"}
+                  </Badge>
+                </div>
               ) : null}
             </div>
           ) : null}
 
+          {selectedConversation && isAuditOnlyView ? (
+            <div className="shrink-0 border-b bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+              Platform oversight view. Tenant message content is hidden. You can review ticket activity, status, tenant, requester, and timestamps only.
+            </div>
+          ) : null}
+
           {/* Messages area */}
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+          <div className="min-h-0 min-w-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-muted/[0.18] px-3 py-3 pb-28 md:bg-transparent md:pb-3">
             {!effectiveSelectedTicketId ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
                 <LifeBuoy className="size-10 text-muted-foreground/40" />
@@ -940,20 +1114,30 @@ export function SupportDesk({
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+                    className={cn(
+                      "flex w-full min-w-0",
+                      isOwn ? "justify-end" : "justify-start",
+                    )}
                   >
                     <div
                       className={cn(
-                        "max-w-[78%] rounded-2xl px-3 py-2.5 text-sm",
+                        "max-w-[92%] min-w-0 overflow-hidden px-3.5 py-3 text-sm shadow-sm md:max-w-[78%]",
                         isOwn
-                          ? "bg-foreground text-background"
-                          : "border bg-card text-foreground",
+                          ? "rounded-[22px] rounded-br-md bg-foreground text-background"
+                          : "rounded-[22px] rounded-bl-md border bg-card text-foreground",
                       )}
                     >
-                      <p className="text-xs font-semibold opacity-70">
+                      <p className="truncate text-[11px] font-semibold opacity-70">
                         {message.author.name}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap">{message.body}</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                        {message.body}
+                      </p>
+                      {message.is_redacted ? (
+                        <p className="mt-2 text-[11px] text-muted-foreground">
+                          Logged in platform oversight view
+                        </p>
+                      ) : null}
                       <p
                         className={cn(
                           "mt-1.5 text-[11px]",
@@ -977,8 +1161,8 @@ export function SupportDesk({
           </div>
 
           {/* Reply bar */}
-          {effectiveSelectedTicketId ? (
-            <div className="flex shrink-0 items-end gap-2 border-t bg-background px-3 py-2.5">
+          {effectiveSelectedTicketId && !isAuditOnlyView ? (
+            <div className="sticky bottom-0 flex min-w-0 shrink-0 items-end gap-2 border-t bg-background/95 px-3 py-2.5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] backdrop-blur supports-backdrop-filter:bg-background/80">
               <Textarea
                 value={replyBody}
                 onChange={(event) => setReplyBody(event.target.value)}
@@ -992,11 +1176,11 @@ export function SupportDesk({
                 }}
                 placeholder="Write a message…"
                 rows={1}
-                className="max-h-32 min-h-9 flex-1 resize-none text-sm"
+                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[22px] border bg-background text-sm"
               />
               <Button
                 size="icon"
-                className="size-9 shrink-0 rounded-xl"
+                className="size-11 shrink-0 rounded-[22px]"
                 onClick={() => void handleSendMessage()}
                 disabled={createMessage.isPending || !replyBody.trim()}
                 aria-label="Send message"
@@ -1007,6 +1191,10 @@ export function SupportDesk({
                   <Send className="size-4" />
                 )}
               </Button>
+            </div>
+          ) : effectiveSelectedTicketId && isAuditOnlyView ? (
+            <div className="sticky bottom-0 shrink-0 border-t bg-background/95 px-3 py-3 text-xs text-muted-foreground backdrop-blur supports-backdrop-filter:bg-background/80">
+              Super admin can monitor tenant support logs here, but cannot reply to or moderate tenant support tickets.
             </div>
           ) : null}
         </div>

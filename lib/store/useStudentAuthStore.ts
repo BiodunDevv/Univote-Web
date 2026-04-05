@@ -55,9 +55,6 @@ function normalizeStudentProfile(
     | (StudentPortalUser & {
         _id?: string;
         display_identifier?: string | null;
-        member_id?: string | null;
-        employee_id?: string | null;
-        username?: string | null;
       })
     | undefined,
 ): StudentPortalUser {
@@ -71,9 +68,6 @@ function normalizeStudentProfile(
       payload.id ||
       payload._id ||
       payload.display_identifier ||
-      payload.member_id ||
-      payload.employee_id ||
-      payload.username ||
       payload.matric_no ||
       payload.email,
     photo_url: payload.photo_url || null,

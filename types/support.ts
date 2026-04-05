@@ -31,6 +31,8 @@ export interface SupportTicket {
   category: SupportTicketCategory;
   priority: SupportTicketPriority;
   status: SupportTicketStatus;
+  photo_reset_decision_status?: "pending" | "approved" | "declined" | null;
+  photo_reset_decided_at?: string | null;
   requester_type: "student" | "admin";
   requester: SupportActorSnapshot;
   assigned_admin: (SupportActorSnapshot & { id: string }) | null;
@@ -50,6 +52,7 @@ export interface SupportMessage {
   author: SupportActorSnapshot;
   body: string;
   attachments: string[];
+  is_redacted?: boolean;
   createdAt: string;
   updatedAt: string;
 }

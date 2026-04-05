@@ -1,4 +1,4 @@
-import { getResolvedTenantSlug } from "@/lib/tenant";
+import { deriveTenantSlugFromHostname, getResolvedTenantSlug } from "@/lib/tenant";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -152,7 +152,7 @@ function selectTenantSlug(auth: AuthScope) {
     return getStoredStudentTenantSlug() || getResolvedTenantSlug();
   }
 
-  return getResolvedTenantSlug();
+  return deriveTenantSlugFromHostname();
 }
 
 function getErrorMessage(payload: ErrorPayload | null, fallback: string) {

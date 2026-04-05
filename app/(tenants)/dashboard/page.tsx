@@ -331,7 +331,7 @@ export default function DashboardWelcomePage() {
               recentSessions={recentSessions}
               onOpenSession={openSession}
             />
-            <AdminChatOverviewCard supportPath="/dashboard/support" />
+            <AdminChatOverviewCard />
           </div>
         </div>
 

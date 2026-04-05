@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   useAdminSystemConfigQuery,
   useTestEmailMutation,
-  useTestFaceppMutation,
+  useTestBiometricMutation,
 } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
@@ -27,7 +27,7 @@ export default function IntegrationsPage() {
   const participantLabels = getTenantParticipantLabels(tenant);
   const configQuery = useAdminSystemConfigQuery();
   const testEmail = useTestEmailMutation();
-  const testFacepp = useTestFaceppMutation();
+  const testBiometric = useTestBiometricMutation();
   const [email, setEmail] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
@@ -37,7 +37,7 @@ export default function IntegrationsPage() {
         messages={[
           "Loading system integrations...",
           "Checking delivery providers...",
-          "Preparing verification tools...",
+          "Preparing biometric tools...",
         ]}
       />
     );
@@ -58,11 +58,11 @@ export default function IntegrationsPage() {
 
   const integrations = [
     {
-      title: "Face++",
-      configured: config.facepp.configured,
-      details: config.facepp.configured
-        ? `Base URL: ${config.facepp.base_url}`
-        : "Face verification keys are missing.",
+      title: "AWS Rekognition",
+      configured: config.biometrics.configured,
+      details: config.biometrics.configured
+        ? `Region: ${config.biometrics.region || "Not set"}`
+        : "AWS biometric credentials are not fully configured.",
       icon: <ScanFace className="h-4 w-4" />,
     },
     {
@@ -112,8 +112,8 @@ export default function IntegrationsPage() {
             value: config.email.configured ? "Ready" : "Pending",
           },
           {
-            label: "Face++",
-            value: config.facepp.configured ? "Ready" : "Pending",
+            label: "Biometrics",
+            value: config.biometrics.configured ? "Ready" : "Pending",
           },
         ]}
       />
@@ -154,14 +154,14 @@ export default function IntegrationsPage() {
         </TenantSectionCard>
 
         <TenantSectionCard
-          title="Test Face++ detection"
-          description="Run a safe verification request using a supplied image URL to confirm the Face++ path is responsive."
+          title="Test AWS biometric detection"
+          description="Run a safe verification request using a supplied image URL to confirm the AWS Rekognition path is responsive."
           contentClassName="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="integration-facepp">Image URL</Label>
+            <Label htmlFor="integration-biometric">Image URL</Label>
             <Input
-              id="integration-facepp"
+              id="integration-biometric"
               placeholder="https://example.com/photo.jpg"
               value={imageUrl}
               onChange={(event) => setImageUrl(event.target.value)}
@@ -169,29 +169,29 @@ export default function IntegrationsPage() {
             />
           </div>
           <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-            <span>Face++ base URL</span>
+            <span>AWS region</span>
             <span className="font-medium text-foreground">
-              {config.facepp.base_url || "Not configured"}
+              {config.biometrics.region || "Not configured"}
             </span>
           </div>
           <Button
-            disabled={testFacepp.isPending || !imageUrl}
+            disabled={testBiometric.isPending || !imageUrl}
             onClick={async () => {
-              await testFacepp.mutateAsync(imageUrl);
-              toast.success("Face++ test completed");
+              await testBiometric.mutateAsync(imageUrl);
+              toast.success("AWS biometric test completed");
             }}
             className="h-10"
           >
-            {testFacepp.isPending ? "Testing..." : "Run Face++ test"}
+            {testBiometric.isPending ? "Testing..." : "Run AWS test"}
           </Button>
         </TenantSectionCard>
       </div>
 
-      {testEmail.error || testFacepp.error ? (
+      {testEmail.error || testBiometric.error ? (
         <Alert variant="destructive">
           <AlertDescription>
             {(testEmail.error as Error | undefined)?.message ||
-              (testFacepp.error as Error | undefined)?.message}
+              (testBiometric.error as Error | undefined)?.message}
           </AlertDescription>
         </Alert>
       ) : null}

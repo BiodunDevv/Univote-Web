@@ -40,9 +40,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
-import { useSupportOverviewQuery } from "@/lib/queries/support";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { buildPublicAppUrl } from "@/lib/tenant";
 
@@ -74,9 +74,8 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const { logout, admin } = useAuthStore();
+  const openSupportSheet = useAdminChatWidgetStore((state) => state.openTicket);
   const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
-  const supportOverviewQuery = useSupportOverviewQuery("admin");
-  const unreadSupport = supportOverviewQuery.data?.overview.unread_total ?? 0;
   const [showLogout, setShowLogout] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
 
@@ -89,8 +88,10 @@ export function NavUser({
       ? "/super-admin/settings#security"
       : "/dashboard/settings?tab=security";
   const settingsPath = scope === "super-admin" ? "/super-admin/settings" : "/dashboard/settings";
-  const notificationsPath = scope === "super-admin" ? "/super-admin/notifications" : "/dashboard/notifications";
-  const supportPath = scope === "super-admin" ? "/super-admin/support" : "/dashboard/support";
+  const notificationsPath =
+    scope === "super-admin"
+      ? "/super-admin/notifications"
+      : "/dashboard/notifications";
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -172,7 +173,7 @@ export function NavUser({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => router.push(notificationsPath)}>
+              <DropdownMenuItem onClick={() => router.push(notificationsPath)}>
                   <Bell />
                   Notifications
                   <NotificationCountBadge
@@ -180,11 +181,12 @@ export function NavUser({
                     className="ml-auto"
                   />
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(supportPath)}>
-                  <LifeBuoy />
-                  Support
-                  <NotificationCountBadge count={unreadSupport} className="ml-auto" />
-                </DropdownMenuItem>
+                {scope !== "super-admin" ? (
+                  <DropdownMenuItem onClick={() => openSupportSheet()}>
+                    <LifeBuoy />
+                    Support
+                  </DropdownMenuItem>
+                ) : null}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem

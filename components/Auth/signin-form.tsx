@@ -26,6 +26,8 @@ import { type AuthSessionData, useAuthStore } from "@/lib/store/useAuthStore";
 import { isApiError } from "@/lib/api/client";
 import {
   buildTenantAuthAcceptUrl,
+  buildPublicAppUrl,
+  clearTenantSlugOverride,
   deriveTenantSlugFromHostname,
   isTenantHost,
 } from "@/lib/tenant";
@@ -73,6 +75,8 @@ export function LoginForm({
   const [showTenantDialog, setShowTenantDialog] = useState(false);
   const [isSelectingTenant, setIsSelectingTenant] = useState(false);
 
+  const isRootSignIn = !hostTenantSlug;
+
   const redirectAfterLogin = async (session: AuthSessionData) => {
     const ref = searchParams.get("ref");
     const redirectTarget =
@@ -82,7 +86,12 @@ export function LoginForm({
           ? "/super-admin"
           : "/dashboard";
 
-    if (session.admin.role !== "super_admin" && session.tenant?.slug) {
+    if (session.admin.role === "super_admin") {
+      window.location.assign(buildPublicAppUrl(redirectTarget));
+      return;
+    }
+
+    if (session.tenant?.slug) {
       const tenantTarget = redirectTarget.startsWith("/dashboard")
         ? redirectTarget
         : "/dashboard";
@@ -105,6 +114,9 @@ export function LoginForm({
   };
 
   const completeLogin = async (tenantSlug?: string | null) => {
+    if (isRootSignIn && !tenantSlug) {
+      clearTenantSlugOverride();
+    }
     const session = await login(email, password, tenantSlug || hostTenantSlug);
     await redirectAfterLogin(session);
   };

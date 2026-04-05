@@ -168,11 +168,7 @@ export type PlatformBiometricsResponse = {
   defaults: Record<string, unknown>;
   identity_catalog: Record<string, unknown>;
   biometrics: {
-    active_provider:
-      | "facepp"
-      | "aws_rekognition"
-      | "azure_face"
-      | "google_vision";
+    active_provider: "aws_rekognition";
     provider_catalog: Record<
       string,
       {
@@ -184,17 +180,6 @@ export type PlatformBiometricsResponse = {
       }
     >;
     providers: {
-      facepp: {
-        enabled: boolean;
-        implemented: boolean;
-        configured: boolean;
-        api_key_value?: string | null;
-        api_secret_value?: string | null;
-        api_key_masked?: string | null;
-        api_secret_masked?: string | null;
-        base_url: string;
-        confidence_threshold: number;
-      };
       aws_rekognition: {
         enabled: boolean;
         implemented: boolean;
@@ -205,24 +190,9 @@ export type PlatformBiometricsResponse = {
         secret_access_key_masked?: string | null;
         region: string;
         similarity_threshold: number;
-      };
-      azure_face: {
-        enabled: boolean;
-        implemented: boolean;
-        configured: boolean;
-        endpoint?: string | null;
-        api_key_value?: string | null;
-        api_key_masked?: string | null;
-        confidence_threshold: number;
-      };
-      google_vision: {
-        enabled: boolean;
-        implemented: boolean;
-        configured: boolean;
-        project_id?: string | null;
-        api_key_value?: string | null;
-        api_key_masked?: string | null;
-        confidence_threshold: number;
+        collection_prefix?: string;
+        liveness_required?: boolean;
+        liveness_threshold?: number;
       };
     };
   };
