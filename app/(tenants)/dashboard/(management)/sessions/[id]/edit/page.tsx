@@ -189,20 +189,34 @@ export default function EditSessionPage() {
       onCancel={() => router.push(`/dashboard/sessions/${sessionId}`)}
       onSubmit={async (formData, eligibleCollegeIds) => {
         const payload = buildSessionPayload(formData, eligibleCollegeIds);
+        const sessionPayload =
+          currentSession.status === "active"
+            ? {
+                title: payload.title,
+                description: payload.description,
+                end_time: payload.end_time,
+                location: payload.location,
+                eligible_college: payload.eligible_college,
+                eligible_departments: payload.eligible_departments,
+                eligible_levels: payload.eligible_levels,
+                is_off_campus_allowed: payload.is_off_campus_allowed,
+                results_public: payload.results_public,
+              }
+            : {
+                title: payload.title,
+                description: payload.description,
+                start_time: payload.start_time,
+                end_time: payload.end_time,
+                location: payload.location,
+                categories: payload.categories,
+                eligible_college: payload.eligible_college,
+                eligible_departments: payload.eligible_departments,
+                eligible_levels: payload.eligible_levels,
+                is_off_campus_allowed: payload.is_off_campus_allowed,
+                results_public: payload.results_public,
+              };
         try {
-          await updateSession.mutateAsync({
-            title: payload.title,
-            description: payload.description,
-            start_time: payload.start_time,
-            end_time: payload.end_time,
-            location: payload.location,
-            categories: payload.categories,
-            eligible_college: payload.eligible_college,
-            eligible_departments: payload.eligible_departments,
-            eligible_levels: payload.eligible_levels,
-            is_off_campus_allowed: payload.is_off_campus_allowed,
-            results_public: payload.results_public,
-          });
+          await updateSession.mutateAsync(sessionPayload);
         } catch (submitError) {
           throw new Error(getSessionUpdateErrorMessage(submitError));
         }
