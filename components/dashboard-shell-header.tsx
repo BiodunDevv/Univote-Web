@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Kbd } from "@/components/ui/kbd";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
+import { AdminChatWidget } from "@/components/support/admin-chat-widget";
 import {
   getTenantParticipantLabels,
   isTenantParticipantFieldEnabled,
