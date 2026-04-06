@@ -1,6 +1,7 @@
 export async function uploadImageToCloudinary(
   file: File,
   folder: string,
+  onProgress?: (progress: number) => void,
 ) {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -17,18 +18,38 @@ export async function uploadImageToCloudinary(
   formData.append("cloud_name", cloudName);
   formData.append("folder", folder);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
-  if (!response.ok) {
-    throw new Error("Failed to upload image");
-  }
+  return new Promise<string>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", uploadUrl);
 
-  const data = (await response.json()) as { secure_url: string };
-  return data.secure_url;
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      const progress = Math.min(
+        100,
+        Math.max(0, Math.round((event.loaded / event.total) * 100)),
+      );
+      onProgress?.(progress);
+    };
+
+    request.onload = () => {
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error("Failed to upload image"));
+        return;
+      }
+
+      try {
+        const data = JSON.parse(request.responseText) as { secure_url: string };
+        onProgress?.(100);
+        resolve(data.secure_url);
+      } catch {
+        reject(new Error("Failed to parse upload response"));
+      }
+    };
+
+    request.onerror = () => reject(new Error("Failed to upload image"));
+    request.onabort = () => reject(new Error("Image upload was cancelled"));
+    request.send(formData);
+  });
 }

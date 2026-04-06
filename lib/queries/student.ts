@@ -170,14 +170,12 @@ export function useSubmitVoteMutation() {
     mutationFn: ({
       sessionId,
       choices,
-      imageUrl,
       location,
       deviceId,
       livenessSessionId,
     }: {
       sessionId: string;
       choices: Array<{ candidate_id: string; category: string }>;
-      imageUrl: string;
       location: { lat: number; lng: number };
       deviceId?: string;
       livenessSessionId?: string;
@@ -188,7 +186,6 @@ export function useSubmitVoteMutation() {
         data: {
           session_id: sessionId,
           choices,
-          image_url: imageUrl,
           lat: location.lat,
           lng: location.lng,
           device_id: deviceId,
@@ -238,6 +235,12 @@ export type StudentVoteLivenessResult = {
   confidence: number | null;
   threshold: number | null;
   status: string | null;
+  ownership_verified: boolean | null;
+  compare_confidence: number | null;
+  compare_threshold: number | null;
+  matched_face_id: string | null;
+  code: string | null;
+  message: string | null;
 };
 
 export function useCreateVoteLivenessSessionMutation() {

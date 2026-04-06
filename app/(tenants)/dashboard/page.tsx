@@ -381,10 +381,10 @@ export default function DashboardWelcomePage() {
               </div>
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  Biometric accuracy
+                  Proxy accuracy
                 </p>
                 <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                  {`${((biometricMetricsQuery.data?.metrics.summary.accuracy || 0) * 100).toFixed(1)}%`}
+                  {`${((biometricMetricsQuery.data?.metrics.summary.proxy_accuracy || 0) * 100).toFixed(1)}%`}
                 </p>
               </div>
             </CardContent>

@@ -160,10 +160,10 @@ export default function PlatformSettingsPage() {
     setAwsRegion(biometrics.region || "us-east-1");
     setAwsAccessKeyId(biometrics.access_key_id_value || "");
     setAwsSecretAccessKey(biometrics.secret_access_key_value || "");
-    setAwsThreshold(String(biometrics.similarity_threshold || 90));
+    setAwsThreshold(String(biometrics.similarity_threshold || 70));
     setCollectionPrefix(biometrics.collection_prefix || "univote");
     setLivenessRequired(biometrics.liveness_required !== false);
-    setLivenessThreshold(String(biometrics.liveness_threshold || 80));
+    setLivenessThreshold(String(biometrics.liveness_threshold || 70));
   }, [biometrics]);
 
   const handleSaveProfile = async () => {
@@ -239,10 +239,10 @@ export default function PlatformSettingsPage() {
               access_key_id: awsAccessKeyId || undefined,
               secret_access_key: awsSecretAccessKey || undefined,
               region: awsRegion,
-              similarity_threshold: Number(awsThreshold || 90),
+              similarity_threshold: Number(awsThreshold || 70),
               collection_prefix: collectionPrefix || undefined,
               liveness_required: livenessRequired,
-              liveness_threshold: Number(livenessThreshold || 80),
+              liveness_threshold: Number(livenessThreshold || 70),
               enabled: true,
             },
           },

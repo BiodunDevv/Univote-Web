@@ -169,17 +169,19 @@ export type BiometricMetricSummary = {
   total_attempts: number;
   accepted_attempts: number;
   rejected_attempts: number;
-  reviewed_attempts: number;
-  unlabeled_attempts: number;
-  false_accepts: number;
-  false_rejects: number;
-  correct_accepts: number;
-  correct_rejects: number;
-  total_genuine_attempts: number;
-  total_impostor_attempts: number;
-  far: number;
-  frr: number;
-  accuracy: number;
+  liveness_passed_attempts: number;
+  liveness_failed_attempts: number;
+  lockout_count: number;
+  compare_success_count: number;
+  compare_reject_count: number;
+  pass_rate: number;
+  reject_rate: number;
+  liveness_pass_rate: number;
+  liveness_fail_rate: number;
+  proxy_far: number;
+  proxy_frr: number;
+  proxy_accuracy: number;
+  metric_mode: "operational_estimate";
 };
 
 export type AdminBiometricMetricsResponse = {
@@ -190,10 +192,11 @@ export type AdminBiometricMetricsResponse = {
       date: string;
       accepted: number;
       rejected: number;
+      lockouts: number;
     }>;
     confidence_trend: Array<{
       date: string;
-      average_confidence: number;
+      average_compare_confidence: number;
     }>;
     failure_reasons: Array<{
       reason: string;
@@ -223,6 +226,17 @@ export type AdminVerificationLogEntry = {
   } | null;
   confidence_score: number | null;
   threshold_used: number | null;
+  liveness_session_id?: string | null;
+  liveness_status?: string | null;
+  liveness_confidence?: number | null;
+  liveness_threshold?: number | null;
+  compare_confidence?: number | null;
+  compare_threshold?: number | null;
+  matched_face_id?: string | null;
+  decision_source?: string | null;
+  fail_streak?: number;
+  lockout_triggered?: boolean;
+  lockout_expires_at?: string | null;
   result: "accepted" | "rejected";
   failure_reason: string | null;
   is_genuine_attempt: boolean | null;
@@ -247,6 +261,41 @@ export type AdminVerificationLogsResponse = {
     limit: number;
     pages: number;
   };
+};
+
+export type AdminTestingLivenessSessionResponse = {
+  session_id: string;
+  provider: string;
+  region: string;
+  configured: boolean;
+  required: boolean;
+};
+
+export type AdminTestingLivenessResultResponse = {
+  session_id: string;
+  provider: string;
+  passed: boolean;
+  confidence: number | null;
+  threshold: number | null;
+  status: string | null;
+};
+
+export type AdminTestingCompareResponse = {
+  student: {
+    id: string;
+    full_name: string;
+    matric_no?: string | null;
+    email?: string | null;
+  };
+  decision: "accepted" | "rejected";
+  compare_confidence: number | null;
+  compare_threshold: number | null;
+  matched_face_id: string | null;
+  provider: string;
+  provider_code: string;
+  provider_label: string;
+  message: string;
+  decision_source: string;
 };
 
 export type TenantProfileSettingsResponse = {
@@ -1134,7 +1183,8 @@ export function useAdminVerificationLogsQuery(
     session_id?: string;
     result?: string;
     failure_reason?: string;
-    review_state?: "reviewed" | "pending";
+    decision_source?: string;
+    liveness_status?: string;
     start_date?: string;
     end_date?: string;
   } = {},
@@ -1843,6 +1893,48 @@ export function useTestBiometricMutation() {
         method: "POST",
         auth: "admin",
         data: { image_url },
+      }),
+  });
+}
+
+export function useCreateAdminTestingLivenessSessionMutation() {
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<AdminTestingLivenessSessionResponse>(
+        "/api/admin/settings/testing/liveness/session",
+        {
+          method: "POST",
+          auth: "admin",
+        },
+      ),
+  });
+}
+
+export function fetchAdminTestingLivenessSessionResult(sessionId: string) {
+  return apiRequest<AdminTestingLivenessResultResponse>(
+    `/api/admin/settings/testing/liveness/session/${sessionId}`,
+    {
+      auth: "admin",
+    },
+  );
+}
+
+export function useAdminTestingCompareMutation() {
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      imageUrl,
+    }: {
+      studentId: string;
+      imageUrl: string;
+    }) =>
+      apiRequest<AdminTestingCompareResponse>("/api/admin/settings/testing/compare", {
+        method: "POST",
+        auth: "admin",
+        data: {
+          student_id: studentId,
+          image_url: imageUrl,
+        },
       }),
   });
 }

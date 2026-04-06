@@ -11,6 +11,7 @@ import {
   FileBarChart,
   GraduationCap,
   LayoutDashboard,
+  FlaskConical,
   Settings2,
   UserCog,
   Users,
@@ -123,6 +124,7 @@ const adminNavProjects = [
   { name: "Announcements", url: "/dashboard/announcements", icon: Megaphone },
   { name: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { name: "System Health", url: "/dashboard/system-health", icon: Activity },
+  { name: "Testing", url: "/dashboard/testing", icon: FlaskConical },
   { name: "Biometrics", url: "/dashboard/biometrics", icon: Fingerprint },
   { name: "Settings", url: "/dashboard/settings", icon: Settings2 },
 ];
@@ -251,7 +253,6 @@ export function AdminSidebar({
       collegeEnabled,
       canManageAdmins,
       canManageSessions,
-      canManageStudents,
       canViewParticipants,
       canViewAnalytics,
       canExportReports,
@@ -312,7 +313,7 @@ export function AdminSidebar({
   };
 
   return (
-    <Sidebar collapsible="icon" data-tour="admin-sidebar" {...props}>
+    <Sidebar collapsible="offcanvas" data-tour="admin-sidebar" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
         <NavSearch items={searchItems} />

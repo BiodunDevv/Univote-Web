@@ -84,6 +84,13 @@ export interface SystemConfig {
     environment: string;
     port: number;
   };
+  tenant?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    plan_code?: string;
+    biometric_threshold?: number;
+  } | null;
 }
 
 export interface DatabaseStats {

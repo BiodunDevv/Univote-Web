@@ -266,7 +266,8 @@ export function usePlatformVerificationLogsQuery(
     session_id?: string;
     result?: string;
     failure_reason?: string;
-    review_state?: "reviewed" | "pending";
+    decision_source?: string;
+    liveness_status?: string;
     page?: number;
     limit?: number;
     start_date?: string;

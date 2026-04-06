@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   BarChart3,
   Activity,
@@ -22,12 +21,8 @@ import {
   useAdminAnalyticsOverviewQuery,
   useAdminBiometricMetricsQuery,
   useAdminVerificationLogsQuery,
-  useReviewVerificationLogMutation,
 } from "@/lib/queries/admin";
-import {
-  ChangingLoadingState,
-  LoadingButtonContent,
-} from "@/components/shared/changing-loading-state";
+import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   TenantAccessRestricted,
   TenantMetricCard,
@@ -37,20 +32,13 @@ import {
 } from "@/components/tenants/shared";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import {
-  formatParticipantIdentifier,
-  getTenantParticipantLabels,
-  shouldShowTenantParticipantFieldInProfile,
-} from "@/lib/tenant-config";
+import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 const trendChartConfig = {
@@ -76,20 +64,7 @@ export default function AnalyticsPage() {
   const participantLabels = getTenantParticipantLabels(tenant);
   const analyticsQuery = useAdminAnalyticsOverviewQuery();
   const biometricMetricsQuery = useAdminBiometricMetricsQuery();
-  const verificationLogsQuery = useAdminVerificationLogsQuery({
-    limit: 6,
-  });
-  const reviewVerificationLog = useReviewVerificationLogMutation();
-  const [reviewAction, setReviewAction] = useState<string | null>(null);
-
-  if (!canViewAnalytics) {
-    return (
-      <TenantAccessRestricted
-        title="Analytics access restricted"
-        subtitle="Your university role does not allow analytics access."
-      />
-    );
-  }
+  const verificationLogsQuery = useAdminVerificationLogsQuery({ limit: 6 });
 
   if (
     analyticsQuery.isLoading ||
@@ -101,8 +76,17 @@ export default function AnalyticsPage() {
         messages={[
           "Loading analytics overview...",
           "Compiling session metrics...",
-          "Preparing participation snapshots...",
+          "Preparing biometric operations insights...",
         ]}
+      />
+    );
+  }
+
+  if (!canViewAnalytics) {
+    return (
+      <TenantAccessRestricted
+        title="Analytics access restricted"
+        subtitle="Your university role does not allow analytics access."
       />
     );
   }
@@ -111,7 +95,7 @@ export default function AnalyticsPage() {
   const biometricMetrics = biometricMetricsQuery.data?.metrics;
   const verificationLogs = verificationLogsQuery.data?.logs || [];
 
-  if (analyticsQuery.error) {
+  if (analyticsQuery.error || !analytics) {
     return (
       <TenantSectionCard
         title="Analytics temporarily unavailable"
@@ -120,21 +104,7 @@ export default function AnalyticsPage() {
         <p className="text-sm text-muted-foreground">
           {analyticsQuery.error instanceof Error
             ? analyticsQuery.error.message
-            : "Retry in a moment. If the problem persists, review recent data imports and session activity."}
-        </p>
-      </TenantSectionCard>
-    );
-  }
-
-  if (!analytics) {
-    return (
-      <TenantSectionCard
-        title="Analytics are getting started"
-        description="This university does not have enough recent activity to populate the advanced analytics overview yet."
-      >
-        <p className="text-sm text-muted-foreground">
-          Once sessions, votes, and operational activity accumulate, the trend
-          charts and turnout summaries will appear here automatically.
+            : "Retry in a moment. If the problem persists, review recent imports and session activity."}
         </p>
       </TenantSectionCard>
     );
@@ -146,7 +116,7 @@ export default function AnalyticsPage() {
         eyebrow="Tenant monitoring"
         icon={<BarChart3 className="h-5 w-5" />}
         title="Analytics Overview"
-        subtitle="Follow turnout momentum, session performance, and the most active users from one chart-driven command surface."
+        subtitle="Follow turnout momentum, session performance, and operational biometric posture from one chart-driven workspace."
         stats={[
           {
             label: "Participation",
@@ -157,12 +127,12 @@ export default function AnalyticsPage() {
             value: `${analytics.overview.average_turnout}%`,
           },
           {
-            label: "Votes",
-            value: analytics.overview.total_votes.toLocaleString(),
+            label: "Pass rate",
+            value: `${((biometricMetrics?.summary.pass_rate || 0) * 100).toFixed(1)}%`,
           },
           {
-            label: "Sessions",
-            value: analytics.overview.total_sessions.toLocaleString(),
+            label: "Lockouts",
+            value: biometricMetrics?.summary.lockout_count?.toLocaleString() || "0",
           },
         ]}
       />
@@ -190,21 +160,21 @@ export default function AnalyticsPage() {
 
       <TenantMetricGrid columns={3}>
         <TenantMetricCard
-          label="Biometric accuracy"
-          value={`${((biometricMetrics?.summary.accuracy || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.reviewed_attempts || 0} reviewed attempts used for evaluation.`}
+          label="Proxy accuracy"
+          value={`${((biometricMetrics?.summary.proxy_accuracy || 0) * 100).toFixed(1)}%`}
+          hint="Automated operational estimate based on system outcomes."
           icon={<ShieldCheck className="h-4 w-4" />}
         />
         <TenantMetricCard
-          label="False accept rate"
-          value={`${((biometricMetrics?.summary.far || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.false_accepts || 0} false accepts across ${biometricMetrics?.summary.total_impostor_attempts || 0} reviewed impostor attempts.`}
+          label="Proxy FAR"
+          value={`${((biometricMetrics?.summary.proxy_far || 0) * 100).toFixed(1)}%`}
+          hint="Estimated from accepted compare outcomes, not manual labels."
           icon={<Fingerprint className="h-4 w-4" />}
         />
         <TenantMetricCard
-          label="False reject rate"
-          value={`${((biometricMetrics?.summary.frr || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.false_rejects || 0} false rejects across ${biometricMetrics?.summary.total_genuine_attempts || 0} reviewed genuine attempts.`}
+          label="Proxy FRR"
+          value={`${((biometricMetrics?.summary.proxy_frr || 0) * 100).toFixed(1)}%`}
+          hint="Estimated from compare rejections, not human review states."
           icon={<Fingerprint className="h-4 w-4" />}
         />
       </TenantMetricGrid>
@@ -214,22 +184,12 @@ export default function AnalyticsPage() {
           title="Vote trend"
           description="Daily voting volume across the sessions contributing to advanced analytics."
         >
-          <ChartContainer
-            config={trendChartConfig}
-            className="h-[280px] w-full"
-          >
+          <ChartContainer config={trendChartConfig} className="h-[280px] w-full">
             <AreaChart accessibilityLayer data={analytics.vote_trend}>
               <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-              />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} />
               <YAxis tickLine={false} axisLine={false} width={42} />
-              <ChartTooltip
-                content={<ChartTooltipContent indicator="line" />}
-              />
+              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
               <Area
                 type="monotone"
                 dataKey="votes"
@@ -243,134 +203,36 @@ export default function AnalyticsPage() {
         </TenantSectionCard>
 
         <TenantSectionCard
-          title="Turnout by session"
-          description={`Compare turnout percentage against eligible ${participantLabels.singular.toLowerCase()} volume by session.`}
+          title="Turnout snapshots"
+          description="Current turnout posture for the most active session windows."
         >
-          <ChartContainer
-            config={turnoutChartConfig}
-            className="h-[280px] w-full"
-          >
+          <ChartContainer config={turnoutChartConfig} className="h-[280px] w-full">
             <BarChart accessibilityLayer data={analytics.turnout_snapshots}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="title"
                 tickLine={false}
                 axisLine={false}
-                tickMargin={10}
-                tickFormatter={(value) => value.slice(0, 10)}
+                tickFormatter={(value) => String(value).slice(0, 14)}
               />
               <YAxis tickLine={false} axisLine={false} width={42} />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Bar
-                dataKey="turnout_percentage"
-                fill="var(--color-turnout)"
-                radius={10}
-                name="Turnout %"
-              />
+              <Bar dataKey="turnout_percentage" fill="var(--color-turnout)" radius={10} />
             </BarChart>
           </ChartContainer>
         </TenantSectionCard>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <TenantSectionCard
-          title="Top voters"
-          description={`${participantLabels.plural} with the strongest participation footprint across sessions.`}
-        >
-          <div className="space-y-3">
-            {analytics.top_voters.slice(0, 6).map((voter) => (
-              <div
-                key={
-                  voter.display_identifier || voter.matric_no || voter.full_name
-                }
-                className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {voter.full_name}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {[
-                        formatParticipantIdentifier(
-                          voter as Record<string, unknown>,
-                          tenant,
-                        ),
-                        shouldShowTenantParticipantFieldInProfile(
-                          tenant,
-                          "department",
-                        )
-                          ? voter.department
-                          : null,
-                        shouldShowTenantParticipantFieldInProfile(
-                          tenant,
-                          "college",
-                        )
-                          ? voter.college
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" • ")}
-                    </p>
-                  </div>
-                  <Badge>{voter.votes_cast} votes</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TenantSectionCard>
-
-        <TenantSectionCard
-          title="Recent activity"
-          description="The latest admin actions contributing to the operational analytics trail."
-        >
-          <div className="space-y-3">
-            {analytics.recent_activities.slice(0, 6).map((activity) => (
-              <div
-                key={activity.id}
-                className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {activity.user_name}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {activity.action} {activity.resource}
-                    </p>
-                  </div>
-                  <Badge variant="outline">{activity.status}</Badge>
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {new Date(activity.timestamp).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        </TenantSectionCard>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[0.82fr_1.18fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <TenantSectionCard
           title="Biometric failure reasons"
-          description="Recent rejection reasons captured during vote-time face verification and voting safeguards."
+          description="Automatic biometric rejection distribution from the live voting flow."
         >
           <div className="space-y-3">
             {(biometricMetrics?.failure_reasons || []).length > 0 ? (
               biometricMetrics?.failure_reasons.map((entry) => (
-                <div
-                  key={entry.reason}
-                  className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {entry.reason.replaceAll("_", " ")}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Captured in verification logs and available for review.
-                    </p>
-                  </div>
+                <div key={entry.reason} className="flex items-center justify-between rounded-2xl border bg-muted/15 p-3">
+                  <span className="text-sm text-foreground">{entry.reason.replaceAll("_", " ")}</span>
                   <Badge variant="outline">{entry.count}</Badge>
                 </div>
               ))
@@ -383,16 +245,13 @@ export default function AnalyticsPage() {
         </TenantSectionCard>
 
         <TenantSectionCard
-          title="Recent verification reviews"
-          description="Review vote-time biometric attempts, then mark them as genuine or impostor to improve FAR and FRR accuracy."
+          title="Recent biometric activity"
+          description="Recent liveness and compare decisions from the live voting flow."
         >
           <div className="space-y-3">
             {verificationLogs.length > 0 ? (
               verificationLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-                >
+                <div key={log.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -401,8 +260,7 @@ export default function AnalyticsPage() {
                       <p className="mt-1 text-xs text-muted-foreground">
                         {[
                           log.session_id?.title,
-                          log.failure_reason?.replaceAll("_", " ") ||
-                            log.result,
+                          log.failure_reason?.replaceAll("_", " ") || log.result,
                         ]
                           .filter(Boolean)
                           .join(" • ")}
@@ -412,74 +270,25 @@ export default function AnalyticsPage() {
                       <Badge variant={log.result === "accepted" ? "default" : "secondary"}>
                         {log.result}
                       </Badge>
-                      <Badge variant="outline">
-                        {typeof log.confidence_score === "number"
-                          ? `${log.confidence_score.toFixed(1)}%`
-                          : "No confidence"}
-                      </Badge>
+                      {log.lockout_triggered ? <Badge variant="destructive">Lockout</Badge> : null}
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
-                      {log.is_genuine_attempt === null
-                        ? "Pending review"
-                        : log.is_genuine_attempt
-                          ? "Reviewed as genuine attempt"
-                          : "Reviewed as impostor attempt"}{" "}
-                      • {new Date(log.timestamp).toLocaleString()}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={reviewAction === log.id}
-                        onClick={async () => {
-                          setReviewAction(log.id);
-                          try {
-                            await reviewVerificationLog.mutateAsync({
-                              id: log.id,
-                              is_genuine_attempt: true,
-                            });
-                          } finally {
-                            setReviewAction(null);
-                          }
-                        }}
-                      >
-                        {reviewAction === log.id ? (
-                          <LoadingButtonContent label="Saving..." />
-                        ) : (
-                          "Mark genuine"
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={reviewAction === log.id}
-                        onClick={async () => {
-                          setReviewAction(log.id);
-                          try {
-                            await reviewVerificationLog.mutateAsync({
-                              id: log.id,
-                              is_genuine_attempt: false,
-                            });
-                          } finally {
-                            setReviewAction(null);
-                          }
-                        }}
-                      >
-                        {reviewAction === log.id ? (
-                          <LoadingButtonContent label="Saving..." />
-                        ) : (
-                          "Mark impostor"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Compare{" "}
+                    {typeof log.compare_confidence === "number"
+                      ? `${log.compare_confidence.toFixed(1)}%`
+                      : "n/a"}{" "}
+                    • Liveness{" "}
+                    {typeof log.liveness_confidence === "number"
+                      ? `${log.liveness_confidence.toFixed(1)}%`
+                      : log.liveness_status || "n/a"}{" "}
+                    • {new Date(log.timestamp).toLocaleString()}
+                  </p>
                 </div>
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
-                Verification attempts will appear here after students begin face-verified voting.
+                No biometric verification activity has been logged yet.
               </div>
             )}
           </div>

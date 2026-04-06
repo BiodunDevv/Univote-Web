@@ -1,4 +1,6 @@
 import { deriveTenantSlugFromHostname, getResolvedTenantSlug } from "@/lib/tenant";
+import { clearSharedAdminContext } from "@/lib/shared-admin-context";
+import { setTenantSlugOverride } from "@/lib/tenant";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -54,6 +56,8 @@ const TENANT_RESTRICTION_CODES = new Set([
   "TENANT_ACCESS_RESTRICTED",
   "TENANT_SUSPENDED",
 ]);
+
+const FORCE_LOGOUT_CODES = new Set(["TENANT_MISMATCH"]);
 
 export class ApiError extends Error {
   status: number;
@@ -123,6 +127,14 @@ export function clearStoredStudentSession() {
   localStorage.removeItem("student-auth-storage");
 }
 
+function clearStoredAllSessions() {
+  if (typeof window === "undefined") return;
+  clearStoredAdminSession();
+  clearStoredStudentSession();
+  clearSharedAdminContext();
+  setTenantSlugOverride(null);
+}
+
 function buildUrl(
   path: string,
   params?: Record<string, string | number | boolean | null | undefined>,
@@ -175,6 +187,25 @@ function handleAuthRedirect(auth: AuthScope) {
     clearStoredStudentSession();
     window.location.assign(`/students/login?ref=${encodeURIComponent(ref)}`);
   }
+}
+
+function handleForcedLogout(auth: AuthScope, code?: string) {
+  if (typeof window === "undefined") return;
+
+  clearStoredAllSessions();
+  const ref = `${window.location.pathname}${window.location.search}`;
+  const reason = code || "SESSION_INVALIDATED";
+
+  if (auth === "student") {
+    window.location.assign(
+      `/students/login?reason=${encodeURIComponent(reason)}&ref=${encodeURIComponent(ref)}`,
+    );
+    return;
+  }
+
+  window.location.assign(
+    `/auth/signin?reason=${encodeURIComponent(reason)}&ref=${encodeURIComponent(ref)}`,
+  );
 }
 
 function handleTenantRestriction(auth: AuthScope, code?: string) {
@@ -302,6 +333,15 @@ export async function apiRequest<T>(
     parsedPayload?.code,
     parsedPayload,
   );
+
+  if (
+    redirectOnAuthError &&
+    auth !== "optional" &&
+    error.code &&
+    FORCE_LOGOUT_CODES.has(error.code)
+  ) {
+    handleForcedLogout(auth, error.code);
+  }
 
   if (
     redirectOnAuthError &&

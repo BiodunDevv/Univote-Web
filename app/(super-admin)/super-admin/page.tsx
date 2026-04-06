@@ -81,8 +81,8 @@ export default function SuperAdminOverviewPage() {
   const biometricMetrics = biometricMetricsQuery.data?.metrics;
   const verificationLogs = verificationLogsQuery.data?.logs || [];
   const confidenceChartConfig = {
-    average_confidence: {
-      label: "Average confidence",
+    average_compare_confidence: {
+      label: "Average compare confidence",
       color: "var(--chart-1)",
     },
   } satisfies ChartConfig;
@@ -133,24 +133,24 @@ export default function SuperAdminOverviewPage() {
 
       <TenantMetricGrid columns={4}>
         <TenantMetricCard
-          label="Biometric accuracy"
-          value={`${((biometricMetrics?.summary.accuracy || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.reviewed_attempts || 0} reviewed attempts across all universities.`}
+          label="Pass rate"
+          value={`${((biometricMetrics?.summary.pass_rate || 0) * 100).toFixed(1)}%`}
+          hint="Operational acceptance rate across biometric verification attempts."
         />
         <TenantMetricCard
-          label="False accept rate"
-          value={`${((biometricMetrics?.summary.far || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.false_accepts || 0} false accepts.`}
+          label="Proxy FAR"
+          value={`${((biometricMetrics?.summary.proxy_far || 0) * 100).toFixed(1)}%`}
+          hint="Automated operational estimate, not human-labeled FAR."
         />
         <TenantMetricCard
-          label="False reject rate"
-          value={`${((biometricMetrics?.summary.frr || 0) * 100).toFixed(1)}%`}
-          hint={`${biometricMetrics?.summary.false_rejects || 0} false rejects.`}
+          label="Proxy FRR"
+          value={`${((biometricMetrics?.summary.proxy_frr || 0) * 100).toFixed(1)}%`}
+          hint="Automated operational estimate, not human-labeled FRR."
         />
         <TenantMetricCard
-          label="Pending reviews"
-          value={(biometricMetrics?.summary.unlabeled_attempts || 0).toLocaleString()}
-          hint="Verification attempts waiting for admin labeling."
+          label="Lockouts"
+          value={(biometricMetrics?.summary.lockout_count || 0).toLocaleString()}
+          hint="Students temporarily locked after repeated biometric failures."
         />
       </TenantMetricGrid>
 
@@ -221,8 +221,8 @@ export default function SuperAdminOverviewPage() {
           >
             <AreaChart
               accessibilityLayer
-              data={biometricMetrics?.confidence_trend || []}
-            >
+                data={biometricMetrics?.confidence_trend || []}
+              >
               <CartesianGrid vertical={false} />
               <XAxis dataKey="date" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} width={42} />
@@ -231,9 +231,9 @@ export default function SuperAdminOverviewPage() {
               />
               <Area
                 type="monotone"
-                dataKey="average_confidence"
-                stroke="var(--color-average_confidence)"
-                fill="var(--color-average_confidence)"
+                dataKey="average_compare_confidence"
+                stroke="var(--color-average_compare_confidence)"
+                fill="var(--color-average_compare_confidence)"
                 fillOpacity={0.18}
                 strokeWidth={2}
               />
@@ -267,7 +267,7 @@ export default function SuperAdminOverviewPage() {
 
       <TenantSectionCard
         title="Recent biometric verification activity"
-        description="Cross-university verification attempts, review state, and failure reasons from the live voting flow."
+        description="Cross-university verification attempts, lockout posture, and failure reasons from the live voting flow."
         action={
           <Button variant="outline" asChild>
             <Link href="/super-admin/biometrics">
@@ -303,19 +303,18 @@ export default function SuperAdminOverviewPage() {
                     <Badge variant={log.result === "accepted" ? "default" : "secondary"}>
                       {log.result}
                     </Badge>
-                    <Badge variant="outline">
-                      {log.is_genuine_attempt === null
-                        ? "Pending review"
-                        : log.is_genuine_attempt
-                          ? "Genuine"
-                          : "Impostor"}
-                    </Badge>
+                    {log.lockout_triggered ? <Badge variant="destructive">Lockout</Badge> : null}
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {typeof log.confidence_score === "number"
-                    ? `Confidence ${log.confidence_score.toFixed(1)}%`
-                    : "No confidence score"}{" "}
+                  Compare{" "}
+                  {typeof log.compare_confidence === "number"
+                    ? `${log.compare_confidence.toFixed(1)}%`
+                    : "n/a"}{" "}
+                  • Liveness{" "}
+                  {typeof log.liveness_confidence === "number"
+                    ? `${log.liveness_confidence.toFixed(1)}%`
+                    : log.liveness_status || "n/a"}{" "}
                   • {new Date(log.timestamp).toLocaleString()}
                 </p>
               </div>

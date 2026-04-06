@@ -29,7 +29,7 @@ const segmentLabels: Record<string, string> = {
   admins: "Admins",
   settings: "Settings",
   "audit-logs": "Audit Logs",
-  "facepp-test": "Biometric Testing",
+  testing: "Testing Hub",
   analytics: "Analytics",
   reports: "Reports",
   notifications: "Notifications",
@@ -184,7 +184,7 @@ export function DashboardShellHeader({
             path.startsWith("/dashboard/system-health") ||
             path.startsWith("/dashboard/audit-logs") ||
             path.startsWith("/dashboard/election-analytics") ||
-            path.startsWith("/dashboard/facepp-test"),
+            path.startsWith("/dashboard/testing"),
           visible:
             tenant?.entitlements?.advanced_analytics !== false ||
             tenant?.entitlements?.advanced_reports !== false,

@@ -10,11 +10,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Fingerprint, ShieldCheck } from "lucide-react";
+import { Fingerprint, Lock, ShieldCheck } from "lucide-react";
 import {
   useAdminBiometricMetricsQuery,
   useAdminVerificationLogsQuery,
-  useReviewVerificationLogMutation,
 } from "@/lib/queries/admin";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
@@ -32,7 +31,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -43,8 +41,8 @@ import {
 } from "@/components/ui/select";
 
 const confidenceChartConfig = {
-  average_confidence: {
-    label: "Average confidence",
+  average_compare_confidence: {
+    label: "Average compare confidence",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
@@ -63,19 +61,12 @@ export default function TenantBiometricsPage() {
     "tenant.manage",
   ]);
   const [resultFilter, setResultFilter] = useState("all");
-  const [reviewFilter, setReviewFilter] = useState("all");
-  const [reviewAction, setReviewAction] = useState<string | null>(null);
 
   const biometricMetricsQuery = useAdminBiometricMetricsQuery();
   const verificationLogsQuery = useAdminVerificationLogsQuery({
     limit: 12,
     result: resultFilter === "all" ? undefined : resultFilter,
-    review_state:
-      reviewFilter === "all"
-        ? undefined
-        : (reviewFilter as "reviewed" | "pending"),
   });
-  const reviewVerificationLog = useReviewVerificationLogMutation();
 
   if (!canViewAnalytics) {
     return (
@@ -91,8 +82,8 @@ export default function TenantBiometricsPage() {
       <ChangingLoadingState
         messages={[
           "Loading biometric metrics...",
-          "Compiling verification accuracy...",
-          "Preparing review queue...",
+          "Compiling operational verification posture...",
+          "Preparing biometric activity feed...",
         ]}
       />
     );
@@ -107,77 +98,71 @@ export default function TenantBiometricsPage() {
         eyebrow="Tenant monitoring"
         icon={<Fingerprint className="h-5 w-5" />}
         title="Biometric verification"
-        subtitle="Review vote-time verification accuracy, investigate failure reasons, and label attempts to improve FAR and FRR quality."
+        subtitle="Track operational biometric performance, lockouts, failure patterns, and compare confidence without manual genuine or impostor review."
         stats={[
           {
-            label: "Accuracy",
-            value: `${((metrics?.summary.accuracy || 0) * 100).toFixed(1)}%`,
+            label: "Pass rate",
+            value: `${((metrics?.summary.pass_rate || 0) * 100).toFixed(1)}%`,
           },
           {
-            label: "FAR",
-            value: `${((metrics?.summary.far || 0) * 100).toFixed(1)}%`,
+            label: "Proxy FAR",
+            value: `${((metrics?.summary.proxy_far || 0) * 100).toFixed(1)}%`,
           },
           {
-            label: "FRR",
-            value: `${((metrics?.summary.frr || 0) * 100).toFixed(1)}%`,
+            label: "Proxy FRR",
+            value: `${((metrics?.summary.proxy_frr || 0) * 100).toFixed(1)}%`,
           },
           {
-            label: "Pending review",
-            value: metrics?.summary.unlabeled_attempts?.toLocaleString() || "0",
+            label: "Lockouts",
+            value: metrics?.summary.lockout_count?.toLocaleString() || "0",
           },
         ]}
       />
 
       <TenantMetricGrid columns={4}>
         <TenantMetricCard
-          label="Reviewed attempts"
-          value={metrics?.summary.reviewed_attempts?.toLocaleString() || "0"}
-          hint="Attempts already labeled genuine or impostor."
-          icon={<ShieldCheck className="h-4 w-4" />}
-        />
-        <TenantMetricCard
           label="Accepted attempts"
           value={metrics?.summary.accepted_attempts?.toLocaleString() || "0"}
-          hint="Verification attempts that passed threshold checks."
+          hint="Verification attempts accepted by the live voting safeguards."
+          icon={<ShieldCheck className="h-4 w-4" />}
         />
         <TenantMetricCard
           label="Rejected attempts"
           value={metrics?.summary.rejected_attempts?.toLocaleString() || "0"}
-          hint="Attempts blocked by biometric or vote-flow safeguards."
+          hint="Attempts rejected by liveness, compare, or other biometric checks."
         />
         <TenantMetricCard
-          label="Impostor attempts"
-          value={
-            metrics?.summary.total_impostor_attempts?.toLocaleString() || "0"
-          }
-          hint="Reviewed attempts marked as impostor activity."
+          label="Liveness pass rate"
+          value={`${((metrics?.summary.liveness_pass_rate || 0) * 100).toFixed(1)}%`}
+          hint="Share of completed liveness outcomes that passed the configured threshold."
+        />
+        <TenantMetricCard
+          label="Proxy accuracy"
+          value={`${((metrics?.summary.proxy_accuracy || 0) * 100).toFixed(1)}%`}
+          hint="Operational estimate based on system outcomes, not ground-truth labels."
+          icon={<Lock className="h-4 w-4" />}
         />
       </TenantMetricGrid>
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <TenantSectionCard
-          title="Confidence trend"
-          description="Average confidence across logged verification attempts."
+          title="Compare confidence trend"
+          description="Average face compare confidence across logged verification attempts."
         >
           <ChartContainer
             config={confidenceChartConfig}
             className="h-[280px] w-full"
           >
-            <AreaChart
-              accessibilityLayer
-              data={metrics?.confidence_trend || []}
-            >
+            <AreaChart accessibilityLayer data={metrics?.confidence_trend || []}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="date" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} width={42} />
-              <ChartTooltip
-                content={<ChartTooltipContent indicator="line" />}
-              />
+              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
               <Area
                 type="monotone"
-                dataKey="average_confidence"
-                stroke="var(--color-average_confidence)"
-                fill="var(--color-average_confidence)"
+                dataKey="average_compare_confidence"
+                stroke="var(--color-average_compare_confidence)"
+                fill="var(--color-average_compare_confidence)"
                 fillOpacity={0.18}
                 strokeWidth={2}
               />
@@ -187,7 +172,7 @@ export default function TenantBiometricsPage() {
 
         <TenantSectionCard
           title="Failure reasons"
-          description="Normalized rejection reasons captured in tenant-scoped verification logs."
+          description="Normalized biometric rejection reasons captured in tenant-scoped verification logs."
         >
           <ChartContainer
             config={failureChartConfig}
@@ -210,31 +195,19 @@ export default function TenantBiometricsPage() {
       </div>
 
       <TenantSectionCard
-        title="Verification review queue"
-        description="Filter verification attempts, inspect results, and label them to keep FAR and FRR accurate."
+        title="Recent biometric activity"
+        description="Inspect live vote verification outcomes, compare confidence, and lockout posture."
         action={
-          <div className="flex flex-wrap gap-2">
-            <Select value={resultFilter} onValueChange={setResultFilter}>
-              <SelectTrigger className="h-10 w-[150px]">
-                <SelectValue placeholder="Result" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All results</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={reviewFilter} onValueChange={setReviewFilter}>
-              <SelectTrigger className="h-10 w-[160px]">
-                <SelectValue placeholder="Review state" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All reviews</SelectItem>
-                <SelectItem value="pending">Pending review</SelectItem>
-                <SelectItem value="reviewed">Reviewed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={resultFilter} onValueChange={setResultFilter}>
+            <SelectTrigger className="h-10 w-[150px]">
+              <SelectValue placeholder="Result" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All results</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         }
       >
         <div className="space-y-3">
@@ -259,65 +232,29 @@ export default function TenantBiometricsPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge
-                      variant={log.result === "accepted" ? "default" : "secondary"}
-                    >
+                    <Badge variant={log.result === "accepted" ? "default" : "secondary"}>
                       {log.result}
                     </Badge>
-                    <Badge variant="outline">
-                      {log.is_genuine_attempt === null
-                        ? "Pending review"
-                        : log.is_genuine_attempt
-                          ? "Genuine"
-                          : "Impostor"}
-                    </Badge>
+                    {log.lockout_triggered ? (
+                      <Badge variant="destructive">Lockout triggered</Badge>
+                    ) : null}
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    {typeof log.confidence_score === "number"
-                      ? `Confidence ${log.confidence_score.toFixed(1)}%`
-                      : "No confidence score"}{" "}
-                    • {new Date(log.timestamp).toLocaleString()}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={reviewAction === log.id}
-                      onClick={async () => {
-                        setReviewAction(log.id);
-                        try {
-                          await reviewVerificationLog.mutateAsync({
-                            id: log.id,
-                            is_genuine_attempt: true,
-                          });
-                        } finally {
-                          setReviewAction(null);
-                        }
-                      }}
-                    >
-                      {reviewAction === log.id ? "Saving..." : "Mark genuine"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={reviewAction === log.id}
-                      onClick={async () => {
-                        setReviewAction(log.id);
-                        try {
-                          await reviewVerificationLog.mutateAsync({
-                            id: log.id,
-                            is_genuine_attempt: false,
-                          });
-                        } finally {
-                          setReviewAction(null);
-                        }
-                      }}
-                    >
-                      {reviewAction === log.id ? "Saving..." : "Mark impostor"}
-                    </Button>
-                  </div>
+                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <span>
+                    Compare:{" "}
+                    {typeof log.compare_confidence === "number"
+                      ? `${log.compare_confidence.toFixed(1)}%`
+                      : "n/a"}
+                  </span>
+                  <span>
+                    Liveness:{" "}
+                    {typeof log.liveness_confidence === "number"
+                      ? `${log.liveness_confidence.toFixed(1)}%`
+                      : log.liveness_status || "n/a"}
+                  </span>
+                  <span>Fail streak: {log.fail_streak || 0}</span>
+                  <span>{new Date(log.timestamp).toLocaleString()}</span>
                 </div>
               </div>
             ))
