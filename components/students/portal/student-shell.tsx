@@ -251,6 +251,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       ) : null}
       <div className="mx-auto min-h-svh w-full max-w-[1680px] px-2 pb-28 pt-2 sm:px-4 sm:pt-3 lg:pb-8">
         <aside
+          data-tour="student-sidebar"
           className="fixed inset-y-4 z-20 hidden w-72 lg:block"
           style={{ left: "max(1rem, calc((100vw - 1680px) / 2 + 1rem))" }}
         >
@@ -291,7 +292,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              <nav className="space-y-1.5">
+              <nav className="space-y-1.5" data-tour="student-primary-nav">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const active = isActivePath(pathname, item.href);
@@ -314,7 +315,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 })}
               </nav>
 
-              <div className="rounded-2xl border bg-muted/20 p-3">
+              <div
+                className="rounded-2xl border bg-muted/20 p-3"
+                data-tour="student-support-card"
+              >
                 <p className={compactUi.typography.cardTitle}>Need help?</p>
                 <p className="mt-1 text-sm leading-5 text-muted-foreground">
                   Open a support ticket and keep all replies in one thread.
@@ -328,7 +332,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-2xl border bg-muted/20 p-3">
+            <div
+              className="space-y-3 rounded-2xl border bg-muted/20 p-3"
+              data-tour="student-profile-card"
+            >
               <div className="flex items-center gap-3">
                 <Avatar size="lg">
                   <AvatarImage
@@ -361,7 +368,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main className="min-w-0 lg:ml-77">
-          <div className="sticky top-0 z-30 mb-3 shrink-0">
+          <div className="sticky top-0 z-30 mb-3 shrink-0" data-tour="student-topbar">
             <div
               className={cn(
                 "rounded-2xl border px-3 py-2.5 transition-all duration-300 ease-out",
@@ -473,7 +480,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-3 z-40 px-3 lg:hidden">
+      <nav
+        className="fixed inset-x-0 bottom-3 z-40 px-3 lg:hidden"
+        data-tour="student-mobile-nav"
+      >
         <div
           className="mx-auto grid max-w-lg grid-cols-5 gap-1 rounded-[28px] border border-border/70 bg-background/95 px-2 py-2 shadow-xl shadow-black/10 backdrop-blur"
           style={{

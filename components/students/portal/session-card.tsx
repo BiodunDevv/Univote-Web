@@ -27,10 +27,15 @@ export function StudentSessionCard({
   ctaLabel = "View details",
   compact = false,
 }: StudentSessionCardProps) {
+  const resolvedCtaLabel =
+    session.has_voted && session.status === "active"
+      ? "View submitted ballot"
+      : ctaLabel;
+
   return (
     <Card className="overflow-hidden rounded-2xl border shadow-none">
       <CardContent
-        className={cn("space-y-3 p-3", compact ? "sm:p-3" : "sm:p-4")}
+        className={cn("space-y-2.5 p-3", compact ? "sm:p-3" : "sm:p-4")}
       >
         <div className="flex flex-wrap items-center gap-2">
           <Badge
@@ -52,17 +57,27 @@ export function StudentSessionCard({
           >
             {session.title}
           </h3>
-          <p className="text-sm leading-5 text-muted-foreground">
+          <p
+            className={cn(
+              "leading-5 text-muted-foreground",
+              compact ? "line-clamp-2 text-xs sm:text-sm" : "text-sm",
+            )}
+          >
             {session.description ||
               "No additional session description provided."}
           </p>
         </div>
-        <div className="grid gap-2 text-sm text-muted-foreground">
+        <div
+          className={cn(
+            "grid gap-1.5 text-muted-foreground",
+            compact ? "text-xs sm:text-sm" : "text-sm",
+          )}
+        >
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4" />
             <span>{formatDateRange(session.start_time, session.end_time)}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className={cn("items-center gap-2", compact ? "hidden sm:flex" : "flex")}>
             <Clock3 className="h-4 w-4" />
             <span>Starts {formatDateTime(session.start_time)}</span>
           </div>
@@ -71,12 +86,12 @@ export function StudentSessionCard({
             <span>{session.candidate_count} candidates on this ballot</span>
           </div>
           {session.eligibility_scope ? (
-            <div className="flex items-center gap-2">
+            <div className={cn("items-center gap-2", compact ? "hidden sm:flex" : "flex")}>
               <Vote className="h-4 w-4" />
               <span>{session.eligibility_scope.summary}</span>
             </div>
           ) : null}
-          <div className="flex items-center gap-2">
+          <div className={cn("items-center gap-2", compact ? "hidden sm:flex" : "flex")}>
             <MapPin className="h-4 w-4" />
             <span>
               {session.is_off_campus_allowed
@@ -100,7 +115,7 @@ export function StudentSessionCard({
           </div>
           <Button asChild size="sm" className="shrink-0 rounded-xl">
             <Link href={href}>
-              {ctaLabel}
+              {resolvedCtaLabel}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

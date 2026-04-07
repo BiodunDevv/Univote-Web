@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Eye,
   LocateFixed,
   MapPin,
   ScanFace,
@@ -191,8 +192,16 @@ export default function StudentVotePage() {
     categories.every(([position]) => Boolean(selectedByCategory[position]));
   const canContinueFromLocation = Boolean(location);
   const canContinueFromLiveness =
-    livenessStatus === "passed" && Boolean(livenessSessionId);
+    livenessStatus === "passed" &&
+    ownershipVerified === true &&
+    Boolean(livenessSessionId);
   const biometricLocked = lockoutSeconds > 0;
+  const reviewSelections = categories.map(([position, candidates]) => ({
+    position,
+    candidate:
+      candidates.find((candidate) => candidate.id === selectedByCategory[position]) ||
+      null,
+  }));
 
   useEffect(() => {
     if (!lockoutSeconds) return undefined;
@@ -248,9 +257,7 @@ export default function StudentVotePage() {
               voting, so this ballot must be completed from a phone.
             </p>
           </div>
-          <Button variant="outline" onClick={() => router.replace("/students/vote")}>
-            Back to vote center
-          </Button>
+        
         </CardContent>
       </Card>
     );
@@ -434,16 +441,20 @@ export default function StudentVotePage() {
   };
 
   return (
-    <PortalPage className="flex min-h-full flex-col gap-4 pb-28">
-      <section className="rounded-3xl border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none sm:p-6">
+    <PortalPage className="flex min-h-full flex-col gap-3 pb-36 sm:gap-4">
+      <section
+        data-tour="student-vote-hero"
+        className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:rounded-3xl sm:p-6"
+      >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
+            
             <Badge variant="outline">Active ballot</Badge>
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 {session.title}
               </h1>
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+              <p className="max-w-3xl text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
                 Complete your ballot, capture your location, pass the live
                 presence check, and submit securely. Univote uses your live
                 reference image from AWS liveness to verify you against your
@@ -466,13 +477,13 @@ export default function StudentVotePage() {
       </section>
 
       <Card className="border shadow-none">
-        <CardContent className="space-y-4 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <CardContent className="space-y-3 p-3 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                 Voting progress
               </p>
-              <p className="mt-1 text-sm text-foreground">
+              <p className="mt-1 text-xs text-foreground sm:text-sm">
                 Step {currentStepIndex + 1} of {stepOrder.length}
               </p>
             </div>
@@ -509,7 +520,7 @@ export default function StudentVotePage() {
       </Card>
 
       {currentStep === "ballot" ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4" data-tour="student-vote-ballot">
           {categories.map(([position, candidates]) => (
             <Card key={position} className="border shadow-none">
               <CardHeader className="pb-2">
@@ -530,14 +541,14 @@ export default function StudentVotePage() {
                         }))
                       }
                       className={cn(
-                        "rounded-2xl border p-4 text-left transition-colors",
+                        "rounded-2xl border p-3 text-left transition-colors sm:p-4",
                         selected
                           ? "border-foreground bg-foreground text-background"
                           : "border-border bg-muted/20 text-foreground hover:border-foreground/40",
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="h-14 w-14 overflow-hidden rounded-2xl border bg-background/70">
+                        <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-background/70 sm:h-14 sm:w-14">
                           {candidate.photo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -552,7 +563,7 @@ export default function StudentVotePage() {
                             <p className="font-semibold">{candidate.name}</p>
                             {selected ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
                           </div>
-                          <p className="mt-1 text-xs opacity-80">
+                          <p className="mt-1 line-clamp-2 text-[11px] opacity-80 sm:text-xs">
                             {candidate.bio || "No biography provided."}
                           </p>
                         </div>
@@ -618,7 +629,7 @@ export default function StudentVotePage() {
       ) : null}
 
       {currentStep === "liveness" ? (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           <Card className="border shadow-none">
             <CardHeader>
               <CardTitle className="text-base">Professional live verification</CardTitle>
@@ -635,16 +646,16 @@ export default function StudentVotePage() {
                 </Alert>
               ) : null}
 
-              <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-                <div className="rounded-3xl border bg-muted/20 p-4 sm:p-5">
+              <div className="grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="overflow-hidden rounded-3xl border bg-muted/20 p-3 sm:p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Badge variant="outline">AWS liveness</Badge>
                       <div className="space-y-1">
                         <p className="text-base font-semibold text-foreground">
                           Verify your live presence with the front camera
                         </p>
-                        <p className="text-sm leading-6 text-muted-foreground">
+                        <p className="text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
                           The reference image captured during this live session is
                           what Univote uses to compare against your enrolled face.
                           No pre-uploaded selfie is required.
@@ -654,6 +665,7 @@ export default function StudentVotePage() {
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       disabled={createLivenessSession.isPending || biometricLocked}
                       onClick={() => void startLivenessCheck()}
                     >
@@ -667,7 +679,7 @@ export default function StudentVotePage() {
                   </div>
 
                   {livenessStatus === "ready" && livenessSessionId ? (
-                    <div className="mt-5 overflow-hidden rounded-3xl border bg-background">
+                    <div className="mt-4 overflow-hidden rounded-2xl border bg-background">
                       <FaceLivenessDetector
                         sessionId={livenessSessionId}
                         region={livenessRegion}
@@ -709,7 +721,7 @@ export default function StudentVotePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-3xl border bg-background p-5">
+                <div className="rounded-3xl border bg-background p-4">
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -824,26 +836,43 @@ export default function StudentVotePage() {
             <CardContent className="space-y-4">
               <div className="rounded-3xl border bg-muted/20 p-5">
                 <div className="flex items-start gap-3">
-                  <Vote className="mt-0.5 h-5 w-5 text-foreground" />
+                  <Eye className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-foreground">
-                      Ballot selections ready
+                      Review who you are voting for
                     </p>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      {categories.map(([position, candidates]) => {
-                        const selectedCandidate = candidates.find(
-                          (candidate) => candidate.id === selectedByCategory[position],
-                        );
-
-                        return (
-                          <div key={position} className="flex items-center justify-between gap-3">
-                            <span>{position}</span>
-                            <span className="font-medium text-foreground">
-                              {selectedCandidate?.name || "Not selected"}
-                            </span>
+                    <p className="text-sm text-muted-foreground">
+                      Confirm each candidate carefully before you submit your final ballot.
+                    </p>
+                    <div className="grid gap-2">
+                      {reviewSelections.map(({ position, candidate }) => (
+                        <div
+                          key={position}
+                          className="flex items-center gap-3 rounded-2xl border bg-background/80 p-3"
+                        >
+                          <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-muted/20">
+                            {candidate?.photo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={candidate.photo_url}
+                                alt={candidate.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : null}
                           </div>
-                        );
-                      })}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                              {position}
+                            </p>
+                            <p className="truncate text-sm font-semibold text-foreground">
+                              {candidate?.name || "Not selected"}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {candidate?.bio || "Selected candidate review"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -924,44 +953,91 @@ export default function StudentVotePage() {
         </div>
       ) : null}
 
-      <div className="sticky bottom-4 z-20 mt-auto flex justify-between gap-3 rounded-3xl border bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={currentStep === "ballot"}
-          onClick={() =>
-            setCurrentStep(stepOrder[Math.max(currentStepIndex - 1, 0)])
-          }
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        {currentStep !== "review" ? (
-          <Button
-            type="button"
-            disabled={
-              (currentStep === "ballot" && !allCategoriesSelected) ||
-              (currentStep === "location" && !canContinueFromLocation) ||
-              (currentStep === "liveness" && !canContinueFromLiveness)
-            }
-            onClick={() =>
-              setCurrentStep(
-                stepOrder[Math.min(currentStepIndex + 1, stepOrder.length - 1)],
-              )
-            }
-          >
-            Continue
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            disabled={submitVote.isPending || biometricLocked}
-            onClick={() => void handleSubmitVote()}
-          >
-            {submitVote.isPending ? "Submitting..." : "Submit vote"}
-          </Button>
-        )}
+      <div
+        data-tour="student-vote-footer"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-3 py-2 backdrop-blur"
+      >
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-2xl border bg-background px-3 py-2 shadow-none">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  Guided voting flow
+                </p>
+                <p className="truncate text-xs font-medium text-foreground sm:text-sm">
+                  {currentStep === "ballot"
+                    ? allCategoriesSelected
+                      ? "Ballot complete. Continue to location confirmation."
+                      : "Select one candidate in every category."
+                    : currentStep === "location"
+                      ? canContinueFromLocation
+                        ? "Location captured. Continue to live verification."
+                        : "Capture your current location to continue."
+                      : currentStep === "liveness"
+                        ? canContinueFromLiveness
+                          ? "Verification complete. Continue to final review."
+                          : "Complete live verification and account ownership check."
+                        : "Review your selected candidates, then submit your final vote."}
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {currentStep !== "ballot" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-xl px-2.5 text-xs"
+                    onClick={() =>
+                      setCurrentStep(stepOrder[currentStepIndex - 1] || "ballot")
+                    }
+                  >
+                    <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Back</span>
+                  </Button>
+                ) : null}
+
+                {currentStep !== "review" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 rounded-xl px-3 text-xs"
+                    disabled={
+                      (currentStep === "ballot" && !allCategoriesSelected) ||
+                      (currentStep === "location" && !canContinueFromLocation) ||
+                      (currentStep === "liveness" && !canContinueFromLiveness)
+                    }
+                    onClick={() =>
+                      setCurrentStep(
+                        stepOrder[Math.min(currentStepIndex + 1, stepOrder.length - 1)],
+                      )
+                    }
+                  >
+                    Continue
+                    <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 shrink-0 rounded-xl px-3 text-xs"
+                    onClick={() => void handleSubmitVote()}
+                    disabled={submitVote.isPending || biometricLocked}
+                  >
+                    {submitVote.isPending ? (
+                      <LoadingButtonContent label="Submitting vote..." />
+                    ) : (
+                      <>
+                        <Vote className="mr-1 h-3.5 w-3.5" />
+                        Submit vote
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </PortalPage>
   );

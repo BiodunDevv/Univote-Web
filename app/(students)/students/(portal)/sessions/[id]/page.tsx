@@ -6,7 +6,6 @@ import {
   AlertCircle,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   Layers3,
   MapPin,
   Vote,
@@ -24,11 +23,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 
 const truncate = (value: string | undefined, length: number) => {
@@ -73,6 +67,11 @@ export default function StudentSessionDetailPage() {
           href: `/students/vote/${session.id}`,
           label: "Start voting",
         }
+      : session.has_voted
+        ? {
+            href: `/students/results/${session.id}`,
+            label: "Vote already recorded",
+          }
       : session.status === "ended"
         ? {
             href: `/students/results/${session.id}`,
@@ -313,31 +312,26 @@ export default function StudentSessionDetailPage() {
         />
 
         <div className="grid gap-2.5">
-          {positionEntries.map(([position, candidates], positionIndex) => (
-            <Collapsible key={position} defaultOpen={positionIndex === 0}>
-              <Card className="border shadow-none">
-                <CardHeader className="p-0">
-                  <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 px-3 py-3 text-left">
-                    <div>
-                      <CardTitle className="text-sm">{position}</CardTitle>
-                      <p className="text-xs text-muted-foreground">
-                        {candidates.length}{" "}
-                        {candidates.length === 1 ? "candidate" : "candidates"}
-                      </p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                </CardHeader>
-                <CollapsibleContent>
-                  <Separator />
-                  <CardContent className="p-3">
-                    <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1">
-                      {candidates.map((candidate) => (
-                        <Card
-                          key={candidate.id}
-                          className="w-[84vw] min-w-[84vw] max-w-sm shrink-0 snap-start rounded-xl border bg-card shadow-none sm:w-[320px] sm:min-w-[320px]"
-                        >
-                          <CardContent className="flex h-full flex-col gap-3 p-4">
+          {positionEntries.map(([position, candidates]) => (
+            <Card key={position} className="border shadow-none">
+              <CardHeader className="px-3 py-3">
+                <div>
+                  <CardTitle className="text-sm">{position}</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {candidates.length}{" "}
+                    {candidates.length === 1 ? "candidate" : "candidates"}
+                  </p>
+                </div>
+              </CardHeader>
+              <Separator />
+              <CardContent className="p-3">
+                <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1">
+                  {candidates.map((candidate) => (
+                    <Card
+                      key={candidate.id}
+                      className="w-[80vw] min-w-[80vw] max-w-sm shrink-0 snap-start rounded-xl border bg-card shadow-none sm:w-[320px] sm:min-w-[320px]"
+                    >
+                      <CardContent className="flex h-full flex-col gap-3 p-4">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold text-foreground">
@@ -384,14 +378,12 @@ export default function StudentSessionDetailPage() {
                                 </p>
                               </div>
                             ) : null}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           ))}
 
           {positionEntries.length === 0 ? (

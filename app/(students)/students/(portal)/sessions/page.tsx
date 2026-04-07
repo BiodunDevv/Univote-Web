@@ -49,7 +49,7 @@ export default function StudentSessionsPage() {
         className="p-4 sm:p-5"
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-3">
         <PortalStackCard className="space-y-1.5">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Vote className="h-4 w-4 text-primary" />
@@ -86,21 +86,25 @@ export default function StudentSessionsPage() {
         </PortalStackCard>
       </div>
 
-      <Tabs value={status} onValueChange={setStatus}>
-        <TabsList
-          variant="line"
-          className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-[1.4rem] bg-card/60 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {statusTabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="shrink-0 rounded-xl border border-transparent px-3 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={status} onValueChange={setStatus} className="w-full">
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-linear-to-r from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-5 bg-linear-to-l from-background to-transparent" />
+          <TabsList
+            variant="line"
+            className="h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto border-b border-border/70 px-0 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {statusTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="shrink-0 px-3 py-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 sm:px-4"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
         <TabsContent value={status} className="mt-4">
           {error ? (
             <PortalEmptyState
@@ -113,12 +117,13 @@ export default function StudentSessionsPage() {
               description="No sessions matched this filter."
             />
           ) : (
-            <div className="grid gap-3">
+            <div className="grid gap-2.5">
               {sessions.map((session) => (
                 <StudentSessionCard
                   key={session._id}
                   session={session}
                   href={`/students/sessions/${session._id}`}
+                  compact
                 />
               ))}
             </div>

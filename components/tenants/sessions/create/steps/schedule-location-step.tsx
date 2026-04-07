@@ -257,9 +257,14 @@ export function ScheduleLocationStep({
               lat={formData.location.lat}
               lng={formData.location.lng}
               radius={formData.location.radius_meters}
+              interactive
+              onLocationSelect={({ lat, lng }) => {
+                onLocationChange("lat", lat);
+                onLocationChange("lng", lng);
+              }}
             />
             <p className="text-xs text-muted-foreground">
-              The center marker and ring visualize the current geofence radius.
+              Search for a place or tap on the map to move the geofence center.
             </p>
           </CardContent>
         </Card>

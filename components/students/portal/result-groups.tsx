@@ -32,21 +32,23 @@ export function ResultGroups({ groups }: { groups: ResultGroup[] }) {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-2.5 sm:gap-3">
       {groups.map((group) => (
         <Card
           key={group.position}
-          className="overflow-hidden rounded-[1.75rem] border shadow-none"
+          className="overflow-hidden rounded-2xl border shadow-none"
         >
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle className="text-base">{group.position}</CardTitle>
-              <Badge variant="outline">{group.total_votes} total votes</Badge>
+              <Badge variant="outline" className="text-[11px]">
+                {group.total_votes} total votes
+              </Badge>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {group.candidates[0] ? (
-              <div className="rounded-[1.6rem] border bg-gradient-to-br from-primary/10 via-card to-card p-4">
+              <div className="rounded-[1.35rem] border bg-gradient-to-br from-primary/10 via-card to-card p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
                     <Badge className="gap-1 rounded-full">
@@ -54,7 +56,7 @@ export function ResultGroups({ groups }: { groups: ResultGroup[] }) {
                       {group.candidates[0].is_winner ? "Winner" : "Leading"}
                     </Badge>
                     <div>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-base font-semibold text-foreground sm:text-lg">
                         {group.candidates[0].name}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
@@ -62,11 +64,11 @@ export function ResultGroups({ groups }: { groups: ResultGroup[] }) {
                       </p>
                     </div>
                   </div>
-                  <div className="rounded-2xl border bg-background/80 px-4 py-3 text-right">
+                  <div className="rounded-2xl border bg-background/80 px-3.5 py-3 text-right">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Vote share
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-foreground">
+                    <p className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">
                       {group.candidates[0].percentage}%
                     </p>
                   </div>
@@ -74,7 +76,7 @@ export function ResultGroups({ groups }: { groups: ResultGroup[] }) {
               </div>
             ) : null}
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {group.candidates.slice(1).map((candidate, index) => {
                 const rank = index + 2;
                 const statusLabel =
@@ -87,7 +89,7 @@ export function ResultGroups({ groups }: { groups: ResultGroup[] }) {
                 return (
                   <div
                     key={`${group.position}-${candidate.name}`}
-                    className="rounded-2xl border bg-muted/20 p-4"
+                    className="rounded-2xl border bg-muted/20 p-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">

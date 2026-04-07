@@ -67,7 +67,7 @@ export default function StudentResultDetailPage() {
       <PortalHero
         eyebrow={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="text-[11px]">{session.status}</Badge>
+            <Badge variant="outline" className="text-[11px] capitalize">{session.status}</Badge>
             <Badge variant="outline" className="text-[11px]">{isLive ? "Live tally" : "Final tally"}</Badge>
           </div>
         }
@@ -82,10 +82,10 @@ export default function StudentResultDetailPage() {
         </Alert>
       ) : null}
 
-      <section className="grid gap-3 lg:grid-cols-[minmax(0,1.12fr)_minmax(280px,0.88fr)]">
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+      <section className="grid gap-2.5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
+        <div className="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1">
           <Card className="border shadow-none">
-            <CardContent className="p-4">
+            <CardContent className="p-3.5">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Eligibility scope
               </p>
@@ -95,7 +95,7 @@ export default function StudentResultDetailPage() {
             </CardContent>
           </Card>
           <Card className="border shadow-none">
-            <CardContent className="p-4">
+            <CardContent className="p-3.5">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Participation
               </p>
@@ -105,7 +105,7 @@ export default function StudentResultDetailPage() {
             </CardContent>
           </Card>
           <Card className="border shadow-none">
-            <CardContent className="p-4">
+            <CardContent className="p-3.5">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Tally type
               </p>
@@ -116,8 +116,8 @@ export default function StudentResultDetailPage() {
           </Card>
         </div>
 
-        <Card className="rounded-[1.75rem] border shadow-none">
-          <CardContent className="space-y-3 p-4">
+        <Card className="rounded-2xl border shadow-none">
+          <CardContent className="space-y-3 p-3.5 sm:p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {isLive ? <ArrowUpRight className="h-4 w-4 text-primary" /> : <Trophy className="h-4 w-4 text-primary" />}
               {isLive ? "Race snapshot" : "Final board"}
@@ -128,7 +128,7 @@ export default function StudentResultDetailPage() {
                 .map((group, index) => {
                   const leader = group.candidates[0];
                   return (
-                    <div key={`${group.position}-${leader?.id || group.position}`} className="rounded-2xl border bg-muted/20 p-4">
+                    <div key={`${group.position}-${leader?.id || group.position}`} className="rounded-2xl border bg-muted/20 p-3.5">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">

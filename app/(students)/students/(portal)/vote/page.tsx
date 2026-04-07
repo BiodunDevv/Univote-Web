@@ -46,13 +46,20 @@ export default function StudentVoteLandingPage() {
             description="There are no active or upcoming sessions available to vote in right now."
           />
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-2.5">
             {sessions.map((session) => (
               <StudentSessionCard
                 key={session._id}
                 session={session}
                 href={`/students/vote/${session._id}`}
-                ctaLabel={session.status === "active" ? "Start voting" : "Review before voting"}
+                compact
+                ctaLabel={
+                  session.has_voted
+                    ? "View submitted ballot"
+                    : session.status === "active"
+                      ? "Start voting"
+                      : "Review before voting"
+                }
               />
             ))}
           </div>
@@ -67,9 +74,9 @@ export default function StudentVoteLandingPage() {
               Use your phone to cast ballots
             </p>
             <p className="text-sm leading-6 text-muted-foreground">
-              The full ballot flow uses your selfie and location in one seamless
-              mobile experience. Desktop still works for browsing sessions,
-              results, and your profile.
+              The full ballot flow uses live verification and location capture
+              in one smooth mobile experience. Desktop still works for browsing
+              sessions, results, and your profile.
             </p>
           </div>
         </PortalStackCard>

@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Circle, MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Circle,
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
+import { Loader2, Search } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -45,15 +55,82 @@ interface MapComponentProps {
   lat: number;
   lng: number;
   radius: number;
+  interactive?: boolean;
+  onLocationSelect?: (coords: { lat: number; lng: number }) => void;
 }
 
-export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
+function MapClickHandler({
+  enabled,
+  onLocationSelect,
+}: {
+  enabled: boolean;
+  onLocationSelect?: (coords: { lat: number; lng: number }) => void;
+}) {
+  useMapEvents({
+    click(event) {
+      if (!enabled || !onLocationSelect) return;
+      onLocationSelect({
+        lat: event.latlng.lat,
+        lng: event.latlng.lng,
+      });
+    },
+  });
+
+  return null;
+}
+
+export default function MapComponent({
+  lat,
+  lng,
+  radius,
+  interactive = false,
+  onLocationSelect,
+}: MapComponentProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const center: [number, number] = [lat, lng];
+  const radiusLabel = useMemo(
+    () => `${radius}m (${(radius / 1000).toFixed(2)}km)`,
+    [radius],
+  );
 
   useEffect(() => {
     Promise.resolve().then(() => setIsMounted(true));
   }, []);
+
+  const handleSearch = async () => {
+    if (!interactive || !onLocationSelect || !query.trim()) return;
+
+    setSearching(true);
+    setSearchError("");
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query.trim())}`,
+      );
+      const results = (await response.json()) as Array<{
+        lat: string;
+        lon: string;
+      }>;
+
+      if (!Array.isArray(results) || results.length === 0) {
+        throw new Error("No matching place was found.");
+      }
+
+      onLocationSelect({
+        lat: Number(results[0].lat),
+        lng: Number(results[0].lon),
+      });
+    } catch (error) {
+      setSearchError(
+        error instanceof Error ? error.message : "Location search failed.",
+      );
+    } finally {
+      setSearching(false);
+    }
+  };
 
   if (!isMounted) {
     return (
@@ -65,6 +142,42 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
 
   return (
     <div className="relative h-[500px] w-full overflow-hidden rounded-xl border-2 border-border shadow-lg">
+      {interactive ? (
+        <div className="absolute top-3 left-1/2 z-30 w-[min(92%,420px)] -translate-x-1/2 rounded-2xl border bg-background/95 p-2 shadow-xl backdrop-blur">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search and pick a location"
+                className="pl-9"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSearch();
+                  }
+                }}
+              />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void handleSearch()}
+              disabled={searching || !query.trim()}
+            >
+              {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+            </Button>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Search for a place or tap anywhere on the map to set the geofence center.
+          </p>
+          {searchError ? (
+            <p className="mt-1 text-[11px] text-destructive">{searchError}</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <MapContainer
         center={center}
         zoom={15}
@@ -80,6 +193,7 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
         />
 
         <Marker position={center} icon={redIcon} />
+        <MapClickHandler enabled={interactive} onLocationSelect={onLocationSelect} />
         <Circle
           center={center}
           radius={Math.max(1, radius)}
@@ -129,10 +243,7 @@ export default function MapComponent({ lat, lng, radius }: MapComponentProps) {
           <div>
             <p className="text-xs font-semibold">Voting Radius</p>
             <p className="text-sm font-bold">
-              {radius}m
-              <span className="ml-1 text-xs font-normal opacity-90">
-                ({(radius / 1000).toFixed(2)}km)
-              </span>
+              {radiusLabel}
             </p>
           </div>
         </div>
