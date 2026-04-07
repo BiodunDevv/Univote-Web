@@ -26,6 +26,101 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.liveness-detector-shell {
+  --amplify-components-liveness-camera-module-background-color: #050816;
+}
+
+.liveness-detector-shell .liveness-detector,
+.liveness-detector-shell .liveness-detector-check {
+  width: 100%;
+}
+
+.liveness-detector-shell .amplify-liveness-camera-module {
+  min-height: clamp(28rem, 72vh, 42rem);
+}
+
+.liveness-detector-shell .amplify-liveness-video-anchor,
+.liveness-detector-shell .amplify-liveness-video,
+.liveness-detector-shell .amplify-liveness-oval-canvas,
+.liveness-detector-shell .amplify-liveness-freshness-canvas,
+.liveness-detector-shell .amplify-liveness-overlay,
+.liveness-detector-shell .amplify-liveness-overlay-opaque {
+  border-radius: 0;
+}
+
+.liveness-detector-shell .amplify-liveness-video {
+  object-fit: cover;
+}
+
+.liveness-detector-shell .amplify-liveness-oval-canvas,
+.liveness-detector-shell .amplify-liveness-freshness-canvas {
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.liveness-detector-shell .amplify-liveness-toast,
+.liveness-detector-shell .amplify-liveness-hint__text,
+.liveness-detector-shell .amplify-liveness-start-screen-header__body,
+.liveness-detector-shell .amplify-liveness-start-screen-instructions {
+  max-width: min(34rem, calc(100% - 1.5rem));
+}
+
+.liveness-detector-shell .amplify-liveness-recording-icon-container,
+.liveness-detector-shell .amplify-liveness-recording-icon {
+  display: none !important;
+}
+
+.liveness-detector-shell .amplify-liveness-toast {
+  bottom: 0.85rem;
+  top: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: min(21rem, calc(100% - 1.5rem));
+  min-height: 0;
+  padding: 0;
+  border-radius: 999px;
+  box-shadow: 0 16px 32px rgb(0 0 0 / 0.18);
+}
+
+.liveness-detector-shell .amplify-liveness-toast__container {
+  width: auto;
+}
+
+.liveness-detector-shell .amplify-liveness-toast__message,
+.liveness-detector-shell .amplify-liveness-hint__text {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.liveness-detector-shell .amplify-liveness-toast--primary .amplify-liveness-toast__message {
+  background: rgb(8 27 43 / 0.88);
+  color: rgb(245 248 255);
+}
+
+.liveness-detector-shell .amplify-liveness-toast--error .amplify-liveness-toast__message {
+  background: rgb(127 29 29 / 0.92);
+  color: rgb(255 244 244);
+}
+
+@media (max-width: 640px) {
+  .liveness-detector-shell .amplify-liveness-camera-module {
+    min-height: 24rem;
+  }
+
+  .liveness-detector-shell .amplify-liveness-hint__text,
+  .liveness-detector-shell .amplify-liveness-toast__message {
+    max-width: min(17rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.75rem;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

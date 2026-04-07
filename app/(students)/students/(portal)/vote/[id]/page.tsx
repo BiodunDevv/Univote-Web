@@ -65,6 +65,65 @@ const awsIdentityPoolId =
 const awsGuestRegion = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1";
 const hasAwsLivenessWebConfig = Boolean(awsIdentityPoolId);
 
+const livenessDisplayText = {
+  startScreenBeginCheckText: "Begin live verification",
+  photosensitivityWarningHeadingText: "Camera and light notice",
+  photosensitivityWarningBodyText:
+    "This check uses live camera guidance and brief brightness changes to confirm real presence before voting.",
+  photosensitivityWarningInfoText:
+    "Use your front camera, remove anything blocking your face, and stay in even lighting for the smoothest experience.",
+  photosensitivityWarningLabelText: "Important",
+  hintMoveFaceFrontOfCameraText: "Bring your face fully into the frame.",
+  hintFaceDetectedText: "Face detected. Hold steady.",
+  hintCanNotIdentifyText: "We could not read your face clearly yet.",
+  hintTooCloseText: "Move slightly back from the camera.",
+  hintTooFarText: "Move a little closer to the camera.",
+  hintConnectingText: "Connecting to secure live verification...",
+  hintVerifyingText: "Analyzing live presence...",
+  hintCheckCompleteText: "Live capture complete.",
+  hintIlluminationTooBrightText: "Lighting is too bright. Reduce glare and try again.",
+  hintIlluminationTooDarkText: "Lighting is too low. Move into a brighter area.",
+  hintIlluminationNormalText: "Lighting looks good.",
+  hintHoldFaceForFreshnessText: "Hold still while we complete the live check.",
+  hintCenterFaceText: "Center your face inside the guide.",
+  hintCenterFaceInstructionText: "Keep your face centered and look straight ahead.",
+  hintFaceOffCenterText: "Move your face back to the center.",
+  hintMatchIndicatorText: "Face alignment",
+  cameraMinSpecificationsHeadingText: "Camera quality is too low",
+  cameraMinSpecificationsMessageText:
+    "Switch to a device with a clearer front camera to complete secure verification.",
+  cameraNotFoundHeadingText: "Camera access is required",
+  cameraNotFoundMessageText:
+    "Allow camera access for Univote and reopen the live verification step.",
+  retryCameraPermissionsText: "Retry camera access",
+  waitingCameraPermissionText: "Waiting for camera permission...",
+  a11yVideoLabelText: "Live verification camera preview",
+  recordingIndicatorText: "",
+  cancelLivenessCheckText: "Cancel live check",
+  connectionTimeoutHeaderText: "Connection timed out",
+  connectionTimeoutMessageText:
+    "Your connection dropped during live verification. Start a new check when your network is stable.",
+  timeoutHeaderText: "Verification timed out",
+  timeoutMessageText:
+    "This live check took too long to complete. Start a new attempt and hold still.",
+  faceDistanceHeaderText: "Face position needs adjustment",
+  faceDistanceMessageText:
+    "Move into the guide clearly and keep your face steady before retrying.",
+  multipleFacesHeaderText: "Only one person can be in frame",
+  multipleFacesMessageText:
+    "Make sure only the account owner is visible before starting again.",
+  clientHeaderText: "Device issue detected",
+  clientMessageText:
+    "We could not complete live verification on this device. Close other camera apps and retry.",
+  serverHeaderText: "Verification service unavailable",
+  serverMessageText:
+    "Live verification is temporarily unavailable. Please wait a moment and try again.",
+  landscapeHeaderText: "Rotate your device",
+  landscapeMessageText: "Use portrait mode for secure live verification.",
+  portraitMessageText: "Keep your phone upright in portrait mode.",
+  tryAgainText: "Start a new check",
+} as const;
+
 if (hasAwsLivenessWebConfig) {
   Amplify.configure({
     Auth: {
@@ -679,10 +738,26 @@ export default function StudentVotePage() {
                   </div>
 
                   {livenessStatus === "ready" && livenessSessionId ? (
-                    <div className="mt-4 overflow-hidden rounded-2xl border bg-background">
+                    <div className="liveness-detector-shell mt-4 overflow-hidden rounded-[1.75rem] border bg-background shadow-sm">
+                      <div className="border-b bg-muted/20 px-4 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                              Secure camera check
+                            </p>
+                            <p className="mt-1 text-sm font-medium text-foreground">
+                              Keep your face centered, look forward, and follow the on-screen prompts.
+                            </p>
+                          </div>
+                          <Badge variant="secondary" className="rounded-full">
+                            Front camera
+                          </Badge>
+                        </div>
+                      </div>
                       <FaceLivenessDetector
                         sessionId={livenessSessionId}
                         region={livenessRegion}
+                        displayText={livenessDisplayText}
                         onUserCancel={() => {
                           setLivenessStatus("failed");
                           setLivenessError("Live verification was cancelled. Start again when you are ready.");
@@ -717,6 +792,34 @@ export default function StudentVotePage() {
                           setLivenessError(getVoteErrorMessage(livenessUiError));
                         }}
                       />
+                      <div className="border-t bg-muted/15 px-4 py-3">
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          <div className="rounded-2xl border bg-background/90 px-3 py-2">
+                            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                              Lighting
+                            </p>
+                            <p className="mt-1 text-xs text-foreground">
+                              Use a bright, even light source with minimal glare.
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border bg-background/90 px-3 py-2">
+                            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                              Framing
+                            </p>
+                            <p className="mt-1 text-xs text-foreground">
+                              Keep only one face visible and stay inside the oval guide.
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border bg-background/90 px-3 py-2">
+                            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                              Stability
+                            </p>
+                            <p className="mt-1 text-xs text-foreground">
+                              Hold your phone steady until the secure capture finishes.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
                 </div>
