@@ -212,7 +212,11 @@ export default function StudentHomePage() {
                     candidate_count: 0,
                     is_off_campus_allowed: false,
                   }}
-                  href={`/students/sessions/${session._id}`}
+                  href={
+                    session.has_voted
+                      ? `/students/vote/${session._id}/submitted`
+                      : `/students/sessions/${session._id}`
+                  }
                   ctaLabel={
                     session.status === "active"
                       ? "Open session"

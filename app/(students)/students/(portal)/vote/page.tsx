@@ -51,7 +51,11 @@ export default function StudentVoteLandingPage() {
               <StudentSessionCard
                 key={session._id}
                 session={session}
-                href={`/students/vote/${session._id}`}
+                href={
+                  session.has_voted
+                    ? `/students/vote/${session._id}/submitted`
+                    : `/students/vote/${session._id}`
+                }
                 compact
                 ctaLabel={
                   session.has_voted

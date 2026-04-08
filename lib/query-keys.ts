@@ -113,6 +113,8 @@ export const queryKeys = {
   },
   history: {
     voting: () => ["history", "voting"] as const,
+    votingReceipt: (sessionId: string) =>
+      ["history", "voting-receipt", sessionId] as const,
   },
   studentProfile: {
     current: () => ["student-profile", "current"] as const,

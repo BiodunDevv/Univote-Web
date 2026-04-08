@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
@@ -74,11 +75,11 @@ const livenessDisplayText = {
   photosensitivityWarningInfoText:
     "Use your front camera, remove anything blocking your face, and stay in even lighting for the smoothest experience.",
   photosensitivityWarningLabelText: "Important",
-  hintMoveFaceFrontOfCameraText: "Bring your face fully into the frame.",
+  hintMoveFaceFrontOfCameraText: "Bring your full face into view.",
   hintFaceDetectedText: "Face detected. Hold steady.",
   hintCanNotIdentifyText: "We could not read your face clearly yet.",
-  hintTooCloseText: "Move slightly back from the camera.",
-  hintTooFarText: "Move a little closer to the camera.",
+  hintTooCloseText: "Move slightly back.",
+  hintTooFarText: "Move a little closer.",
   hintConnectingText: "Connecting to AWS...",
   hintVerifyingText: "Analyzing live presence...",
   hintCheckCompleteText: "Live capture complete.",
@@ -86,8 +87,9 @@ const livenessDisplayText = {
   hintIlluminationTooDarkText: "Lighting is too low. Move into a brighter area.",
   hintIlluminationNormalText: "Lighting looks good.",
   hintHoldFaceForFreshnessText: "Hold still while we complete the live check.",
-  hintCenterFaceText: "Center your face inside the guide.",
-  hintCenterFaceInstructionText: "Keep your face centered and look straight ahead.",
+  hintCenterFaceText: "Center your face",
+  hintCenterFaceInstructionText:
+    "Keep your face centered, look straight ahead, and stay at a natural arm's-length distance.",
   hintFaceOffCenterText: "Move your face back to the center.",
   hintMatchIndicatorText: "Face alignment",
   cameraMinSpecificationsHeadingText: "Camera quality is too low",
@@ -109,7 +111,7 @@ const livenessDisplayText = {
     "This live check took too long to complete. Start a new attempt and hold still.",
   faceDistanceHeaderText: "Face position needs adjustment",
   faceDistanceMessageText:
-    "Move into the guide clearly and keep your face steady before retrying.",
+    "Keep the phone at a comfortable distance, center your face in the guide, and hold steady before retrying.",
   multipleFacesHeaderText: "Only one person can be in frame",
   multipleFacesMessageText:
     "Make sure only the account owner is visible before starting again.",
@@ -399,6 +401,40 @@ export default function StudentVotePage() {
     );
   }
 
+  if (session.has_voted) {
+    return (
+      <PortalPage className="space-y-3">
+        <Card className="border shadow-none">
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 text-foreground" />
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">
+                  Your ballot has already been recorded
+                </p>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  You have already submitted this session successfully. Open your
+                  submitted ballot to review the candidates that were recorded for
+                  this session.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm">
+                <Link href={`/students/vote/${session.id}/submitted`}>
+                  View submitted ballot
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/students/results/${session.id}`}>View results</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </PortalPage>
+    );
+  }
+
   if (!isMobile) {
     return (
       <Card className="border shadow-none">
@@ -419,16 +455,14 @@ export default function StudentVotePage() {
     );
   }
 
-  if (!session.eligible || session.status !== "active" || session.has_voted) {
+  if (!session.eligible || session.status !== "active") {
     return (
       <Alert variant="destructive">
         <ShieldAlert className="h-4 w-4" />
         <AlertDescription>
           {!session.eligible
             ? session.eligibility_reason || "You are not eligible for this session."
-            : session.has_voted
-              ? "Your vote has already been recorded for this session."
-              : "This session is not currently accepting votes."}
+            : "This session is not currently accepting votes."}
         </AlertDescription>
       </Alert>
     );
@@ -621,7 +655,7 @@ export default function StudentVotePage() {
   };
 
   return (
-    <PortalPage className="flex min-h-full flex-col gap-2.5 pb-34 sm:gap-3">
+    <PortalPage className="flex min-h-full flex-col gap-2.5 pb-28 sm:gap-3 sm:pb-30">
       <section
         data-tour="student-vote-hero"
         className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-3.5 shadow-none sm:rounded-3xl sm:p-5"
@@ -838,8 +872,8 @@ export default function StudentVotePage() {
                 </Alert>
               ) : null}
 
-              <div className="grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-                <div className="overflow-hidden rounded-3xl border bg-muted/20 p-3">
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(270px,0.92fr)]">
+                <div className="overflow-hidden rounded-2xl border bg-muted/20 p-2.5 sm:rounded-3xl sm:p-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
                       <Badge variant="outline">AWS liveness</Badge>
@@ -872,8 +906,8 @@ export default function StudentVotePage() {
                   </div>
 
                   {livenessStatus === "ready" && livenessSessionId ? (
-                    <div className="liveness-detector-shell mt-3 overflow-hidden rounded-[1.5rem] border bg-background shadow-sm">
-                      <div className="border-b bg-muted/20 px-3 py-2.5">
+                    <div className="liveness-detector-shell mt-3 overflow-hidden rounded-2xl border bg-background shadow-sm sm:rounded-[1.5rem]">
+                      <div className="border-b bg-muted/20 px-3 py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -926,7 +960,7 @@ export default function StudentVotePage() {
                           setLivenessError(getVoteErrorMessage(livenessUiError));
                         }}
                       />
-                      <div className="border-t bg-muted/15 px-3 py-2.5">
+                      <div className="border-t bg-muted/15 px-2.5 py-2 sm:px-3 sm:py-2.5">
                         <div className="grid gap-2 sm:grid-cols-3">
                           <div className="rounded-2xl border bg-background/90 px-3 py-2">
                             <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -958,7 +992,7 @@ export default function StudentVotePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-3xl border bg-background p-3.5 sm:p-4">
+                <div className="rounded-2xl border bg-background p-3 sm:rounded-3xl sm:p-4">
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -986,18 +1020,18 @@ export default function StudentVotePage() {
                                         : "Verification failed"}
                       </p>
                     </div>
-                    <div className="space-y-2 rounded-2xl border bg-muted/15 p-3">
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <div className="space-y-2 rounded-xl border bg-muted/15 p-3">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Session ID</span>
-                        <span className="max-w-[60%] truncate font-medium text-foreground">
+                        <span className="max-w-full break-all font-medium text-foreground sm:max-w-[60%] sm:text-right">
                           {livenessSessionId || "Not started"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Region</span>
                         <span className="font-medium text-foreground">{livenessRegion}</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Confidence</span>
                         <span className="font-medium text-foreground">
                           {typeof livenessConfidence === "number"
@@ -1005,7 +1039,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Threshold</span>
                         <span className="font-medium text-foreground">
                           {typeof livenessThreshold === "number"
@@ -1013,7 +1047,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Account owner</span>
                         <span className="font-medium text-foreground">
                           {ownershipVerified === null
@@ -1023,7 +1057,7 @@ export default function StudentVotePage() {
                               : "Not confirmed"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Match confidence</span>
                         <span className="font-medium text-foreground">
                           {typeof compareConfidence === "number"
@@ -1031,7 +1065,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
                         <span className="text-muted-foreground">Match threshold</span>
                         <span className="font-medium text-foreground">
                           {typeof compareThreshold === "number"
@@ -1065,13 +1099,13 @@ export default function StudentVotePage() {
       ) : null}
 
       {currentStep === "review" ? (
-        <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
           <Card className="border shadow-none">
             <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-base">Final review</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pb-4">
-              <div className="rounded-3xl border bg-muted/20 p-4">
+              <div className="rounded-2xl border bg-muted/20 p-3 sm:rounded-3xl sm:p-4">
                 <div className="flex items-start gap-3">
                   <Eye className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
@@ -1085,7 +1119,7 @@ export default function StudentVotePage() {
                       {reviewSelections.map(({ position, candidate }) => (
                         <div
                           key={position}
-                          className="flex items-center gap-3 rounded-2xl border bg-background/80 p-2.5"
+                          className="flex items-start gap-3 rounded-xl border bg-background/80 p-2.5"
                         >
                           <div className="h-10 w-10 overflow-hidden rounded-2xl border bg-muted/20">
                             {candidate?.photo_url ? (
@@ -1101,10 +1135,10 @@ export default function StudentVotePage() {
                             <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                               {position}
                             </p>
-                            <p className="truncate text-sm font-semibold text-foreground">
+                            <p className="break-words text-sm font-semibold text-foreground">
                               {candidate?.name || "Not selected"}
                             </p>
-                            <p className="truncate text-xs text-muted-foreground">
+                            <p className="text-xs leading-5 text-muted-foreground">
                               {candidate?.bio || "Selected candidate review"}
                             </p>
                           </div>
@@ -1114,7 +1148,7 @@ export default function StudentVotePage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-3xl border bg-muted/20 p-4">
+              <div className="rounded-2xl border bg-muted/20 p-3 sm:rounded-3xl sm:p-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
@@ -1141,7 +1175,7 @@ export default function StudentVotePage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-3xl border bg-muted/20 p-4">
+              <div className="rounded-2xl border bg-muted/20 p-3 sm:rounded-3xl sm:p-4">
                 <div className="flex items-start gap-3">
                   <Smartphone className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
@@ -1186,7 +1220,7 @@ export default function StudentVotePage() {
               </p>
               <Button
                 type="button"
-                className="h-9 w-full rounded-xl"
+                className="h-10 w-full rounded-lg"
                 size="sm"
                 disabled={submitVote.isPending || biometricLocked}
                 onClick={() => void handleSubmitVote()}
@@ -1204,16 +1238,13 @@ export default function StudentVotePage() {
 
       <div
         data-tour="student-vote-footer"
-        className="fixed inset-x-0 bottom-1 z-30 border-t border-border/70 bg-background/95 px-3 py-2 backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/96 px-3 py-2 backdrop-blur"
       >
         <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border bg-background px-3 py-2 shadow-none">
-            <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="rounded-xl border bg-background px-2.5 py-2 shadow-none">
+            <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  Guided voting flow
-                </p>
-                <p className="truncate text-xs font-medium text-foreground sm:text-sm">
+                <p className="truncate text-[11px] font-medium text-foreground sm:text-sm">
                   {currentStep === "ballot"
                     ? allCategoriesSelected
                       ? "Ballot complete. Continue to location confirmation."
@@ -1224,24 +1255,24 @@ export default function StudentVotePage() {
                         : "Capture your current location to continue."
                       : currentStep === "liveness"
                         ? canContinueFromLiveness
-                          ? "Verification complete. Continue to final review."
-                          : "Complete live verification and account ownership check."
+                        ? "Verification complete. Continue to final review."
+                        : "Complete live verification and account ownership check."
                         : "Review your selected candidates, then submit your final vote."}
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 {currentStep !== "ballot" ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-xl px-2.5 text-xs"
+                    className="h-9 min-w-9 rounded-lg px-2.5 text-xs"
                     onClick={() =>
                       setCurrentStep(stepOrder[currentStepIndex - 1] || "ballot")
                     }
                   >
-                    <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                    <ChevronLeft className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Back</span>
                   </Button>
                 ) : null}
@@ -1250,7 +1281,7 @@ export default function StudentVotePage() {
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 rounded-xl px-3 text-xs"
+                    className="h-9 rounded-lg px-3.5 text-xs"
                     disabled={
                       (currentStep === "ballot" && !allCategoriesSelected) ||
                       (currentStep === "location" && !canContinueFromLocation) ||
@@ -1269,7 +1300,7 @@ export default function StudentVotePage() {
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 shrink-0 rounded-xl px-3 text-xs"
+                    className="h-9 shrink-0 rounded-lg px-3.5 text-xs"
                     onClick={() => void handleSubmitVote()}
                     disabled={submitVote.isPending || biometricLocked}
                   >

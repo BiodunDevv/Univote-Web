@@ -122,7 +122,11 @@ export default function StudentSessionsPage() {
                 <StudentSessionCard
                   key={session._id}
                   session={session}
-                  href={`/students/sessions/${session._id}`}
+                  href={
+                    session.has_voted
+                      ? `/students/vote/${session._id}/submitted`
+                      : `/students/sessions/${session._id}`
+                  }
                   compact
                 />
               ))}

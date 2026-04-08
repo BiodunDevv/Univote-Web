@@ -14,6 +14,7 @@ import {
   StudentPortalUser,
   StudentSessionEligibilityScope,
   StudentSessionDetail,
+  StudentSubmittedBallotResponse,
   StudentVotingHistoryEntry,
 } from "@/types/student-portal";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
@@ -115,6 +116,21 @@ export function useStudentVotingHistoryQuery() {
         auth: "student",
         signal,
       }),
+  });
+}
+
+export function useStudentSubmittedBallotQuery(sessionId: string) {
+  return useQuery({
+    enabled: Boolean(sessionId),
+    queryKey: queryKeys.history.votingReceipt(sessionId),
+    queryFn: ({ signal }) =>
+      apiRequest<StudentSubmittedBallotResponse>(
+        `/api/vote/session/${sessionId}/submitted`,
+        {
+          auth: "student",
+          signal,
+        },
+      ),
   });
 }
 

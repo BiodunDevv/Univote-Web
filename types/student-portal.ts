@@ -206,3 +206,28 @@ export interface StudentVotingHistoryEntry {
   }>;
   voted_at: string;
 }
+
+export interface StudentSubmittedBallotResponse {
+  ballot: {
+    session: {
+      id: string;
+      title: string;
+      description?: string;
+      start_time: string;
+      end_time: string;
+      status: "upcoming" | "active" | "ended";
+    };
+    submitted_at: string | null;
+    status: "submitted";
+    choices: Array<{
+      position: string;
+      candidate: {
+        id: string;
+        name: string;
+        position?: string;
+        photo_url?: string;
+        bio?: string;
+      };
+    }>;
+  };
+}

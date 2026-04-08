@@ -68,9 +68,9 @@ export default function StudentSessionDetailPage() {
           label: "Start voting",
         }
       : session.has_voted
-        ? {
-            href: `/students/results/${session.id}`,
-            label: "Vote already recorded",
+      ? {
+            href: `/students/vote/${session.id}/submitted`,
+            label: "View submitted ballot",
           }
       : session.status === "ended"
         ? {
