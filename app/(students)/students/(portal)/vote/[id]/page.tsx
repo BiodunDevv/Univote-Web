@@ -64,7 +64,8 @@ const awsIdentityPoolId =
   process.env.NEXT_PUBLIC_AWS_COGNITO_IDENTITY_POOL_ID || "";
 const awsGuestRegion = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1";
 const hasAwsLivenessWebConfig = Boolean(awsIdentityPoolId);
-
+const mapboxAccessToken =
+  process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() || "";
 const livenessDisplayText = {
   startScreenBeginCheckText: "Begin live verification",
   photosensitivityWarningHeadingText: "Camera and light notice",
@@ -78,7 +79,7 @@ const livenessDisplayText = {
   hintCanNotIdentifyText: "We could not read your face clearly yet.",
   hintTooCloseText: "Move slightly back from the camera.",
   hintTooFarText: "Move a little closer to the camera.",
-  hintConnectingText: "Connecting to secure live verification...",
+  hintConnectingText: "Connecting to AWS...",
   hintVerifyingText: "Analyzing live presence...",
   hintCheckCompleteText: "Live capture complete.",
   hintIlluminationTooBrightText: "Lighting is too bright. Reduce glare and try again.",
@@ -205,6 +206,99 @@ function formatCountdown(totalSeconds: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function getLocationErrorMessage(error: GeolocationPositionError) {
+  const rawMessage = error.message || "";
+
+  if (
+    rawMessage.includes("kCLErrorLocationUnknown") ||
+    error.code === error.POSITION_UNAVAILABLE
+  ) {
+    return "Your device could not determine your location just yet. Move to an open area, ensure location services are on, and try again.";
+  }
+
+  if (error.code === error.PERMISSION_DENIED) {
+    return "Location access is blocked. Allow location permission for your browser and try again.";
+  }
+
+  if (error.code === error.TIMEOUT) {
+    return "Location capture timed out. Hold still for a moment and try again.";
+  }
+
+  return rawMessage || "Failed to capture location.";
+}
+
+async function resolveStudentLocationName(coords: { lat: number; lng: number }) {
+  const response = await fetch(
+    `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${coords.lng}&latitude=${coords.lat}&access_token=${encodeURIComponent(mapboxAccessToken)}&types=address,street,neighborhood,locality,place&language=en&limit=1`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Location lookup failed with status ${response.status}`);
+  }
+
+  const result = (await response.json()) as {
+    features?: Array<{
+      text?: string;
+      place_name?: string;
+      name?: string;
+      properties?: {
+        name?: string;
+        name_preferred?: string;
+        full_address?: string;
+        place_formatted?: string;
+        context?: {
+          place?: { name?: string };
+          region?: { name?: string };
+          country?: { name?: string };
+        };
+      };
+      full_address?: string;
+      place_formatted?: string;
+    }>;
+  };
+
+  const primary = result.features?.[0];
+
+  const label =
+    primary?.properties?.name_preferred ||
+    primary?.properties?.name ||
+    primary?.properties?.full_address?.split(",")[0] ||
+    primary?.name ||
+    primary?.text ||
+    primary?.place_formatted?.split(",")[0] ||
+    primary?.full_address?.split(",")[0] ||
+    primary?.place_name?.split(",")[0] ||
+    "";
+
+  const detail =
+    primary?.properties?.place_formatted ||
+    [
+      primary?.properties?.context?.place?.name,
+      primary?.properties?.context?.region?.name,
+      primary?.properties?.context?.country?.name,
+    ]
+      .filter((value): value is string => Boolean(value && value.trim()))
+      .join(", ") ||
+    primary?.place_formatted
+      ?.split(",")
+      .map((part) => part.trim())
+      .slice(0, 3)
+      .join(", ") ||
+    primary?.full_address
+      ?.split(",")
+      .map((part) => part.trim())
+      .slice(0, 3)
+      .join(", ") ||
+    primary?.place_name
+      ?.split(",")
+      .map((part) => part.trim())
+      .slice(0, 3)
+      .join(", ") ||
+    "";
+
+  return { label, detail };
+}
+
 export default function StudentVotePage() {
   const params = useParams();
   const router = useRouter();
@@ -217,9 +311,12 @@ export default function StudentVotePage() {
   const [selectedByCategory, setSelectedByCategory] = useState<
     Record<string, string>
   >({});
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
+  const [location, setLocation] = useState<{
+    lat: number;
+    lng: number;
+    label?: string;
+    detail?: string;
+  } | null>(null);
   const [currentStep, setCurrentStep] = useState<VoteStep>("ballot");
   const [isLocating, setIsLocating] = useState(false);
   const [livenessStatus, setLivenessStatus] = useState<LivenessStatus>(
@@ -435,11 +532,35 @@ export default function StudentVotePage() {
     setIsLocating(true);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
+      async (position) => {
+        const nextLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+          label: "Resolving current location...",
+          detail: "",
+        };
+
+        setLocation(nextLocation);
+
+        try {
+          const resolved = await resolveStudentLocationName({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+
+          setLocation({
+            ...nextLocation,
+            label: resolved.label || "Current location",
+            detail: resolved.detail,
+          });
+        } catch {
+          setLocation({
+            ...nextLocation,
+            label: "Current location",
+            detail: "",
+          });
+        }
+
         setIsLocating(false);
         toast.success(
           session.is_off_campus_allowed
@@ -448,7 +569,7 @@ export default function StudentVotePage() {
         );
       },
       (locationError) => {
-        toast.error(locationError.message || "Failed to capture location");
+        toast.error(getLocationErrorMessage(locationError));
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -500,20 +621,20 @@ export default function StudentVotePage() {
   };
 
   return (
-    <PortalPage className="flex min-h-full flex-col gap-3 pb-36 sm:gap-4">
+    <PortalPage className="flex min-h-full flex-col gap-2.5 pb-34 sm:gap-3">
       <section
         data-tour="student-vote-hero"
-        className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:rounded-3xl sm:p-6"
+        className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-3.5 shadow-none sm:rounded-3xl sm:p-5"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
             
             <Badge variant="outline">Active ballot</Badge>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <div className="space-y-1.5">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                 {session.title}
               </h1>
-              <p className="max-w-3xl text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+              <p className="max-w-3xl text-[11px] leading-5 text-muted-foreground sm:text-sm sm:leading-6">
                 Complete your ballot, capture your location, pass the live
                 presence check, and submit securely. Univote uses your live
                 reference image from AWS liveness to verify you against your
@@ -536,7 +657,7 @@ export default function StudentVotePage() {
       </section>
 
       <Card className="border shadow-none">
-        <CardContent className="space-y-3 p-3 sm:p-5">
+        <CardContent className="space-y-2.5 p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -566,7 +687,7 @@ export default function StudentVotePage() {
                 >
                   <Badge
                     variant={currentStep === value ? "default" : "outline"}
-                    className="rounded-full px-3 py-1"
+                    className="rounded-full px-2.5 py-1 text-[11px]"
                   >
                     {index + 1}. {label}
                   </Badge>
@@ -579,13 +700,13 @@ export default function StudentVotePage() {
       </Card>
 
       {currentStep === "ballot" ? (
-        <div className="grid gap-4" data-tour="student-vote-ballot">
+        <div className="grid gap-3" data-tour="student-vote-ballot">
           {categories.map(([position, candidates]) => (
             <Card key={position} className="border shadow-none">
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2 pt-4">
                 <CardTitle className="text-sm">{position}</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-2">
+              <CardContent className="grid gap-2 pb-4">
                 {candidates.map((candidate) => {
                   const selected = selectedByCategory[position] === candidate.id;
 
@@ -600,14 +721,14 @@ export default function StudentVotePage() {
                         }))
                       }
                       className={cn(
-                        "rounded-2xl border p-3 text-left transition-colors sm:p-4",
+                        "rounded-2xl border p-2.5 text-left transition-colors sm:p-3",
                         selected
                           ? "border-foreground bg-foreground text-background"
                           : "border-border bg-muted/20 text-foreground hover:border-foreground/40",
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-background/70 sm:h-14 sm:w-14">
+                        <div className="h-11 w-11 overflow-hidden rounded-2xl border bg-background/70 sm:h-12 sm:w-12">
                           {candidate.photo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -619,7 +740,7 @@ export default function StudentVotePage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="font-semibold">{candidate.name}</p>
+                            <p className="text-sm font-semibold">{candidate.name}</p>
                             {selected ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
                           </div>
                           <p className="mt-1 line-clamp-2 text-[11px] opacity-80 sm:text-xs">
@@ -638,19 +759,19 @@ export default function StudentVotePage() {
 
       {currentStep === "location" ? (
         <Card className="border shadow-none">
-          <CardHeader>
+          <CardHeader className="pb-3 pt-4">
             <CardTitle className="text-base">Confirm your voting location</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-3xl border bg-muted/20 p-5">
+          <CardContent className="space-y-4 pb-4">
+            <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="rounded-3xl border bg-muted/20 p-4">
                 <div className="flex items-start gap-3">
                   <LocateFixed className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-foreground">
-                      Capture your live location before verification
+                      Capture your live location
                     </p>
-                    <p className="text-sm leading-6 text-muted-foreground">
+                    <p className="text-xs leading-6 text-muted-foreground">
                       {session.is_off_campus_allowed
                         ? "This session allows flexible voting locations, but your location is still recorded as part of the secure audit trail."
                         : "Your device must be inside the approved voting radius for this ballot before your vote can be accepted."}
@@ -658,8 +779,8 @@ export default function StudentVotePage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-3xl border bg-background p-5">
-                <div className="space-y-4">
+              <div className="rounded-3xl border bg-background p-4">
+                <div className="space-y-3">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                       Status
@@ -669,11 +790,23 @@ export default function StudentVotePage() {
                     </p>
                   </div>
                   {location ? (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>
-                        {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                      </span>
+                    <div className="rounded-2xl border bg-muted/15 p-3">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {location.label || "Current location"}
+                          </p>
+                          {location.detail ? (
+                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                              {location.detail}
+                            </p>
+                          ) : null}
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
                   <Button type="button" variant="outline" onClick={captureLocation} disabled={isLocating}>
@@ -688,12 +821,12 @@ export default function StudentVotePage() {
       ) : null}
 
       {currentStep === "liveness" ? (
-        <div className="grid gap-3 sm:gap-4">
+        <div className="grid gap-3">
           <Card className="border shadow-none">
-            <CardHeader>
+            <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-base">Professional live verification</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-4 pb-4">
               {biometricLocked ? (
                 <Alert variant="destructive">
                   <Clock3 className="h-4 w-4" />
@@ -706,15 +839,15 @@ export default function StudentVotePage() {
               ) : null}
 
               <div className="grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-                <div className="overflow-hidden rounded-3xl border bg-muted/20 p-3 sm:p-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-1.5">
+                <div className="overflow-hidden rounded-3xl border bg-muted/20 p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
                       <Badge variant="outline">AWS liveness</Badge>
                       <div className="space-y-1">
-                        <p className="text-base font-semibold text-foreground">
+                        <p className="text-sm font-semibold text-foreground sm:text-base">
                           Verify your live presence with the front camera
                         </p>
-                        <p className="text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                        <p className="text-[11px] leading-5 text-muted-foreground sm:text-sm sm:leading-6">
                           The reference image captured during this live session is
                           what Univote uses to compare against your enrolled face.
                           No pre-uploaded selfie is required.
@@ -725,6 +858,7 @@ export default function StudentVotePage() {
                       type="button"
                       variant="outline"
                       size="sm"
+                      className="h-8 rounded-xl px-3 text-xs"
                       disabled={createLivenessSession.isPending || biometricLocked}
                       onClick={() => void startLivenessCheck()}
                     >
@@ -738,14 +872,14 @@ export default function StudentVotePage() {
                   </div>
 
                   {livenessStatus === "ready" && livenessSessionId ? (
-                    <div className="liveness-detector-shell mt-4 overflow-hidden rounded-[1.75rem] border bg-background shadow-sm">
-                      <div className="border-b bg-muted/20 px-4 py-3">
+                    <div className="liveness-detector-shell mt-3 overflow-hidden rounded-[1.5rem] border bg-background shadow-sm">
+                      <div className="border-b bg-muted/20 px-3 py-2.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                               Secure camera check
                             </p>
-                            <p className="mt-1 text-sm font-medium text-foreground">
+                            <p className="mt-1 text-xs font-medium text-foreground sm:text-sm">
                               Keep your face centered, look forward, and follow the on-screen prompts.
                             </p>
                           </div>
@@ -792,7 +926,7 @@ export default function StudentVotePage() {
                           setLivenessError(getVoteErrorMessage(livenessUiError));
                         }}
                       />
-                      <div className="border-t bg-muted/15 px-4 py-3">
+                      <div className="border-t bg-muted/15 px-3 py-2.5">
                         <div className="grid gap-2 sm:grid-cols-3">
                           <div className="rounded-2xl border bg-background/90 px-3 py-2">
                             <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -824,8 +958,8 @@ export default function StudentVotePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-3xl border bg-background p-4">
-                  <div className="space-y-4">
+                <div className="rounded-3xl border bg-background p-3.5 sm:p-4">
+                  <div className="space-y-3">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                         Verification state
@@ -852,18 +986,18 @@ export default function StudentVotePage() {
                                         : "Verification failed"}
                       </p>
                     </div>
-                    <div className="space-y-2 rounded-2xl border bg-muted/15 p-4">
-                      <div className="flex items-center justify-between text-sm">
+                    <div className="space-y-2 rounded-2xl border bg-muted/15 p-3">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Session ID</span>
                         <span className="max-w-[60%] truncate font-medium text-foreground">
                           {livenessSessionId || "Not started"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Region</span>
                         <span className="font-medium text-foreground">{livenessRegion}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Confidence</span>
                         <span className="font-medium text-foreground">
                           {typeof livenessConfidence === "number"
@@ -871,7 +1005,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Threshold</span>
                         <span className="font-medium text-foreground">
                           {typeof livenessThreshold === "number"
@@ -879,7 +1013,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Account owner</span>
                         <span className="font-medium text-foreground">
                           {ownershipVerified === null
@@ -889,7 +1023,7 @@ export default function StudentVotePage() {
                               : "Not confirmed"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Match confidence</span>
                         <span className="font-medium text-foreground">
                           {typeof compareConfidence === "number"
@@ -897,7 +1031,7 @@ export default function StudentVotePage() {
                             : "Pending"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">Match threshold</span>
                         <span className="font-medium text-foreground">
                           {typeof compareThreshold === "number"
@@ -931,13 +1065,13 @@ export default function StudentVotePage() {
       ) : null}
 
       {currentStep === "review" ? (
-        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="border shadow-none">
-            <CardHeader>
+            <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-base">Final review</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-3xl border bg-muted/20 p-5">
+            <CardContent className="space-y-3 pb-4">
+              <div className="rounded-3xl border bg-muted/20 p-4">
                 <div className="flex items-start gap-3">
                   <Eye className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
@@ -951,9 +1085,9 @@ export default function StudentVotePage() {
                       {reviewSelections.map(({ position, candidate }) => (
                         <div
                           key={position}
-                          className="flex items-center gap-3 rounded-2xl border bg-background/80 p-3"
+                          className="flex items-center gap-3 rounded-2xl border bg-background/80 p-2.5"
                         >
-                          <div className="h-12 w-12 overflow-hidden rounded-2xl border bg-muted/20">
+                          <div className="h-10 w-10 overflow-hidden rounded-2xl border bg-muted/20">
                             {candidate?.photo_url ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -980,22 +1114,34 @@ export default function StudentVotePage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-3xl border bg-muted/20 p-5">
+              <div className="rounded-3xl border bg-muted/20 p-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-foreground">
                       Location ready
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {location
-                        ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
-                        : "Location missing"}
-                    </p>
+                    {location ? (
+                      <div className="space-y-1">
+                        <p className="text-sm text-foreground">
+                          {location.label || "Current location"}
+                        </p>
+                        {location.detail ? (
+                          <p className="text-xs text-muted-foreground">
+                            {location.detail}
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-muted-foreground">
+                          {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Location missing</p>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="rounded-3xl border bg-muted/20 p-5">
+              <div className="rounded-3xl border bg-muted/20 p-4">
                 <div className="flex items-start gap-3">
                   <Smartphone className="mt-0.5 h-5 w-5 text-foreground" />
                   <div className="space-y-2">
@@ -1021,10 +1167,10 @@ export default function StudentVotePage() {
           </Card>
 
           <Card className="border shadow-none">
-            <CardHeader>
+            <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-base">Submit securely</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 pb-4">
               {biometricLocked ? (
                 <Alert variant="destructive">
                   <AlertDescription>
@@ -1040,8 +1186,8 @@ export default function StudentVotePage() {
               </p>
               <Button
                 type="button"
-                className="w-full"
-                size="lg"
+                className="h-9 w-full rounded-xl"
+                size="sm"
                 disabled={submitVote.isPending || biometricLocked}
                 onClick={() => void handleSubmitVote()}
               >
@@ -1058,7 +1204,7 @@ export default function StudentVotePage() {
 
       <div
         data-tour="student-vote-footer"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 px-3 py-2 backdrop-blur"
+        className="fixed inset-x-0 bottom-1 z-30 border-t border-border/70 bg-background/95 px-3 py-2 backdrop-blur"
       >
         <div className="mx-auto max-w-5xl">
           <div className="rounded-2xl border bg-background px-3 py-2 shadow-none">

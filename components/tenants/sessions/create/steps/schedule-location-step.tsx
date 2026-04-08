@@ -1,5 +1,6 @@
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import { CalendarIcon, Clock3, Loader2, MapPin } from "lucide-react";
+import { CalendarIcon, Clock3, Loader2, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,13 @@ type ScheduleLocationStepProps = {
     field: "lat" | "lng" | "radius_meters",
     value: number,
   ) => void;
+};
+
+type SearchResult = {
+  lat: string;
+  lon: string;
+  display_name: string;
+  name?: string;
 };
 
 function DateTimeField({
@@ -114,6 +122,38 @@ export function ScheduleLocationStep({
   onDateTimeChange,
   onLocationChange,
 }: ScheduleLocationStepProps) {
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+
+    setSearching(true);
+    setSearchError("");
+    setResults([]);
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query.trim())}`,
+      );
+      const nextResults = (await response.json()) as SearchResult[];
+
+      if (!Array.isArray(nextResults) || nextResults.length === 0) {
+        throw new Error("No matching place was found.");
+      }
+
+      setResults(nextResults);
+    } catch (error) {
+      setSearchError(
+        error instanceof Error ? error.message : "Location search failed.",
+      );
+    } finally {
+      setSearching(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <Card className="border shadow-none">
@@ -249,8 +289,67 @@ export function ScheduleLocationStep({
         </Card>
 
         <Card className="border shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Map Preview</CardTitle>
+          <CardHeader className="gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold">Map Preview</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Search for a place or tap on the map to move the geofence center.
+              </p>
+            </div>
+            <div className="relative w-full sm:max-w-sm">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search and pick a location"
+                    className="pl-9"
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleSearch();
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void handleSearch()}
+                  disabled={searching || !query.trim()}
+                >
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                </Button>
+              </div>
+              {searchError ? (
+                <p className="mt-1 text-[11px] text-destructive">{searchError}</p>
+              ) : null}
+              {results.length > 0 ? (
+                <div className="absolute right-0 z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border bg-background shadow-xl z-50">
+                  {results.map((result) => (
+                    <button
+                      key={`${result.lat}-${result.lon}-${result.display_name}`}
+                      type="button"
+                      className="flex w-full flex-col gap-1 border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/50"
+                      onClick={() => {
+                        onLocationChange("lat", Number(result.lat));
+                        onLocationChange("lng", Number(result.lon));
+                        setQuery(result.display_name);
+                        setResults([]);
+                      }}
+                    >
+                      <span className="line-clamp-1 text-xs font-medium text-foreground">
+                        {result.name || result.display_name.split(",")[0]}
+                      </span>
+                      <span className="line-clamp-2 text-[11px] text-muted-foreground">
+                        {result.display_name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             <MapComponent
@@ -263,9 +362,6 @@ export function ScheduleLocationStep({
                 onLocationChange("lng", lng);
               }}
             />
-            <p className="text-xs text-muted-foreground">
-              Search for a place or tap on the map to move the geofence center.
-            </p>
           </CardContent>
         </Card>
       </div>

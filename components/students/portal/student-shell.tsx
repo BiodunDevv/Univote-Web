@@ -41,6 +41,9 @@ const navigationItems = [
   { href: "/students/profile", label: "Profile", icon: UserRound },
 ];
 
+const PULL_REFRESH_MAX = 104;
+const PULL_REFRESH_TRIGGER = 78;
+
 function isActivePath(pathname: string, href: string) {
   if (href === "/students/home") {
     return pathname === href;
@@ -99,7 +102,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isMobile || isVoteRoute) return;
+    if (!isMobile) return;
 
     let startY = 0;
     let pulling = false;
@@ -115,14 +118,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     const handleTouchMove = (event: TouchEvent) => {
       if (!pulling || window.scrollY > 0 || !maybePull) return;
       const currentY = event.touches[0]?.clientY || 0;
-      const distance = Math.max(0, Math.min(88, currentY - startY));
+      const distance = Math.max(0, Math.min(PULL_REFRESH_MAX, currentY - startY));
       pullDistanceRef.current = distance;
       setPullDistance(distance);
     };
 
     const handleTouchEnd = () => {
       const distance = pullDistanceRef.current;
-      if (distance >= 64 && !isRefreshing) {
+      if (distance >= PULL_REFRESH_TRIGGER && !isRefreshing) {
         setIsRefreshing(true);
 
         const isStandalone =
@@ -159,7 +162,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isMobile, isRefreshing, isVoteRoute, router]);
+  }, [isMobile, isRefreshing, router]);
   const initials = student?.full_name
     ?.split(" ")
     .slice(0, 2)
@@ -184,9 +187,31 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     await promptInstall();
   };
 
+  const pullRefreshHint = isRefreshing
+    ? "Refreshing student app..."
+    : pullDistance >= PULL_REFRESH_TRIGGER
+      ? "Release to refresh"
+      : pullDistance > 10
+        ? `Pull a little more to refresh`
+        : "Pull down to refresh";
+
   if (isVoteRoute) {
     return (
       <div className="min-h-svh overflow-x-hidden bg-background">
+        {isMobile ? (
+          <div className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center">
+            <div
+              className={cn(
+                "rounded-full border bg-background/95 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur transition-all duration-200",
+                pullDistance > 8 || isRefreshing
+                  ? "translate-y-0 opacity-100"
+                  : "-translate-y-3 opacity-0",
+              )}
+            >
+              {pullRefreshHint}
+            </div>
+          </div>
+        ) : null}
         <div className="sticky top-0 z-40 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur xl:px-6">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -231,7 +256,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh overflow-x-hidden bg-muted/20">
-      {isMobile && !isVoteRoute ? (
+      {isMobile ? (
         <div className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center">
           <div
             className={cn(
@@ -241,11 +266,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 : "-translate-y-3 opacity-0",
             )}
           >
-            {isRefreshing
-              ? "Refreshing student app..."
-              : pullDistance >= 72
-                ? "Release to refresh"
-                : "Pull down to refresh"}
+            {pullRefreshHint}
           </div>
         </div>
       ) : null}
