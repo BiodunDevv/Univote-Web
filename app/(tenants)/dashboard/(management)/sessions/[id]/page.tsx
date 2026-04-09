@@ -525,15 +525,15 @@ function SessionDetailsLoaded({
               Back
             </Button>
             {currentSession.status !== "ended" ? (
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    router.push(`/dashboard/sessions/${sessionId}/edit`)
-                  }
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Session
-                </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(`/dashboard/sessions/${sessionId}/edit`)
+                }
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Session
+              </Button>
             ) : null}
           </div>
         </div>

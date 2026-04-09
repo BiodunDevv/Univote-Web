@@ -265,7 +265,10 @@ export function StudentsPage() {
   const collegeCodeMap = useMemo(
     () =>
       Object.fromEntries(
-        (overview?.colleges || []).map((college) => [college.name, college.code]),
+        (overview?.colleges || []).map((college) => [
+          college.name,
+          college.code,
+        ]),
       ),
     [overview?.colleges],
   );

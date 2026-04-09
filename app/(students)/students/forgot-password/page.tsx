@@ -12,7 +12,7 @@ import {
   KeyRound,
   Mail,
   ShieldCheck,
-  Vote
+  Vote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +95,8 @@ function StudentForgotPasswordPageContent() {
               Password recovery
             </div>
             <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Recover your {labels.singular.toLowerCase()} voting portal password
+              Recover your {labels.singular.toLowerCase()} voting portal
+              password
             </h1>
             <p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
               Enter the recovery email tied to your account. We&apos;ll send a

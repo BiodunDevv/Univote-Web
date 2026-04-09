@@ -119,7 +119,8 @@ function StudentResetPasswordPageContent() {
               Secure password reset
             </div>
             <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Reset your {labels.singular.toLowerCase()} portal password with confidence
+              Reset your {labels.singular.toLowerCase()} portal password with
+              confidence
             </h1>
             <p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
               Enter the six-digit code sent to your recovery address, choose a
@@ -253,7 +254,9 @@ function StudentResetPasswordPageContent() {
                     onClick={() => setShowNewPassword((current) => !current)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     disabled={isLoading || success}
-                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showNewPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showNewPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -277,10 +280,14 @@ function StudentResetPasswordPageContent() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    onClick={() =>
+                      setShowConfirmPassword((current) => !current)
+                    }
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     disabled={isLoading || success}
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
