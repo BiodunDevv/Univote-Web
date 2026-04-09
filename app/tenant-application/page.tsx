@@ -1,10 +1,19 @@
-"use client";
-
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 import { HeroHeader } from "@/components/Landing/header";
 import { TenantApplicationSection } from "@/components/Landing/tenant-application";
-import { Button } from "@/components/ui/button";
+import { buildPublicMetadata } from "../seo";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Apply for a University Voting Workspace",
+  description:
+    "Request a Univote workspace for your university and launch secure campus elections with student identity checks and live result delivery.",
+  path: "/tenant-application",
+  keywords: [
+    "apply for university voting software",
+    "campus election workspace",
+    "student election platform application",
+  ],
+});
 
 export default function TenantApplicationPage() {
   return (
