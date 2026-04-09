@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -929,4 +929,10 @@ export function StudentsPage() {
   );
 }
 
-export default StudentsPage;
+export default function StudentsPageRoute() {
+  return (
+    <Suspense fallback={null}>
+      <StudentsPage />
+    </Suspense>
+  );
+}

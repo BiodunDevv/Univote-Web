@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 
-export default function TenantSupportPage() {
+function TenantSupportPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const openTicket = useAdminChatWidgetStore((state) => state.openTicket);
@@ -24,5 +24,13 @@ export default function TenantSupportPage() {
         "Returning to dashboard...",
       ]}
     />
+  );
+}
+
+export default function TenantSupportPage() {
+  return (
+    <Suspense fallback={null}>
+      <TenantSupportPageContent />
+    </Suspense>
   );
 }

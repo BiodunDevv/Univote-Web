@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   useParams,
   usePathname,
@@ -169,7 +169,7 @@ type SessionDetailsLoadedProps = {
   }) => void;
 };
 
-export default function SessionDetailsPage() {
+function SessionDetailsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
@@ -428,6 +428,14 @@ export default function SessionDetailsPage() {
       setCandidates={setCandidates}
       handleCandidateSheetStateChange={handleCandidateSheetStateChange}
     />
+  );
+}
+
+export default function SessionDetailsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SessionDetailsPageContent />
+    </Suspense>
   );
 }
 

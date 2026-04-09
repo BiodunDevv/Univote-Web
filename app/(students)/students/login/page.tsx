@@ -2,9 +2,9 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,7 +14,7 @@ import {
   Search,
   ShieldCheck,
   Smartphone,
-  Sparkles,
+  Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -52,11 +52,9 @@ import type { TenantContext } from "@/types/tenant";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 
-export default function StudentLoginPage() {
+function StudentLoginPageContent() {
   const router = useRouter();
-  const searchParams = new URLSearchParams(
-    typeof window === "undefined" ? "" : window.location.search,
-  );
+  const searchParams = useSearchParams();
   const hostTenantSlug = deriveTenantSlugFromHostname();
   const orgParam =
     searchParams.get("organization") || searchParams.get("org") || "";
@@ -140,10 +138,22 @@ export default function StudentLoginPage() {
         : null;
 
   useEffect(() => {
-    if (hasHydrated && token && !student?.first_login && !firstLoginPromptOpen) {
+    if (
+      hasHydrated &&
+      token &&
+      !student?.first_login &&
+      !firstLoginPromptOpen
+    ) {
       router.replace(ref);
     }
-  }, [firstLoginPromptOpen, hasHydrated, ref, router, student?.first_login, token]);
+  }, [
+    firstLoginPromptOpen,
+    hasHydrated,
+    ref,
+    router,
+    student?.first_login,
+    token,
+  ]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -211,11 +221,11 @@ export default function StudentLoginPage() {
         </Button>
         <AnimatedThemeToggler variant="header" className="h-9" />
       </div>
-      <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
+      <div className="mx-auto grid min-h-[calc(100svh-7rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
         <div className="relative overflow-hidden rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none hidden md:block">
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
+              <Vote className="h-3.5 w-3.5" />
               {selectedOrganization ? labels.singular : "University"} access
             </div>
             <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
@@ -236,8 +246,8 @@ export default function StudentLoginPage() {
                   Mobile-first flow
                 </div>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Install the student app, sign in once, and move through sessions
-                  and voting with a cleaner mobile experience.
+                  Install the student app, sign in once, and move through
+                  sessions and voting with a cleaner mobile experience.
                 </p>
               </div>
               <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
@@ -456,7 +466,9 @@ export default function StudentLoginPage() {
                         type="button"
                         onClick={() => setShowPassword((current) => !current)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -567,5 +579,13 @@ export default function StudentLoginPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function StudentLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentLoginPageContent />
+    </Suspense>
   );
 }
