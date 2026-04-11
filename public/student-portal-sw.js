@@ -1,6 +1,7 @@
-const CACHE_NAME = "univote-student-portal-v2";
+const CACHE_NAME = "univote-student-portal-v3";
 const CORE_ASSETS = [
   "/student-portal.webmanifest",
+  "/icon.svg",
   "/Darklogo.png",
   "/Whitelogo.png",
   "/students/login",

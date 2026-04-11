@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { useStudentPwaStore } from "@/lib/store/useStudentPwaStore";
 
 type BeforeInstallPromptEvent = Event & {
@@ -33,6 +35,8 @@ function isStandaloneMode() {
 }
 
 export function StudentPwaBootstrap() {
+  const router = useRouter();
+  const pathname = usePathname();
   const setInstallPromptEvent = useStudentPwaStore(
     (state) => state.setInstallPromptEvent,
   );
@@ -40,6 +44,7 @@ export function StudentPwaBootstrap() {
   const setMobileCapable = useStudentPwaStore(
     (state) => state.setMobileCapable,
   );
+  const [isNormalizingStandalone, setIsNormalizingStandalone] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -85,12 +90,48 @@ export function StudentPwaBootstrap() {
 
     void navigator.serviceWorker
       .register("/student-portal-sw.js", {
-        scope: "/",
+        scope: "/students/",
       })
       .catch((error) => {
         console.error("Student portal service worker registration failed:", error);
       });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !pathname) {
+      return;
+    }
+
+    if (!isStandaloneMode()) {
+      return;
+    }
+
+    if (pathname === "/students") {
+      const startNormalization = window.setTimeout(
+        () => setIsNormalizingStandalone(true),
+        0,
+      );
+      router.replace("/students/login");
+      return () => window.clearTimeout(startNormalization);
+    }
+
+    if (isNormalizingStandalone) {
+      const stopNormalization = window.setTimeout(
+        () => setIsNormalizingStandalone(false),
+        0,
+      );
+      return () => window.clearTimeout(stopNormalization);
+    }
+  }, [isNormalizingStandalone, pathname, router]);
+
+  if (isNormalizingStandalone) {
+    return (
+      <ChangingLoadingState
+        fullHeight
+        message="Opening Univote..."
+      />
+    );
+  }
 
   return null;
 }

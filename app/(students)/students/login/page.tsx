@@ -36,7 +36,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
+import {
+  ChangingLoadingState,
+  LoadingButtonContent,
+} from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import {
   usePublicOrganizationQuery,
@@ -51,6 +54,32 @@ import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
+
+function isStandaloneMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
+
+function detectIosInstallEnvironment() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const ua = window.navigator.userAgent.toLowerCase();
+  const touchMac =
+    window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
+  const iosLike =
+    /iphone|ipad|ipod/.test(ua) ||
+    touchMac;
+
+  return iosLike && !isStandaloneMode();
+}
 
 function StudentLoginPageContent() {
   const router = useRouter();
@@ -71,7 +100,7 @@ function StudentLoginPageContent() {
     clearError,
     tenant,
   } = useStudentAuthStore();
-  const { canInstall, isPrompting, promptInstall } =
+  const { canInstall, isInstalled, isPrompting, promptInstall } =
     useStudentPwaInstallState();
 
   const [search, setSearch] = useState("");
@@ -83,6 +112,9 @@ function StudentLoginPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [firstLoginPromptOpen, setFirstLoginPromptOpen] = useState(false);
   const [postLoginRoute, setPostLoginRoute] = useState(ref);
+  const [iosInstallGuideOpen, setIosInstallGuideOpen] = useState(false);
+  const [showStandaloneBoot, setShowStandaloneBoot] = useState(false);
+  const [isIosInstallEligible, setIsIosInstallEligible] = useState(false);
 
   const organizationsQuery = usePublicOrganizationsQuery(search);
   const selectedOrganizationQuery = usePublicOrganizationQuery(
@@ -155,6 +187,25 @@ function StudentLoginPageContent() {
     token,
   ]);
 
+  useEffect(() => {
+    const environmentFrame = window.requestAnimationFrame(() => {
+      setIsIosInstallEligible(detectIosInstallEnvironment());
+    });
+
+    if (!isStandaloneMode()) {
+      return () => window.cancelAnimationFrame(environmentFrame);
+    }
+
+    const showBootTimer = window.setTimeout(() => setShowStandaloneBoot(true), 0);
+    const timer = window.setTimeout(() => setShowStandaloneBoot(false), 420);
+
+    return () => {
+      window.cancelAnimationFrame(environmentFrame);
+      window.clearTimeout(showBootTimer);
+      window.clearTimeout(timer);
+    };
+  }, []);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     clearError();
@@ -191,7 +242,14 @@ function StudentLoginPageContent() {
   };
 
   const handleInstall = async () => {
-    await promptInstall();
+    if (canInstall) {
+      await promptInstall();
+      return;
+    }
+
+    if (isIosInstallEligible) {
+      setIosInstallGuideOpen(true);
+    }
   };
 
   const resetOrganizationSelection = () => {
@@ -209,6 +267,21 @@ function StudentLoginPageContent() {
     }
     router.push(`/students/create-password?${query.toString()}`);
   };
+
+  const shouldShowInstallAction =
+    !isInstalled && (canInstall || isIosInstallEligible);
+
+  if (showStandaloneBoot) {
+    return (
+      <ChangingLoadingState
+        fullHeight
+        messages={[
+          "Opening Univote...",
+          "Preparing sign in...",
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="min-h-svh overflow-x-hidden bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -295,7 +368,7 @@ function StudentLoginPageContent() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 p-3">
-                {canInstall ? (
+                {shouldShowInstallAction ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -306,9 +379,19 @@ function StudentLoginPageContent() {
                     {isPrompting ? (
                       <LoadingButtonContent label="Opening install prompt..." />
                     ) : (
-                      "Install app"
+                      canInstall ? "Install app" : "Add app to Home Screen"
                     )}
                   </Button>
+                ) : null}
+
+                {!canInstall && isIosInstallEligible ? (
+                  <Alert>
+                    <AlertDescription>
+                      On iPhone or iPad, use Safari’s share menu and choose
+                      <span className="font-medium text-foreground"> Add to Home Screen</span>
+                      {" "}to install Univote.
+                    </AlertDescription>
+                  </Alert>
                 ) : null}
 
                 <div className="relative">
@@ -396,7 +479,7 @@ function StudentLoginPageContent() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 p-3">
-                {canInstall ? (
+                {shouldShowInstallAction ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -407,9 +490,19 @@ function StudentLoginPageContent() {
                     {isPrompting ? (
                       <LoadingButtonContent label="Opening install prompt..." />
                     ) : (
-                      "Install app"
+                      canInstall ? "Install app" : "Add app to Home Screen"
                     )}
                   </Button>
+                ) : null}
+
+                {!canInstall && isIosInstallEligible ? (
+                  <Alert>
+                    <AlertDescription>
+                      On iPhone or iPad, open the browser share menu and choose
+                      <span className="font-medium text-foreground"> Add to Home Screen</span>
+                      {" "}to install Univote.
+                    </AlertDescription>
+                  </Alert>
                 ) : null}
 
                 {selectedOrganization ? (
@@ -574,6 +667,33 @@ function StudentLoginPageContent() {
             </Button>
             <Button type="button" onClick={routeToCreatePassword}>
               Change password now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={iosInstallGuideOpen} onOpenChange={setIosInstallGuideOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Install Univote on your iPhone</DialogTitle>
+            <DialogDescription>
+              Safari does not show the native install popup, so add the app manually in two quick steps.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+            <p>
+              1. Tap the <span className="font-medium text-foreground">Share</span> button in Safari.
+            </p>
+            <p>
+              2. Choose <span className="font-medium text-foreground">Add to Home Screen</span> and save <span className="font-medium text-foreground">Univote</span>.
+            </p>
+            <p className="text-xs">
+              The app will open directly into the student sign-in experience after it is saved.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setIosInstallGuideOpen(false)}>
+              Got it
             </Button>
           </DialogFooter>
         </DialogContent>

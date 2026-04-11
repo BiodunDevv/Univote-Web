@@ -4,7 +4,6 @@ import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { StudentPwaBootstrap } from "@/components/students/student-pwa-bootstrap";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE,
@@ -75,7 +74,6 @@ export default function RootLayout({
         >
           <QueryProvider>
             <TooltipProvider>
-              <StudentPwaBootstrap />
               {children}
               <Toaster position="top-center" />
             </TooltipProvider>
