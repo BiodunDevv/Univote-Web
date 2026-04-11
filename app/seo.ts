@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const SITE_URL = "https://univote.online";
 export const SITE_NAME = "Univote";
 export const DEFAULT_OG_IMAGE = "/hero.svg";
-export const DEFAULT_TITLE = "Univote | Secure University Election Platform";
+export const DEFAULT_TITLE = "Univote";
 export const DEFAULT_DESCRIPTION =
   "Run secure, transparent campus elections with biometric identity checks, geofenced voting, live results, and tools built for universities, student unions, and institutional election teams.";
 

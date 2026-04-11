@@ -6,9 +6,22 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/tenant-application", "/application-status"],
+        allow: [
+          "/",
+          "/tenant-application",
+          "/application-status",
+          "/students/login",
+          "/students/forgot-password",
+          "/students/reset-password",
+        ],
         disallow: [
-          "/students/",
+          "/students/home",
+          "/students/sessions",
+          "/students/vote",
+          "/students/results",
+          "/students/profile",
+          "/students/support",
+          "/students/notifications",
           "/dashboard/",
           "/super-admin/",
           "/portal/",
@@ -21,4 +34,3 @@ export default function robots(): MetadataRoute.Robots {
     host: SITE_URL,
   };
 }
-

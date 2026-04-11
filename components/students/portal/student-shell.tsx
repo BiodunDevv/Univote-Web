@@ -13,6 +13,7 @@ import {
   House,
   LogOut,
   Mail,
+  Share,
   ShieldCheck,
   UserRound,
   Vote,
@@ -21,6 +22,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/logo";
@@ -43,6 +52,30 @@ const navigationItems = [
 
 const PULL_REFRESH_MAX = 104;
 const PULL_REFRESH_TRIGGER = 78;
+
+function isStandaloneMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
+
+function detectIosInstallEnvironment() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const ua = window.navigator.userAgent.toLowerCase();
+  const touchMac =
+    window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
+  const iosLike = /iphone|ipad|ipod/.test(ua) || touchMac;
+
+  return iosLike && !isStandaloneMode();
+}
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/students/home") {
@@ -78,7 +111,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { student, tenant, logout } = useStudentAuthStore();
-  const { canInstall, isPrompting, promptInstall } =
+  const { canInstall, isInstalled, isPrompting, promptInstall } =
     useStudentPwaInstallState();
   const { data: unreadNotifications = 0 } =
     useNotificationSummaryQuery("student");
@@ -93,7 +126,20 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [iosInstallGuideOpen, setIosInstallGuideOpen] = useState(false);
+  const [isIosInstallEligible, setIsIosInstallEligible] = useState(false);
   const pullDistanceRef = useRef(0);
+
+  useEffect(() => {
+    const evaluateInstallEnvironment = () => {
+      setIsIosInstallEligible(detectIosInstallEnvironment());
+    };
+
+    evaluateInstallEnvironment();
+    window.addEventListener("resize", evaluateInstallEnvironment);
+
+    return () => window.removeEventListener("resize", evaluateInstallEnvironment);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -184,8 +230,18 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   };
 
   const handleInstall = async () => {
-    await promptInstall();
+    if (canInstall) {
+      await promptInstall();
+      return;
+    }
+
+    if (isIosInstallEligible) {
+      setIosInstallGuideOpen(true);
+    }
   };
+
+  const shouldShowInstallAction =
+    !isInstalled && (canInstall || isIosInstallEligible);
 
   const pullRefreshHint = isRefreshing
     ? "Refreshing student app..."
@@ -421,7 +477,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
-                  {canInstall ? (
+                  {shouldShowInstallAction ? (
                     <Button
                       variant="outline"
                       size="sm"
@@ -429,7 +485,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       onClick={() => void handleInstall()}
                       disabled={isPrompting}
                     >
-                      {isPrompting ? "Installing..." : "Install"}
+                      {isPrompting
+                        ? "Installing..."
+                        : canInstall
+                          ? "Install"
+                          : "Add to Home Screen"}
                     </Button>
                   ) : null}
                   <Button
@@ -533,6 +593,46 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
+      <Dialog
+        open={iosInstallGuideOpen}
+        onOpenChange={setIosInstallGuideOpen}
+      >
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader className="space-y-2 text-left">
+            <DialogTitle>Install Univote on your iPhone</DialogTitle>
+            <DialogDescription>
+              Safari does not show the Android-style install popup, but you can
+              still save Univote as a full-screen app from the browser.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              1. Tap the <span className="font-medium text-foreground">Share</span>
+              {" "}button in Safari.
+            </div>
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              2. Choose{" "}
+              <span className="font-medium text-foreground">
+                Add to Home Screen
+              </span>
+              .
+            </div>
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              3. Open the saved app and continue with your student portal.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="w-full rounded-xl"
+              onClick={() => setIosInstallGuideOpen(false)}
+            >
+              <Share className="mr-2 h-4 w-4" />
+              Understood
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
