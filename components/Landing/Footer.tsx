@@ -1,5 +1,19 @@
+"use client";
+
 import { Logo } from "@/components/logo";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Share } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 
 const links = [
   {
@@ -28,7 +42,61 @@ const links = [
   },
 ];
 
+function isStandaloneMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
+
+function detectIosInstallEnvironment() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const ua = window.navigator.userAgent.toLowerCase();
+  const touchMac =
+    window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
+  const iosLike = /iphone|ipad|ipod/.test(ua) || touchMac;
+
+  return iosLike && !isStandaloneMode();
+}
+
 export default function FooterSection() {
+  const [iosInstallGuideOpen, setIosInstallGuideOpen] = useState(false);
+  const [isIosInstallEligible, setIsIosInstallEligible] = useState(false);
+  const { canInstall, isInstalled, isPrompting, promptInstall } =
+    useStudentPwaInstallState();
+
+  useEffect(() => {
+    const updateInstallEnvironment = () => {
+      setIsIosInstallEligible(detectIosInstallEnvironment());
+    };
+
+    updateInstallEnvironment();
+    window.addEventListener("resize", updateInstallEnvironment);
+
+    return () => window.removeEventListener("resize", updateInstallEnvironment);
+  }, []);
+
+  const handleInstall = async () => {
+    if (canInstall) {
+      await promptInstall();
+      return;
+    }
+
+    if (isIosInstallEligible) {
+      setIosInstallGuideOpen(true);
+    }
+  };
+
+  const shouldShowInstallAction =
+    !isInstalled && (canInstall || isIosInstallEligible);
+
   return (
     <footer className="py-16 md:py-24">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -48,6 +116,27 @@ export default function FooterSection() {
           ))}
         </div>
         <div className="mb-8 flex flex-wrap justify-center gap-2.5">
+          {shouldShowInstallAction ? (
+            <div className="flex flex-col items-center gap-2 text-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full px-4 py-2 text-sm"
+                onClick={() => void handleInstall()}
+                disabled={isPrompting}
+              >
+              {isPrompting
+                ? "Installing..."
+                : canInstall
+                  ? "Install App"
+                  : "Add to Home Screen"}
+            </Button>
+            <p className="max-w-sm text-xs leading-5 text-muted-foreground">
+              Install from this homepage for faster access to Univote on your
+              device.
+            </p>
+          </div>
+        ) : null}
           <Link
             href="/auth/signin"
             className="rounded-full border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -193,6 +282,46 @@ export default function FooterSection() {
           © {new Date().getFullYear()} Univote. All rights reserved
         </span>
       </div>
+      <Dialog
+        open={iosInstallGuideOpen}
+        onOpenChange={setIosInstallGuideOpen}
+      >
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader className="space-y-2 text-left">
+            <DialogTitle>Install Univote on your iPhone</DialogTitle>
+            <DialogDescription>
+              Safari does not show the Android-style install popup, but you can
+              still save Univote as a full-screen app from the browser.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              1. Tap the <span className="font-medium text-foreground">Share</span>
+              {" "}button in Safari.
+            </div>
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              2. Choose{" "}
+              <span className="font-medium text-foreground">
+                Add to Home Screen
+              </span>
+              .
+            </div>
+            <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+              3. Open the saved app and continue into the student sign-in flow.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="w-full rounded-xl"
+              onClick={() => setIosInstallGuideOpen(false)}
+            >
+              <Share className="mr-2 h-4 w-4" />
+              Understood
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </footer>
   );
 }

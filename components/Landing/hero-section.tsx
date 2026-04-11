@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-import { useStudentPwaInstallState } from "@/lib/store/useStudentPwaStore";
 import { HeroIllustration } from "../HeroIllustration";
 
 type HeroSectionProps = {
@@ -32,7 +31,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
   } = useAuthStore();
   const { token: studentToken, hasHydrated: participantHasHydrated } =
     useStudentAuthStore();
-  const { canInstall, isPrompting, promptInstall } = useStudentPwaInstallState();
   const isCheckingSession = !adminHasHydrated || !participantHasHydrated;
   const primaryHref = isCheckingSession
     ? "#"
@@ -69,10 +67,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
       icon: Vote,
     },
   ];
-
-  const handleInstall = async () => {
-    await promptInstall();
-  };
 
   return (
     <section className="relative overflow-hidden pb-12 pt-24 sm:pb-16">
@@ -128,16 +122,6 @@ export function HeroSection({ stats }: HeroSectionProps) {
                   <Button className="h-11 rounded-xl px-5 text-sm" asChild>
                     <Link href={primaryHref}>{primaryLabel}</Link>
                   </Button>
-                  {canInstall ? (
-                    <Button
-                      variant="outline"
-                      className="h-11 rounded-xl px-5 text-sm"
-                      onClick={() => void handleInstall()}
-                      disabled={isPrompting}
-                    >
-                      {isPrompting ? "Installing..." : "Install App"}
-                    </Button>
-                  ) : null}
                 </>
               )}
               {!token && !studentToken ? (

@@ -1,9 +1,10 @@
-const CACHE_NAME = "univote-student-portal-v3";
+const CACHE_NAME = "univote-student-portal-v1";
 const CORE_ASSETS = [
   "/student-portal.webmanifest",
   "/icon.svg",
   "/Darklogo.png",
   "/Whitelogo.png",
+  "/",
   "/students/login",
 ];
 
@@ -31,7 +32,10 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (request.method !== "GET" || !url.pathname.startsWith("/students")) {
+  const handlesRoute =
+    url.pathname === "/" || url.pathname.startsWith("/students");
+
+  if (request.method !== "GET" || !handlesRoute) {
     return;
   }
 
@@ -44,6 +48,7 @@ self.addEventListener("fetch", (event) => {
 
         const cacheable =
           request.mode === "navigate" ||
+          url.pathname === "/" ||
           url.pathname === "/students/login" ||
           CORE_ASSETS.includes(url.pathname);
 
@@ -58,6 +63,11 @@ self.addEventListener("fetch", (event) => {
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
           return cachedResponse;
+        }
+
+        const cachedRoot = await caches.match("/");
+        if (cachedRoot) {
+          return cachedRoot;
         }
 
         const cachedLogin = await caches.match("/students/login");
