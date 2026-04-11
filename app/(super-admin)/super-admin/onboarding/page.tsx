@@ -461,8 +461,8 @@ function ApplicationReviewDialog({
         <FilePenLine className="mr-2 size-4" />
         Quick review
       </Button>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[94vh] overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader className="border-b px-4 py-4 sm:px-6">
           <DialogTitle>Review {tenant.name}</DialogTitle>
           <DialogDescription>
             Save moderation changes directly from the onboarding queue. These
@@ -470,316 +470,334 @@ function ApplicationReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-              <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Reference
-                </p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
-                  {tenant.application_reference || "Not assigned"}
-                </p>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Application status
-                </p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
-                  {tenant.status}
-                </p>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Review note
-                </p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
-                  {tenant.onboarding?.rejection_reason || "No review note"}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4 rounded-2xl border p-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Contact name</Label>
-                  <Input
-                    value={form.contact_name}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        contact_name: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Contact email</Label>
-                  <Input
-                    type="email"
-                    value={form.contact_email}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        contact_email: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Institution type</Label>
-                  <Input value="University" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Student estimate</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.student_count_estimate}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        student_count_estimate: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Admin estimate</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.admin_count_estimate}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        admin_count_estimate: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Application status</Label>
-                  <Select
-                    value={form.status}
-                    onValueChange={(value) =>
-                      setForm((current) => ({ ...current, status: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending_approval">
-                        Pending approval
-                      </SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-                  <div className="space-y-1">
-                    <span className="font-medium">Demo requested</span>
-                    <p className="text-xs text-muted-foreground">
-                      Track whether the applicant asked for a guided
-                      walkthrough.
+        <div className="flex max-h-[calc(94vh-4.5rem)] flex-col">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-lg border p-4">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      Reference
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {tenant.application_reference || "Not assigned"}
                     </p>
                   </div>
-                  <Switch
-                    checked={form.demo_requested}
-                    onCheckedChange={(checked) =>
-                      setForm((current) => ({
-                        ...current,
-                        demo_requested: checked,
-                      }))
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Application notes</Label>
-                <Textarea
-                  rows={5}
-                  value={form.notes}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      notes: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Review note / rejection reason</Label>
-                <Input
-                  value={form.rejection_reason}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      rejection_reason: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl border p-4">
-              <p className="text-sm font-medium text-foreground">
-                Application context
-              </p>
-              <dl className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <div className="flex justify-between gap-3">
-                  <dt>Reference</dt>
-                  <dd className="font-medium text-foreground">
-                    {tenant.application_reference || "Not assigned"}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt>Institution</dt>
-                  <dd className="font-medium text-foreground">University</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt>Submitted</dt>
-                  <dd className="font-medium text-foreground">
-                    {tenant.onboarding?.application_submitted_at
-                      ? new Date(
-                          tenant.onboarding.application_submitted_at,
-                        ).toLocaleDateString()
-                      : "Not set"}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className="rounded-2xl border p-4">
-              <p className="text-sm font-medium text-foreground">
-                Status timeline
-              </p>
-              <div className="mt-4 space-y-3">
-                {statusTimeline.length > 0 ? (
-                  statusTimeline.map((item) => (
-                    <div
-                      key={`${item.status}-${item.at}`}
-                      className="rounded-xl border bg-muted/20 p-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Badge variant="outline">{item.status}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(item.at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm font-medium text-foreground">
-                        {item.label}
-                      </p>
-                      {item.note ? (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {item.note}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                    No status history recorded yet.
+                  <div className="rounded-lg border p-4">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      Application status
+                    </p>
+                    <p className="mt-2 text-sm font-semibold capitalize text-foreground">
+                      {(tenant.status || "draft").replace("_", " ")}
+                    </p>
                   </div>
-                )}
+                  <div className="rounded-lg border p-4 sm:col-span-2 xl:col-span-1">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      Review note
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {tenant.onboarding?.rejection_reason || "No review note"}
+                    </p>
+                  </div>
+                </div>
+
+                <section className="space-y-4 rounded-lg border p-4 sm:p-5">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Editable application details
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Update contact details, estimates, and moderation notes without leaving the queue.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Contact name</Label>
+                      <Input
+                        value={form.contact_name}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            contact_name: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Contact email</Label>
+                      <Input
+                        type="email"
+                        value={form.contact_email}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            contact_email: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Institution type</Label>
+                      <Input value="University" disabled />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Student estimate</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.student_count_estimate}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            student_count_estimate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Admin estimate</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.admin_count_estimate}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            admin_count_estimate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr]">
+                    <div className="space-y-2">
+                      <Label>Application status</Label>
+                      <Select
+                        value={form.status}
+                        onValueChange={(value) =>
+                          setForm((current) => ({ ...current, status: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="pending_approval">
+                            Pending approval
+                          </SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="suspended">Suspended</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <label className="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm">
+                      <div className="space-y-1">
+                        <span className="font-medium">Demo requested</span>
+                        <p className="text-xs text-muted-foreground">
+                          Track whether the applicant asked for a guided walkthrough.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={form.demo_requested}
+                        onCheckedChange={(checked) =>
+                          setForm((current) => ({
+                            ...current,
+                            demo_requested: checked,
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Application notes</Label>
+                    <Textarea
+                      rows={5}
+                      value={form.notes}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          notes: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Review note / rejection reason</Label>
+                    <Input
+                      value={form.rejection_reason}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          rejection_reason: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </section>
+              </div>
+
+              <div className="space-y-4">
+                <section className="rounded-lg border p-4 sm:p-5">
+                  <p className="text-sm font-semibold text-foreground">
+                    Application context
+                  </p>
+                  <dl className="mt-4 space-y-3 text-sm text-muted-foreground">
+                    <div className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
+                      <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                        Reference
+                      </dt>
+                      <dd className="font-medium text-foreground">
+                        {tenant.application_reference || "Not assigned"}
+                      </dd>
+                    </div>
+                    <div className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
+                      <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                        Institution
+                      </dt>
+                      <dd className="font-medium text-foreground">University</dd>
+                    </div>
+                    <div className="space-y-1">
+                      <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                        Submitted
+                      </dt>
+                      <dd className="font-medium text-foreground">
+                        {tenant.onboarding?.application_submitted_at
+                          ? new Date(
+                              tenant.onboarding.application_submitted_at,
+                            ).toLocaleDateString()
+                          : "Not set"}
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section className="rounded-lg border p-4 sm:p-5">
+                  <p className="text-sm font-semibold text-foreground">
+                    Status timeline
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {statusTimeline.length > 0 ? (
+                      statusTimeline.map((item) => (
+                        <div
+                          key={`${item.status}-${item.at}`}
+                          className="rounded-lg border bg-muted/20 p-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Badge variant="outline">{item.status}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(item.at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm font-medium text-foreground">
+                            {item.label}
+                          </p>
+                          {item.note ? (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {item.note}
+                            </p>
+                          ) : null}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                        No status history recorded yet.
+                      </div>
+                    )}
+                  </div>
+                </section>
               </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter showCloseButton>
-          <Button
-            variant="outline"
-            disabled={Boolean(actionState)}
-            onClick={async () => {
-              setActionState("approve");
-              try {
-                await updateMutation.mutateAsync({
-                  status: "active",
-                });
-                toast.success("Tenant approved successfully");
-                setOpen(false);
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to approve tenant",
-                );
-              } finally {
-                setActionState(null);
-              }
-            }}
-          >
-            {actionState === "approve"
-              ? "Approving..."
-              : "Approve application"}
-          </Button>
-          <Button
-            variant="outline"
-            disabled={Boolean(actionState)}
-            onClick={async () => {
-              setActionState("draft");
-              try {
-                await updateMutation.mutateAsync({
-                  status: "draft",
-                  rejection_reason:
-                    form.rejection_reason || "Returned for revision",
-                });
-                toast.success("Application moved back to draft");
-                setOpen(false);
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to update application",
-                );
-              } finally {
-                setActionState(null);
-              }
-            }}
-          >
-            {actionState === "draft" ? "Updating..." : "Return to draft"}
-          </Button>
-          <Button
-            disabled={Boolean(actionState)}
-            onClick={async () => {
-              setActionState("save");
-              try {
-                await saveChanges();
-                toast.success("Application review updated");
-                setOpen(false);
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to save review changes",
-                );
-              } finally {
-                setActionState(null);
-              }
-            }}
-          >
-            {actionState === "save"
-              ? "Saving..."
-              : "Save review changes"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="border-t px-4 py-4 sm:px-6" showCloseButton>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              disabled={Boolean(actionState)}
+              onClick={async () => {
+                setActionState("approve");
+                try {
+                  await updateMutation.mutateAsync({
+                    status: "active",
+                  });
+                  toast.success("Tenant approved successfully");
+                  setOpen(false);
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to approve tenant",
+                  );
+                } finally {
+                  setActionState(null);
+                }
+              }}
+            >
+              {actionState === "approve"
+                ? "Approving..."
+                : "Approve application"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              disabled={Boolean(actionState)}
+              onClick={async () => {
+                setActionState("draft");
+                try {
+                  await updateMutation.mutateAsync({
+                    status: "draft",
+                    rejection_reason:
+                      form.rejection_reason || "Returned for revision",
+                  });
+                  toast.success("Application moved back to draft");
+                  setOpen(false);
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to update application",
+                  );
+                } finally {
+                  setActionState(null);
+                }
+              }}
+            >
+              {actionState === "draft" ? "Updating..." : "Return to draft"}
+            </Button>
+            <Button
+              className="w-full sm:w-auto"
+              disabled={Boolean(actionState)}
+              onClick={async () => {
+                setActionState("save");
+                try {
+                  await saveChanges();
+                  toast.success("Application review updated");
+                  setOpen(false);
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to save review changes",
+                  );
+                } finally {
+                  setActionState(null);
+                }
+              }}
+            >
+              {actionState === "save"
+                ? "Saving..."
+                : "Save review changes"}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

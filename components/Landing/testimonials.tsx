@@ -22,6 +22,24 @@ function toUsername(name: string) {
   return `@${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
 }
 
+function buildFallbackAvatar(name: string) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+      <rect width="96" height="96" rx="48" fill="#e7eefb" />
+      <text x="50%" y="54%" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#193b6b">${initials}</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 const ReviewCard = ({
   img,
   name,
@@ -91,9 +109,7 @@ export function TestimonialsSection({
     name: testimonial.author_name,
     username: toUsername(testimonial.author_name),
     body: testimonial.quote,
-    img:
-      testimonial.avatar_url ||
-      "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&h=400&fit=crop&crop=faces",
+    img: testimonial.avatar_url || buildFallbackAvatar(testimonial.author_name),
   }));
   const { firstRow, secondRow } = splitRows(reviews);
 
