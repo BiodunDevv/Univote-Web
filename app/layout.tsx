@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   DEFAULT_DESCRIPTION,
-  DEFAULT_OG_IMAGE,
   DEFAULT_TITLE,
   SITE_NAME,
   SITE_URL,
@@ -18,6 +17,13 @@ export const metadata: Metadata = {
   title: {
     default: DEFAULT_TITLE,
     template: `%s | ${SITE_NAME}`,
+  },
+  icons: {
+    icon: [
+      { url: "/Whitelogo.png", type: "image/png" },
+    ],
+    shortcut: ["/Whitelogo.png"],
+    apple: [{ url: "/Whitelogo.png", type: "image/png" }],
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: SITE_NAME,
@@ -31,20 +37,6 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical: SITE_URL,
-  },
-  openGraph: {
-    type: "website",
-    url: SITE_URL,
-    title: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    siteName: SITE_NAME,
-    images: [DEFAULT_OG_IMAGE],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,
