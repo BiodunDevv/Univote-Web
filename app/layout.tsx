@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -8,6 +8,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
+  PWA_APPLE_STATUS_BAR_STYLE,
+  PWA_APPLE_ICON,
+  PWA_ICON,
+  PWA_MANIFEST_PATH,
+  PWA_THEME_COLOR,
   SITE_NAME,
   SITE_URL,
 } from "./seo";
@@ -19,14 +24,18 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   icons: {
-    icon: [
-      { url: "/Whitelogo.png", type: "image/png" },
-    ],
-    shortcut: ["/Whitelogo.png"],
-    apple: [{ url: "/Whitelogo.png", type: "image/png" }],
+    icon: [{ url: PWA_ICON, type: "image/svg+xml" }],
+    shortcut: [PWA_ICON],
+    apple: [{ url: PWA_APPLE_ICON, type: "image/png", sizes: "180x180" }],
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: SITE_NAME,
+  manifest: PWA_MANIFEST_PATH,
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: PWA_APPLE_STATUS_BAR_STYLE,
+  },
   keywords: [
     "university voting platform",
     "campus election software",
@@ -49,6 +58,10 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: PWA_THEME_COLOR,
 };
 
 export default function RootLayout({

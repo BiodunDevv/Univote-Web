@@ -126,7 +126,7 @@ export default function ApplicationPage() {
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardDescription>Students</CardDescription>
+            <CardDescription>Students Limit</CardDescription>
             <CardTitle className="text-base">
               {String(onboarding?.student_count_estimate ?? 0)}
             </CardTitle>
@@ -134,7 +134,7 @@ export default function ApplicationPage() {
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardDescription>Admins</CardDescription>
+            <CardDescription>Admins Limit</CardDescription>
             <CardTitle className="text-base">
               {String(onboarding?.admin_count_estimate ?? 0)}
             </CardTitle>

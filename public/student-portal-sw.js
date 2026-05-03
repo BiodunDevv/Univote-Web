@@ -1,11 +1,17 @@
-const CACHE_NAME = "univote-student-portal-v1";
+const CACHE_NAME = "univote-student-portal-v4";
+const MANIFEST_URL = "/manifest.json";
+const ICON_URL = "/pwa-icon.svg";
+const ICON_192_URL = "/pwa-icon-192.png";
+const ICON_512_URL = "/pwa-icon-512.png";
+const APPLE_ICON_URL = "/pwa-icon-180.png";
+const START_URL = "/students/login";
 const CORE_ASSETS = [
-  "/student-portal.webmanifest",
-  "/icon.svg",
-  "/Darklogo.png",
-  "/Whitelogo.png",
-  "/",
-  "/students/login",
+  MANIFEST_URL,
+  ICON_URL,
+  ICON_192_URL,
+  ICON_512_URL,
+  APPLE_ICON_URL,
+  START_URL,
 ];
 
 self.addEventListener("install", (event) => {
@@ -32,8 +38,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  const handlesRoute =
-    url.pathname === "/" || url.pathname.startsWith("/students");
+  const handlesRoute = url.pathname.startsWith("/students");
 
   if (request.method !== "GET" || !handlesRoute) {
     return;
@@ -48,8 +53,7 @@ self.addEventListener("fetch", (event) => {
 
         const cacheable =
           request.mode === "navigate" ||
-          url.pathname === "/" ||
-          url.pathname === "/students/login" ||
+          url.pathname === START_URL ||
           CORE_ASSETS.includes(url.pathname);
 
         if (cacheable) {
@@ -65,12 +69,7 @@ self.addEventListener("fetch", (event) => {
           return cachedResponse;
         }
 
-        const cachedRoot = await caches.match("/");
-        if (cachedRoot) {
-          return cachedRoot;
-        }
-
-        const cachedLogin = await caches.match("/students/login");
+        const cachedLogin = await caches.match(START_URL);
         if (cachedLogin) {
           return cachedLogin;
         }
