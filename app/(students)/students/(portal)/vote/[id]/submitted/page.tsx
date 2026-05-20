@@ -88,82 +88,64 @@ export default function StudentSubmittedBallotPage() {
       />
 
       <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Card className="border shadow-none">
-          <CardContent className="space-y-1 p-3">
-            <p className="text-[11px] text-muted-foreground">Status</p>
-            <p className="text-sm font-semibold text-foreground">Vote recorded</p>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none">
-          <CardContent className="space-y-1 p-3">
-            <p className="text-[11px] text-muted-foreground">Selections</p>
-            <p className="text-sm font-semibold text-foreground">
-              {ballot.choices.length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none">
-          <CardContent className="space-y-1 p-3">
-            <p className="text-[11px] text-muted-foreground">Submitted</p>
-            <p className="text-xs font-medium text-foreground">
-              {ballot.submitted_at
-                ? formatDateTime(ballot.submitted_at)
-                : "Recorded"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none">
-          <CardContent className="space-y-1 p-3">
-            <p className="text-[11px] text-muted-foreground">Window</p>
-            <p className="text-xs font-medium text-foreground">
-              {formatDateTime(ballot.session.start_time)}
-            </p>
-          </CardContent>
-        </Card>
+        {[
+          { label: "Status", value: "Vote recorded" },
+          { label: "Selections", value: String(ballot.choices.length) },
+          { label: "Submitted", value: ballot.submitted_at ? formatDateTime(ballot.submitted_at) : "Recorded" },
+          { label: "Window opened", value: formatDateTime(ballot.session.start_time) },
+        ].map(({ label, value }) => (
+          <Card key={label} className="border shadow-none">
+            <CardContent className="space-y-1 p-3 sm:p-4">
+              <p className="text-[11px] text-muted-foreground">{label}</p>
+              <p className="text-xs font-semibold text-foreground sm:text-sm">{value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </section>
 
       <Card className="border shadow-none">
-        <CardContent className="space-y-4 p-3.5 sm:p-4">
-          <div className="flex items-start gap-3 rounded-xl border bg-muted/20 p-3">
-            <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 text-foreground" />
+        <CardContent className="space-y-4 p-4 sm:p-5">
+          <div className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-3.5">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-foreground" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                Your selections were submitted successfully
+              <p className="text-sm font-semibold text-foreground sm:text-base">
+                Your selections were recorded successfully
               </p>
-              <p className="text-sm leading-5 text-muted-foreground">
-                Review the positions and candidates below. This receipt shows the
-                ballot that was recorded for this session.
+              <p className="text-sm leading-6 text-muted-foreground">
+                This receipt shows every position and candidate that was recorded for this session. Keep it for your records.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-2.5">
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {ballot.choices.map((choice) => (
               <div
                 key={`${choice.position}:${choice.candidate.id}`}
-                className="flex items-start gap-3 rounded-xl border bg-card p-3"
+                className="flex items-start gap-3 rounded-2xl border bg-card p-3.5"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-muted/30">
+                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border bg-muted/30">
                   {choice.candidate.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={choice.candidate.photo_url}
                       alt={choice.candidate.name}
-                      className="h-full w-full rounded-lg object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Vote className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Vote className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     {choice.position}
                   </p>
-                  <p className="mt-1 break-words text-sm font-semibold text-foreground">
+                  <p className="mt-0.5 wrap-break-word text-sm font-semibold text-foreground">
                     {choice.candidate.name}
                   </p>
                   {choice.candidate.bio ? (
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                       {choice.candidate.bio}
                     </p>
                   ) : null}
@@ -176,11 +158,11 @@ export default function StudentSubmittedBallotPage() {
 
       <section className="grid gap-2.5 sm:grid-cols-2">
         <Card className="border shadow-none">
-          <CardContent className="flex items-center gap-3 p-3.5">
-            <Clock3 className="h-4.5 w-4.5 text-muted-foreground" />
+          <CardContent className="flex items-center gap-3 p-3.5 sm:p-4">
+            <Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Submitted at</p>
-              <p className="text-sm font-medium text-foreground">
+              <p className="mt-0.5 text-sm font-medium text-foreground">
                 {ballot.submitted_at
                   ? formatDateTime(ballot.submitted_at)
                   : "Submission recorded"}
@@ -189,11 +171,11 @@ export default function StudentSubmittedBallotPage() {
           </CardContent>
         </Card>
         <Card className="border shadow-none">
-          <CardContent className="flex items-center gap-3 p-3.5">
-            <CalendarDays className="h-4.5 w-4.5 text-muted-foreground" />
+          <CardContent className="flex items-center gap-3 p-3.5 sm:p-4">
+            <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Session closes</p>
-              <p className="text-sm font-medium text-foreground">
+              <p className="mt-0.5 text-sm font-medium text-foreground">
                 {formatDateTime(ballot.session.end_time)}
               </p>
             </div>
