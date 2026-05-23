@@ -48,7 +48,7 @@ export function PortalHero({
   return (
     <section
       className={cn(
-        "animate-slide-up relative overflow-hidden rounded-2xl border bg-linear-to-br from-(--student-hero-from) via-card to-(--student-hero-to) px-5 py-5 shadow-none",
+        "animate-slide-up relative overflow-hidden rounded-2xl border px-5 py-5 shadow-none",
         className,
       )}
     >

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarDays, MapPin, Users, Vote } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, MapPin, Users, Vote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,14 +25,65 @@ export function StudentSessionCard({
   ctaLabel = "View details",
   compact = false,
 }: StudentSessionCardProps) {
-  const resolvedCtaLabel =
-    session.has_voted && session.status === "active"
-      ? "View submitted ballot"
-      : ctaLabel;
-
   const isActive = session.status === "active";
   const isUpcoming = session.status === "upcoming";
+  const hasVoted = session.has_voted;
 
+  const resolvedCtaLabel =
+    hasVoted && isActive ? "View ballot" : ctaLabel;
+
+  // Compact mode: fully-tappable native-app row
+  if (compact) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "press-scale group flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition-colors hover:bg-muted/20",
+          isActive && "border-l-[3px] border-l-[var(--student-vote-accent)]",
+        )}
+      >
+        {/* Status dot */}
+        <span
+          className={cn(
+            "mt-0.5 h-2 w-2 shrink-0 rounded-full",
+            isActive
+              ? "animate-pulse bg-emerald-500"
+              : isUpcoming
+                ? "bg-amber-400"
+                : "bg-muted-foreground/30",
+          )}
+        />
+
+        {/* Title + sub */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {session.title}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {isActive
+              ? hasVoted
+                ? "Vote recorded"
+                : "Live now — tap to vote"
+              : isUpcoming
+                ? "Opening soon"
+                : "Election ended"}
+          </p>
+        </div>
+
+        {/* Right: voted badge or arrow */}
+        {hasVoted ? (
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+        ) : (
+          <ArrowRight className={cn(
+            "h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5",
+            isActive ? "text-foreground" : "text-muted-foreground",
+          )} />
+        )}
+      </Link>
+    );
+  }
+
+  // Full mode: detailed card with all meta
   return (
     <div
       className={cn(
@@ -40,7 +91,7 @@ export function StudentSessionCard({
         isActive && "border-l-4 border-l-[var(--student-vote-accent)]",
       )}
     >
-      <div className={cn("space-y-3 p-4", compact && "sm:p-4")}>
+      <div className="space-y-3 p-4">
         {/* Status row */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge
@@ -49,7 +100,7 @@ export function StudentSessionCard({
           >
             {formatRelativeStatus(session.status)}
           </Badge>
-          {session.has_voted ? (
+          {hasVoted ? (
             <Badge variant="outline" className="border-emerald-300/60 bg-emerald-50/50 text-[11px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
               Vote recorded
             </Badge>
@@ -62,14 +113,10 @@ export function StudentSessionCard({
 
         {/* Title + description */}
         <div className="space-y-1">
-          <h3 className={cn("font-semibold text-foreground", compact ? "text-sm" : "text-base")}>
-            {session.title}
-          </h3>
-          {!compact && (
-            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-              {session.description || "No additional election description provided."}
-            </p>
-          )}
+          <h3 className="text-base font-semibold text-foreground">{session.title}</h3>
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            {session.description || "No additional election description provided."}
+          </p>
         </div>
 
         {/* Meta */}
@@ -78,28 +125,24 @@ export function StudentSessionCard({
             <CalendarDays className="h-3.5 w-3.5 shrink-0" />
             <span>{formatDateRange(session.start_time, session.end_time)}</span>
           </div>
-          {!compact && (
-            <div className="flex items-center gap-2">
-              <Users className="h-3.5 w-3.5 shrink-0" />
-              <span>{session.candidate_count} candidates on this ballot</span>
-            </div>
-          )}
-          {session.eligibility_scope && !compact && (
+          <div className="flex items-center gap-2">
+            <Users className="h-3.5 w-3.5 shrink-0" />
+            <span>{session.candidate_count} candidates on this ballot</span>
+          </div>
+          {session.eligibility_scope && (
             <div className="flex items-center gap-2">
               <Vote className="h-3.5 w-3.5 shrink-0" />
               <span>{session.eligibility_scope.summary}</span>
             </div>
           )}
-          {!compact && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                {session.is_off_campus_allowed
-                  ? "On-campus and off-campus voting enabled"
-                  : "On-campus presence required"}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              {session.is_off_campus_allowed
+                ? "On-campus and off-campus voting enabled"
+                : "On-campus presence required"}
+            </span>
+          </div>
         </div>
 
         {/* CTA footer */}
@@ -107,7 +150,7 @@ export function StudentSessionCard({
           <div className="flex min-w-0 items-center gap-1.5">
             <span className={cn(
               "h-1.5 w-1.5 shrink-0 rounded-full",
-              isActive ? "bg-emerald-500" : isUpcoming ? "bg-amber-400" : "bg-muted-foreground/40",
+              isActive ? "animate-pulse bg-emerald-500" : isUpcoming ? "bg-amber-400" : "bg-muted-foreground/40",
             )} />
             <p className="min-w-0 truncate text-xs text-muted-foreground">
               {isActive
@@ -121,10 +164,7 @@ export function StudentSessionCard({
             asChild
             size="sm"
             variant={isActive ? "default" : "outline"}
-            className={cn(
-              "h-8 shrink-0 rounded-lg px-3 text-xs font-semibold",
-              isActive && "bg-primary text-primary-foreground shadow-none",
-            )}
+            className="h-8 shrink-0 rounded-lg px-3 text-xs font-semibold"
           >
             <Link href={href}>
               {resolvedCtaLabel}

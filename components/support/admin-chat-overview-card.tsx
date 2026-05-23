@@ -1,12 +1,12 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
 import { LifeBuoy, MessageSquareText } from "lucide-react";
 import {
   useSupportOverviewQuery,
   useSupportTicketsQuery,
 } from "@/lib/queries/support";
-import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +19,13 @@ type AdminChatOverviewCardProps = {
 };
 
 export function AdminChatOverviewCard({
-  supportPath: _supportPath,
+  supportPath,
   showTenant = false,
 }: AdminChatOverviewCardProps) {
-  void _supportPath;
-  const { openTicket } = useAdminChatWidgetStore();
+  const router = useRouter();
   const overviewQuery = useSupportOverviewQuery("admin");
   const ticketsQuery = useSupportTicketsQuery("admin", { limit: 12 });
+  const resolvedSupportPath = supportPath || "/dashboard/support";
 
   const activeTickets = (ticketsQuery.data?.tickets || [])
     .filter((ticket) => ticket.status === "open" || ticket.status === "in_progress")
@@ -66,7 +66,7 @@ export function AdminChatOverviewCard({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Review the queue and jump straight into the live support sheet
+              Review the queue and jump straight into the full support workspace
               from the dashboard.
             </p>
           </div>
@@ -105,7 +105,7 @@ export function AdminChatOverviewCard({
         {latestTicket ? (
           <button
             type="button"
-            onClick={() => openTicket(latestTicket.id)}
+            onClick={() => router.push(`${resolvedSupportPath}?ticket=${latestTicket.id}`)}
             className="w-full rounded-xl border border-border/70 bg-muted/20 p-2 text-left transition-colors hover:bg-muted/35"
           >
             <div className="flex items-start justify-between gap-3">
@@ -145,8 +145,17 @@ export function AdminChatOverviewCard({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => openTicket(latestTicket?.id ?? null)}>
-            Open support sheet
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(
+                latestTicket
+                  ? `${resolvedSupportPath}?ticket=${latestTicket.id}`
+                  : resolvedSupportPath,
+              )
+            }
+          >
+            Open support workspace
           </Button>
         </div>
       </CardContent>

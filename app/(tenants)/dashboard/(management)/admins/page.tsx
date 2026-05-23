@@ -15,7 +15,7 @@ import {
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -35,10 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  TenantPageHeader,
-  TenantSectionCard,
-} from "@/components/tenants/shared";
+import { TenantPageHeader } from "@/components/tenants/shared";
 import {
   canAssignTenantOwnerRole,
   hasAnyTenantPermission,
@@ -139,80 +136,57 @@ export default function AdminsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4">
       <TenantPageHeader
-        eyebrow="Tenant access"
+        eyebrow="Team management"
         icon={<UserCog className="h-5 w-5" />}
-        title={isSuperAdmin ? "Platform Admins" : "Tenant Admin Team"}
+        title={isSuperAdmin ? "Platform Admins" : "Admin Team"}
         subtitle={
           isSuperAdmin
             ? "Manage platform-wide admin identities and super-admin access."
             : "Manage the active tenant team, scoped roles, and operational permissions."
         }
         actions={
-          <div className="flex gap-3">
-            <Button variant="outline" asChild>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
               <Link href="/dashboard/admins/roles">
-                {isSuperAdmin ? "Role overview" : "Role assignments"}
+                {isSuperAdmin ? "Role overview" : "Roles"}
               </Link>
             </Button>
-            <Button asChild>
+            <Button size="sm" asChild>
               <Link href="/dashboard/admins/create">
-                <UserPlus className="mr-2 size-4" />
-                {isSuperAdmin ? "Create Admin" : "Invite Tenant Admin"}
+                <UserPlus className="mr-2 h-4 w-4" />
+                {isSuperAdmin ? "Create" : "Invite"}
               </Link>
             </Button>
           </div>
         }
         stats={[
-          {
-            label: "Visible admins",
-            value: totalRows.toLocaleString(),
-          },
-          {
-            label: "Active search",
-            value: search.trim() ? "Filtered" : "All records",
-          },
-          {
-            label: "Scope",
-            value: isSuperAdmin ? "Platform" : "Tenant",
-          },
-          {
-            label: "Role model",
-            value: isSuperAdmin ? "Global" : "Scoped",
-          },
+          { label: "Total admins", value: totalRows.toLocaleString() },
+          { label: "Scope", value: isSuperAdmin ? "Platform" : "Tenant" },
         ]}
       />
 
       {errorMessage ? (
-        <Card className="border-destructive/40 shadow-none">
-          <CardContent className="flex min-h-32 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-            {errorMessage}
-          </CardContent>
+        <Card className="border-destructive/30 shadow-none">
+          <CardContent className="p-4 text-sm text-muted-foreground">{errorMessage}</CardContent>
         </Card>
       ) : null}
 
-      <TenantSectionCard
-        title={isSuperAdmin ? "Directory" : "Memberships"}
-        description={
-          isSuperAdmin
-            ? "Platform admin accounts across the Univote control plane."
-            : "Tenant-scoped admin memberships for the active institution."
-        }
-        action={
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, email, or role"
-            className="w-full md:max-w-sm"
-          />
-        }
-        contentClassName="px-0 pb-0"
-      >
-        <div className="px-6 pb-6">
+      {/* Inline search */}
+      <div className="relative">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search by name, email, or role…"
+          className="h-9 text-sm"
+        />
+      </div>
+
+      <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead>Admin</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
@@ -332,8 +306,7 @@ export default function AdminsPage() {
               ) : null}
             </TableBody>
           </Table>
-        </div>
-      </TenantSectionCard>
+      </div>
 
       <AlertDialog
         open={Boolean(deleteTarget)}

@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Clock3,
   Eye,
-  Info,
   LocateFixed,
   MapPin,
   Monitor,
@@ -36,10 +35,8 @@ import {
 import type { StudentLocationCheckResponse } from "@/types/student-portal";
 import { ApiError } from "@/lib/api/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type VoteStep = "ballot" | "location" | "liveness" | "review";
@@ -370,10 +367,8 @@ export default function StudentVotePage() {
   const [livenessSessionId, setLivenessSessionId] = useState("");
   const [livenessRegion, setLivenessRegion] = useState(awsGuestRegion);
   const [livenessConfidence, setLivenessConfidence] = useState<number | null>(null);
-  const [livenessThreshold, setLivenessThreshold] = useState<number | null>(null);
   const [ownershipVerified, setOwnershipVerified] = useState<boolean | null>(null);
   const [compareConfidence, setCompareConfidence] = useState<number | null>(null);
-  const [compareThreshold, setCompareThreshold] = useState<number | null>(null);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<string | null>(null);
 
@@ -531,10 +526,8 @@ export default function StudentVotePage() {
 
     setLivenessError("");
     setLivenessConfidence(null);
-    setLivenessThreshold(null);
     setOwnershipVerified(null);
     setCompareConfidence(null);
-    setCompareThreshold(null);
     setLivenessStatus("creating_session");
 
     try {
@@ -554,10 +547,8 @@ export default function StudentVotePage() {
 
       if (result.status === "SUCCEEDED" || result.passed) {
         setLivenessConfidence(result.confidence ?? null);
-        setLivenessThreshold(result.threshold ?? null);
         setOwnershipVerified(result.ownership_verified ?? null);
         setCompareConfidence(result.compare_confidence ?? null);
-        setCompareThreshold(result.compare_threshold ?? null);
         const isVerified =
           result.passed === true && result.ownership_verified !== false;
         setLivenessStatus(isVerified ? "passed" : "failed");
@@ -578,7 +569,6 @@ export default function StudentVotePage() {
       if (result.status === "FAILED" || result.status === "EXPIRED") {
         setLivenessStatus("failed");
         setLivenessConfidence(result.confidence ?? null);
-        setLivenessThreshold(result.threshold ?? null);
         setLivenessError(
           result.status === "EXPIRED"
             ? "Your liveness session expired. Start a new live check."
@@ -603,10 +593,8 @@ export default function StudentVotePage() {
     setLivenessSessionId("");
     setLivenessRegion(awsGuestRegion);
     setLivenessConfidence(null);
-    setLivenessThreshold(null);
     setOwnershipVerified(null);
     setCompareConfidence(null);
-    setCompareThreshold(null);
   };
 
   const captureLocation = async () => {
@@ -751,637 +739,572 @@ export default function StudentVotePage() {
     }
   };
 
+  // Step metadata
+  const steps = [
+    { value: "ballot" as VoteStep, label: "Ballot", short: "Ballot" },
+    { value: "location" as VoteStep, label: "Location", short: "Loc." },
+    { value: "liveness" as VoteStep, label: "Liveness", short: "Face" },
+    { value: "review" as VoteStep, label: "Review", short: "Review" },
+  ];
+
+  const footerHint =
+    currentStep === "ballot"
+      ? allCategoriesSelected
+        ? `All ${categories.length} position${categories.length !== 1 ? "s" : ""} selected`
+        : `${Object.keys(selectedByCategory).length} of ${categories.length} selected`
+      : currentStep === "location"
+        ? canContinueFromLocation
+          ? session.is_off_campus_allowed ? "Location recorded" : "Within voting area"
+          : locationCheckStatus === "denied" ? "Outside voting area"
+            : locationCheckStatus === "checking" ? "Verifying location…"
+              : "Capture your location"
+        : currentStep === "liveness"
+          ? canContinueFromLiveness ? "Verification passed"
+            : biometricLocked ? `Locked · ${formatCountdown(lockoutSeconds)}`
+              : "Complete face check"
+          : "Review and submit";
+
   return (
-    <PortalPage className="flex min-h-full flex-col gap-3 pb-28 lg:pb-32">
-      {/* Compact app-style header — title + step strip */}
-      <div
-        data-tour="student-vote-hero"
-        className="flex flex-col gap-2.5 rounded-2xl border bg-card px-4 py-3.5"
-      >
-        <div className="flex items-start justify-between gap-3">
+    <PortalPage className="flex min-h-full flex-col gap-3 pb-32">
+
+      {/* ── Step header card ── */}
+      <div data-tour="student-vote-hero" className="overflow-hidden rounded-2xl border">
+        {/* Top: election label */}
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Active ballot
-            </p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
-              {session.title}
-            </p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Active ballot</p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{session.title}</p>
           </div>
-          <Badge variant="outline" className="shrink-0 text-[10px]">
-            {session.is_off_campus_allowed ? "Flexible location" : "Geofenced"}
-          </Badge>
+          <span className={cn(
+            "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium",
+            session.is_off_campus_allowed
+              ? "border-emerald-300/60 bg-emerald-50/60 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+              : "border-amber-300/50 bg-amber-50/50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/20 dark:text-amber-400",
+          )}>
+            {session.is_off_campus_allowed ? "Flexible" : "Geofenced"}
+          </span>
         </div>
 
-        {/* Step pills */}
-        <div className="flex items-center gap-1.5">
-          {([
-            ["ballot", "Ballot"],
-            ["location", "Location"],
-            ["liveness", "Liveness"],
-            ["review", "Review"],
-          ] as const).map(([value, label], index) => {
-            const isCompleted =
-              (value === "ballot" && allCategoriesSelected && currentStep !== "ballot") ||
-              (value === "location" && canContinueFromLocation && currentStep !== "location" && currentStepIndex > 1) ||
-              (value === "liveness" && canContinueFromLiveness && currentStep === "review");
-            const isCurrent = currentStep === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => goToStep(value as VoteStep)}
-                className="disabled:pointer-events-none"
-                disabled={
-                  (value === "location" && !allCategoriesSelected) ||
-                  (value === "liveness" && !canContinueFromLocation) ||
-                  (value === "review" && !canContinueFromLiveness)
-                }
-              >
-                <span
-                  className={cn(
-                    "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors",
-                    isCurrent
-                      ? "border-foreground bg-foreground text-background"
-                      : isCompleted
-                        ? "border-emerald-300/60 bg-emerald-50/60 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
-                        : "border-border bg-transparent text-muted-foreground",
-                  )}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-2.5 w-2.5" />
-                  ) : (
-                    <span className="tabular-nums">{index + 1}</span>
-                  )}
-                  <span className="hidden sm:inline">{label}</span>
-                  <span className="sm:hidden">{isCurrent ? label : ""}</span>
-                </span>
-              </button>
-            );
-          })}
-          <div className="ml-auto min-w-0 flex-1">
-            <Progress value={progress} className="h-1" />
+        {/* Step stepper */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-0">
+            {steps.map(({ value, label }, index) => {
+              const isCompleted =
+                (value === "ballot" && allCategoriesSelected && currentStepIndex > 0) ||
+                (value === "location" && canContinueFromLocation && currentStepIndex > 1) ||
+                (value === "liveness" && canContinueFromLiveness && currentStep === "review");
+              const isCurrent = currentStep === value;
+              const isDisabled =
+                (value === "location" && !allCategoriesSelected) ||
+                (value === "liveness" && !canContinueFromLocation) ||
+                (value === "review" && !canContinueFromLiveness);
+
+              return (
+                <div key={value} className="flex flex-1 items-center">
+                  <button
+                    type="button"
+                    onClick={() => goToStep(value)}
+                    disabled={isDisabled}
+                    className="flex flex-col items-center gap-1 disabled:pointer-events-none"
+                  >
+                    <div className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors",
+                      isCurrent
+                        ? "border-foreground bg-foreground text-background"
+                        : isCompleted
+                          ? "border-emerald-500 bg-emerald-500 text-white"
+                          : "border-border bg-transparent text-muted-foreground",
+                    )}>
+                      {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}
+                    </div>
+                    <span className={cn(
+                      "hidden text-[10px] font-medium sm:block",
+                      isCurrent ? "text-foreground" : "text-muted-foreground",
+                    )}>
+                      {label}
+                    </span>
+                  </button>
+                  {index < steps.length - 1 ? (
+                    <div className={cn(
+                      "mx-1 h-[2px] flex-1 rounded-full transition-colors",
+                      isCompleted ? "bg-emerald-500" : "bg-border",
+                    )} />
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+          {/* Progress bar */}
+          <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </div>
 
+      {/* ── STEP 1: Ballot ── */}
       {currentStep === "ballot" ? (
-        <div className="grid gap-3 lg:gap-4" data-tour="student-vote-ballot">
+        <div className="flex flex-col gap-3" data-tour="student-vote-ballot">
           {categories.map(([position, candidates]) => (
-            <Card key={position} className="border shadow-none">
-              <CardHeader className="pb-2 pt-4 sm:pt-5">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-sm">{position}</CardTitle>
-                  <Badge variant={selectedByCategory[position] ? "secondary" : "outline"} className="shrink-0 text-[11px]">
-                    {selectedByCategory[position] ? "Selected" : `${candidates.length} candidate${candidates.length !== 1 ? "s" : ""}`}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-4 sm:pb-5">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {candidates.map((candidate) => {
-                    const selected = selectedByCategory[position] === candidate.id;
+            <div key={position} className="overflow-hidden rounded-2xl border">
+              {/* Position header */}
+              <div className="flex items-center justify-between border-b px-4 py-2.5">
+                <p className="text-sm font-semibold text-foreground">{position}</p>
+                {selectedByCategory[position] ? (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Selected
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">
+                    {candidates.length} candidate{candidates.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
 
-                    return (
-                      <button
-                        key={candidate.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedByCategory((current) => ({
-                            ...current,
-                            [position]: candidate.id,
-                          }))
-                        }
-                        className={cn(
-                          "rounded-2xl border p-3 text-left transition-all hover:shadow-sm active:scale-[0.98] sm:rounded-3xl",
-                          selected
-                            ? "border-foreground bg-foreground text-background shadow-sm"
-                            : "border-border bg-muted/20 text-foreground hover:border-foreground/40 hover:bg-muted/40",
+              {/* Candidate rows */}
+              <div className="divide-y">
+                {candidates.map((candidate) => {
+                  const selected = selectedByCategory[position] === candidate.id;
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedByCategory((cur) => ({ ...cur, [position]: candidate.id }))
+                      }
+                      className={cn(
+                        "press-scale flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors",
+                        selected ? "bg-foreground" : "hover:bg-muted/30",
+                      )}
+                    >
+                      {/* Avatar */}
+                      <div className={cn(
+                        "h-11 w-11 shrink-0 overflow-hidden rounded-full border",
+                        selected ? "border-background/20" : "border-border",
+                      )}>
+                        {candidate.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={candidate.photo_url} alt={candidate.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className={cn(
+                            "flex h-full w-full items-center justify-center text-sm font-bold",
+                            selected ? "text-background/50" : "text-muted-foreground/50",
+                          )}>
+                            {candidate.name.charAt(0)}
+                          </div>
                         )}
-                      >
-                        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-                          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border bg-background/70 sm:h-12 sm:w-12">
-                            {candidate.photo_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={candidate.photo_url}
-                                alt={candidate.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className={cn("flex h-full w-full items-center justify-center text-lg font-bold", selected ? "text-foreground/30" : "text-muted-foreground/40")}>
-                                {candidate.name.charAt(0)}
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-1 sm:items-center">
-                              <p className="text-sm font-semibold leading-snug">{candidate.name}</p>
-                              {selected ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 sm:mt-0" /> : null}
-                            </div>
-                            <p className="mt-1 line-clamp-2 text-[11px] leading-4 opacity-75 sm:text-xs sm:leading-5">
-                              {candidate.bio || "No biography provided."}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      </div>
+
+                      {/* Text */}
+                      <div className="min-w-0 flex-1">
+                        <p className={cn("text-sm font-semibold leading-snug", selected ? "text-background" : "text-foreground")}>
+                          {candidate.name}
+                        </p>
+                        <p className={cn("mt-0.5 truncate text-xs", selected ? "text-background/60" : "text-muted-foreground")}>
+                          {candidate.bio || "No biography provided."}
+                        </p>
+                      </div>
+
+                      {/* Radio indicator */}
+                      <div className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                        selected ? "border-background/60 bg-background/20" : "border-border",
+                      )}>
+                        {selected ? <div className="h-2 w-2 rounded-full bg-background" /> : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </div>
       ) : null}
 
+      {/* ── STEP 2: Location ── */}
       {currentStep === "location" ? (
-        <div className="grid gap-3 lg:grid-cols-[1fr_380px] lg:gap-4">
-          <Card className="border shadow-none">
-            <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-sm font-semibold">Confirm your voting location</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pb-4 sm:pb-5">
-              <div className="rounded-2xl border bg-muted/20 p-4 sm:rounded-3xl">
-                <div className="flex items-start gap-3">
-                  <LocateFixed className="mt-0.5 h-5 w-5 shrink-0 text-foreground" />
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-foreground sm:text-base">
-                      Capture your live location
-                    </p>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      {session.is_off_campus_allowed
-                        ? "This election allows flexible voting locations. Your coordinates are still recorded in the secure audit trail."
-                        : "Your device must be within the approved voting radius for this election. Step outside the boundary and your vote will not be accepted."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-2.5 sm:grid-cols-3">
+        <div className="flex flex-col gap-3">
+          {/* Context card */}
+          <div className="overflow-hidden rounded-2xl border">
+            <div className="flex items-center gap-3 border-b px-4 py-2.5">
+              <LocateFixed className="h-4 w-4 shrink-0 text-foreground" />
+              <p className="text-sm font-semibold text-foreground">Voting location</p>
+            </div>
+            <div className="px-4 py-4 space-y-3">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {session.is_off_campus_allowed
+                  ? "This election allows flexible voting locations. Your coordinates are still recorded in the secure audit trail."
+                  : "Your device must be within the approved voting area. Step outside the boundary and your vote will not be accepted."}
+              </p>
+              <div className="grid grid-cols-3 divide-x overflow-hidden rounded-xl border">
                 {[
                   { label: "Accuracy", value: "High-precision GPS" },
-                  { label: "Audit trail", value: "Yes — all votes" },
-                  { label: "Privacy", value: "Encrypted in transit" },
+                  { label: "Audit", value: "All votes logged" },
+                  { label: "Privacy", value: "Encrypted" },
                 ].map(({ label, value }) => (
-                  <div key={label} className="rounded-xl border bg-background/70 px-3 py-2.5">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-                    <p className="mt-1 text-xs font-medium text-foreground">{value}</p>
+                  <div key={label} className="px-3 py-2.5 text-center">
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-foreground">{value}</p>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-none">
-            <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-sm font-semibold">Location status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pb-4 sm:pb-5">
-              <div className="rounded-2xl border bg-muted/15 p-3 sm:rounded-3xl sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      locationCheckStatus === "allowed" && "bg-green-500",
-                      locationCheckStatus === "denied" && "bg-destructive",
-                      locationCheckStatus === "checking" && "bg-amber-400",
-                      (locationCheckStatus === "idle" ||
-                        locationCheckStatus === "error") &&
-                        "bg-muted-foreground",
-                    )}
-                  />
-                  <p className="text-sm font-semibold text-foreground">
-                    {locationCheckStatus === "allowed"
-                      ? session.is_off_campus_allowed
-                        ? "Location recorded"
-                        : "Within voting area"
-                      : locationCheckStatus === "denied"
-                        ? "Outside voting area"
-                        : locationCheckStatus === "checking"
-                          ? "Checking voting area"
-                          : locationCheckStatus === "error"
-                            ? "Location check needed"
-                            : "Awaiting location"}
-                  </p>
-                </div>
-                {location ? (
-                  <div className="mt-3 space-y-1.5">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground">
-                          {location.label || "Current location"}
-                        </p>
-                        {location.detail ? (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {location.detail}
-                          </p>
-                        ) : null}
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                          {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-                        </p>
-                      </div>
-                    </div>
-                    {locationCheckStatus === "checking" ? (
-                      <p className="text-xs text-muted-foreground">
-                        Confirming your coordinates with the voting area...
-                      </p>
-                    ) : null}
-                    {locationCheckStatus === "allowed" ? (
-                      <div className="rounded-lg border bg-background px-3 py-2">
-                        <p className="text-xs font-medium text-foreground">
-                          {locationCheck?.message ||
-                            "Location approved for this election."}
-                        </p>
-                        {!session.is_off_campus_allowed ? (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Distance: {formatMeters(locationCheck?.distance_meters)} of{" "}
-                            {formatMeters(locationCheck?.radius_meters)} allowed.
-                          </p>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {locationCheckStatus === "denied" ||
-                    locationCheckStatus === "error" ? (
-                      <Alert variant="destructive">
-                        <ShieldAlert className="h-4 w-4" />
-                        <AlertTitle>
-                          {locationCheckStatus === "denied"
-                            ? "Move closer to the voting area"
-                            : "Location could not be verified"}
-                        </AlertTitle>
-                        <AlertDescription>
-                          {locationCheckMessage ||
-                            "Capture your location again to continue."}
-                          {locationCheck?.distance_meters &&
-                          locationCheck?.radius_meters ? (
-                            <span className="mt-2 block">
-                              Distance:{" "}
-                              {formatMeters(locationCheck.distance_meters)}.
-                              Allowed radius:{" "}
-                              {formatMeters(locationCheck.radius_meters)}.
-                            </span>
-                          ) : null}
-                        </AlertDescription>
-                      </Alert>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Click the button below to capture your current position.
-                  </p>
-                )}
-              </div>
-              <Button type="button" variant={location ? "outline" : "default"} className="w-full" onClick={captureLocation} disabled={isLocating}>
-                <LocateFixed className="mr-2 h-4 w-4" />
-                {isLocating || locationCheckStatus === "checking"
-                  ? "Checking location..."
-                  : location
-                    ? "Re-capture location"
-                    : "Capture current location"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {currentStep === "liveness" ? (
-        <div className="grid gap-3 lg:gap-4">
-          {biometricLocked ? (
-            <Alert variant="destructive">
-              <Clock3 className="h-4 w-4" />
-              <AlertTitle>Verification temporarily locked</AlertTitle>
-              <AlertDescription>
-                Too many failed attempts. Try again in {formatCountdown(lockoutSeconds)}
-                {lockedUntil ? `, at ${new Date(lockedUntil).toLocaleTimeString()}.` : "."}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
-            <Monitor className="h-4 w-4" />
-            <AlertTitle className="text-sm font-semibold">Camera access required for live verification</AlertTitle>
-            <AlertDescription className="mt-1 text-xs leading-5">
-              Univote will request access to your webcam or front camera for the AWS Face Liveness check. Make sure your camera is connected and not blocked by another application. For best results, sit in good lighting and face the camera directly.
-            </AlertDescription>
-          </Alert>
-
-          <div className="grid gap-3 lg:grid-cols-[1fr_340px] lg:gap-4">
-            <Card className="border shadow-none">
-              <CardHeader className="pb-3 pt-4 sm:pt-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <Badge variant="outline">AWS Face Liveness</Badge>
-                    <CardTitle className="text-sm font-semibold">Live presence verification</CardTitle>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 rounded-xl"
-                    disabled={createLivenessSession.isPending || biometricLocked}
-                    onClick={() => void startLivenessCheck()}
-                  >
-                    <ScanFace className="mr-2 h-4 w-4" />
-                    {createLivenessSession.isPending
-                      ? "Preparing..."
-                      : livenessStatus === "passed"
-                        ? "Run again"
-                        : "Start live check"}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 pb-4 sm:pb-5">
-                <p className="text-sm leading-6 text-muted-foreground">
-                  The reference image captured during this live session is used to verify you against your enrolled student biometric profile. No pre-uploaded selfie is needed — the live check captures everything automatically.
-                </p>
-
-                {livenessStatus === "ready" && livenessSessionId ? (
-                  <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
-                    <div className="border-b bg-muted/20 px-4 py-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                            Secure camera session
-                          </p>
-                          <p className="mt-1 text-sm font-medium text-foreground">
-                            Keep your face centered and follow the on-screen prompts.
-                          </p>
-                        </div>
-                        <Badge variant="secondary" className="rounded-full">
-                          <Info className="mr-1.5 h-3 w-3" />
-                          Camera active
-                        </Badge>
-                      </div>
-                    </div>
-                    <FaceLivenessDetector
-                      sessionId={livenessSessionId}
-                      region={livenessRegion}
-                      displayText={livenessDisplayText}
-                      onUserCancel={() => {
-                        setLivenessStatus("failed");
-                        setLivenessError("Live verification was cancelled. Start again when you are ready.");
-                      }}
-                      onAnalysisComplete={async () => {
-                        setLivenessStatus("processing");
-                        setLivenessError(
-                          "Live presence captured. We are now confirming that the person in the camera is the owner of this student account.",
-                        );
-                        await pollLivenessResult(livenessSessionId)
-                          .then((result) => {
-                            if (result.passed && result.ownership_verified !== false) {
-                              toast.success(
-                                "Live verification passed and account ownership was confirmed.",
-                              );
-                            } else {
-                              toast.error(
-                                result.ownership_verified === false
-                                  ? "The person in the live check is not the owner of this account."
-                                  : "Live verification did not pass. Start a new check.",
-                              );
-                            }
-                          })
-                          .catch((pollError: unknown) => {
-                            setLivenessStatus("failed");
-                            setLivenessError(getVoteErrorMessage(pollError));
-                            toast.error(getVoteErrorMessage(pollError));
-                          });
-                      }}
-                      onError={(livenessUiError: unknown) => {
-                        setLivenessStatus("failed");
-                        setLivenessError(getVoteErrorMessage(livenessUiError));
-                      }}
-                    />
-                    <div className="border-t bg-muted/15 px-3 py-3">
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        {[
-                          { label: "Lighting", tip: "Face a bright, even light source. Avoid harsh backlight." },
-                          { label: "Framing", tip: "Center your face in the oval. Only one person in frame." },
-                          { label: "Stability", tip: "Stay still until the capture indicator completes." },
-                        ].map(({ label, tip }) => (
-                          <div key={label} className="rounded-xl border bg-background/90 px-3 py-2.5">
-                            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-                            <p className="mt-1 text-xs leading-4 text-foreground">{tip}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {livenessStatus !== "ready" && livenessStatus !== "idle" && livenessStatus !== "creating_session" ? (
-                  <div className={cn(
-                    "rounded-2xl border p-4",
-                    livenessStatus === "passed" ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30" : "",
-                    livenessStatus === "processing" ? "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20" : "",
-                  )}>
-                    <div className="flex items-start gap-3">
-                      {livenessStatus === "passed" ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400" /> : <ScanFace className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />}
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {livenessStatus === "passed" ? "Verification complete" : livenessStatus === "processing" ? "Processing live capture..." : livenessStatus === "failed" ? "Verification failed" : livenessStatus === "locked" ? "Temporarily locked" : "Verification status"}
-                        </p>
-                        {livenessError ? (
-                          <p className="mt-1 text-sm leading-5 text-muted-foreground">{livenessError}</p>
-                        ) : livenessStatus === "passed" ? (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Your live presence and account ownership have been confirmed. Proceed to the final review.
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <Card className="border shadow-none">
-              <CardHeader className="pb-3 pt-4 sm:pt-5">
-                <CardTitle className="text-sm font-semibold">Verification details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pb-4 sm:pb-5">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">State</p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {livenessStatus === "idle" ? "Ready to begin"
-                      : livenessStatus === "creating_session" ? "Creating secure session"
-                      : livenessStatus === "ready" ? "Camera session active"
-                      : livenessStatus === "processing" ? "Analyzing live capture"
-                      : livenessStatus === "verifying_identity" ? "Confirming account ownership"
-                      : livenessStatus === "passed" ? "Verified"
-                      : livenessStatus === "locked" ? "Locked"
-                      : livenessStatus === "unsupported" ? "Not configured"
-                      : "Failed"}
-                  </p>
-                </div>
-                <div className="divide-y rounded-xl border bg-muted/10 overflow-hidden">
-                  {[
-                    { label: "Session ID", value: livenessSessionId ? livenessSessionId.slice(0, 16) + "…" : "Not started", mono: true },
-                    { label: "Region", value: livenessRegion, mono: true },
-                    { label: "Liveness score", value: typeof livenessConfidence === "number" ? `${livenessConfidence.toFixed(1)}%` : "—" },
-                    { label: "Score threshold", value: typeof livenessThreshold === "number" ? `${livenessThreshold.toFixed(1)}%` : "—" },
-                    { label: "Account owner", value: ownershipVerified === null ? "Pending" : ownershipVerified ? "Confirmed" : "Not confirmed" },
-                    { label: "Face match", value: typeof compareConfidence === "number" ? `${compareConfidence.toFixed(1)}%` : "—" },
-                    { label: "Match threshold", value: typeof compareThreshold === "number" ? `${compareThreshold.toFixed(1)}%` : "—" },
-                  ].map(({ label, value, mono }) => (
-                    <div key={label} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                      <span className="text-xs text-muted-foreground">{label}</span>
-                      <span className={cn("text-right text-xs font-medium text-foreground", mono && "font-mono")}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : null}
-
-      {currentStep === "review" ? (
-        <div className="grid gap-3 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-4">
-          <div className="grid gap-3">
-            <Card className="border shadow-none">
-              <CardHeader className="pb-3 pt-4 sm:pt-5">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-foreground" />
-                  <CardTitle className="text-sm font-semibold">Your ballot selections</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2 pb-4 sm:pb-5">
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Review every position and candidate carefully. Once submitted, your ballot cannot be changed.
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {reviewSelections.map(({ position, candidate }) => (
-                    <div
-                      key={position}
-                      className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-3"
-                    >
-                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border bg-background/70">
-                        {candidate?.photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={candidate.photo_url}
-                            alt={candidate.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground/50">
-                            {candidate?.name?.charAt(0) ?? "?"}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                          {position}
-                        </p>
-                        <p className="mt-0.5 break-words text-sm font-semibold text-foreground">
-                          {candidate?.name || "Not selected"}
-                        </p>
-                        {candidate?.bio ? (
-                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
-                            {candidate.bio}
-                          </p>
-                        ) : null}
-                      </div>
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <Card className="border shadow-none">
-                <CardContent className="p-3.5 sm:p-4">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Location</p>
-                      <p className="mt-1 text-sm font-semibold text-foreground">
-                        {location?.label || "Current location"}
-                      </p>
-                      {location?.detail ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{location.detail}</p>
-                      ) : null}
-                      {location ? (
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                          {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xs text-muted-foreground">Not captured</p>
-                      )}
-                      {locationCheckStatus === "allowed" ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {session.is_off_campus_allowed
-                            ? "Recorded for audit"
-                            : `Approved within ${formatMeters(locationCheck?.radius_meters)} radius`}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border shadow-none">
-                <CardContent className="p-3.5 sm:p-4">
-                  <div className="flex items-start gap-3">
-                    <ScanFace className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Live verification</p>
-                      <p className="mt-1 text-sm font-semibold text-foreground">
-                        {ownershipVerified ? "Verified" : "Unverified"}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {typeof livenessConfidence === "number"
-                          ? `Score ${livenessConfidence.toFixed(1)}% (threshold ${livenessThreshold?.toFixed(1) ?? "—"}%)`
-                          : "Awaiting score"}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {ownershipVerified === true
-                          ? `Face match ${compareConfidence?.toFixed(1) ?? "—"}% (threshold ${compareThreshold?.toFixed(1) ?? "—"}%)`
-                          : ownershipVerified === false
-                            ? "Ownership not confirmed"
-                            : "Pending ownership check"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
 
-          <Card className="border shadow-none lg:sticky lg:top-4">
-            <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-sm font-semibold">Submit your vote</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pb-4 sm:pb-5">
-              {biometricLocked ? (
+          {/* Status + capture card */}
+          <div className="overflow-hidden rounded-2xl border">
+            <div className="flex items-center justify-between border-b px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "h-2 w-2 shrink-0 rounded-full",
+                  locationCheckStatus === "allowed" ? "bg-emerald-500" :
+                  locationCheckStatus === "denied" ? "bg-destructive" :
+                  locationCheckStatus === "checking" ? "animate-pulse bg-amber-400" :
+                  "bg-muted-foreground/40",
+                )} />
+                <p className="text-sm font-semibold text-foreground">
+                  {locationCheckStatus === "allowed"
+                    ? session.is_off_campus_allowed ? "Location recorded" : "Within voting area"
+                    : locationCheckStatus === "denied" ? "Outside voting area"
+                    : locationCheckStatus === "checking" ? "Verifying…"
+                    : locationCheckStatus === "error" ? "Check failed"
+                    : "Awaiting location"}
+                </p>
+              </div>
+              {locationCheckStatus === "allowed" ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              ) : null}
+            </div>
+
+            <div className="space-y-3 px-4 py-4">
+              {location ? (
+                <div className="flex items-start gap-3 rounded-xl border px-3 py-3">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">{location.label || "Current location"}</p>
+                    {location.detail ? <p className="mt-0.5 text-xs text-muted-foreground">{location.detail}</p> : null}
+                    <p className="mt-1 font-mono text-[11px] text-muted-foreground">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</p>
+                    {locationCheckStatus === "allowed" && !session.is_off_campus_allowed ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatMeters(locationCheck?.distance_meters)} of {formatMeters(locationCheck?.radius_meters)} radius
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {(locationCheckStatus === "denied" || locationCheckStatus === "error") ? (
                 <Alert variant="destructive">
-                  <Clock3 className="h-4 w-4" />
-                  <AlertTitle>Submission locked</AlertTitle>
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle>{locationCheckStatus === "denied" ? "Outside voting area" : "Location check failed"}</AlertTitle>
                   <AlertDescription>
-                    Locked for {formatCountdown(lockoutSeconds)} due to repeated failed biometric attempts.
+                    {locationCheckMessage || "Capture your location again to continue."}
+                    {locationCheck?.distance_meters && locationCheck?.radius_meters ? (
+                      <span className="mt-1 block">
+                        Distance: {formatMeters(locationCheck.distance_meters)} · Allowed: {formatMeters(locationCheck.radius_meters)}
+                      </span>
+                    ) : null}
                   </AlertDescription>
                 </Alert>
               ) : null}
 
-              <div className="rounded-2xl border bg-muted/20 p-4">
-                <div className="space-y-2.5">
+              <Button
+                type="button"
+                variant={locationCheckStatus === "allowed" ? "outline" : "default"}
+                className="w-full rounded-xl"
+                onClick={captureLocation}
+                disabled={isLocating || locationCheckStatus === "checking"}
+              >
+                <LocateFixed className="mr-2 h-4 w-4" />
+                {isLocating || locationCheckStatus === "checking"
+                  ? "Verifying location…"
+                  : locationCheckStatus === "allowed"
+                    ? "Re-capture location"
+                    : "Capture current location"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── STEP 3: Liveness ── */}
+      {currentStep === "liveness" ? (
+        <div className="flex flex-col gap-3">
+          {biometricLocked ? (
+            <Alert variant="destructive">
+              <Clock3 className="h-4 w-4" />
+              <AlertTitle>Verification locked · {formatCountdown(lockoutSeconds)}</AlertTitle>
+              <AlertDescription>
+                Too many failed attempts. Try again{lockedUntil ? ` at ${new Date(lockedUntil).toLocaleTimeString()}` : " when the timer reaches 0"}.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {/* Main liveness card */}
+          <div className="overflow-hidden rounded-2xl border">
+
+            {/* Header — title + action, always visible */}
+            <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">Live presence check</p>
+                <p className="text-[11px] text-muted-foreground">AWS Face Liveness · {
+                  livenessStatus === "idle" ? "Ready to start"
+                  : livenessStatus === "creating_session" ? "Creating session…"
+                  : livenessStatus === "ready" ? "Camera active"
+                  : livenessStatus === "processing" ? "Processing…"
+                  : livenessStatus === "passed" ? "Verified ✓"
+                  : livenessStatus === "locked" ? "Locked"
+                  : livenessStatus === "failed" ? "Failed"
+                  : "Not configured"
+                }</p>
+              </div>
+              <Button
+                type="button"
+                variant={livenessStatus === "passed" ? "outline" : "default"}
+                size="sm"
+                className="shrink-0 rounded-xl"
+                disabled={createLivenessSession.isPending || biometricLocked || livenessStatus === "ready"}
+                onClick={() => void startLivenessCheck()}
+              >
+                <ScanFace className="mr-1.5 h-3.5 w-3.5" />
+                {createLivenessSession.isPending
+                  ? "Preparing…"
+                  : livenessStatus === "passed"
+                    ? "Run again"
+                    : "Start check"}
+              </Button>
+            </div>
+
+            {/* Idle / creating — instruction text + camera notice inline */}
+            {livenessStatus === "idle" || livenessStatus === "creating_session" ? (
+              <div className="space-y-3 px-4 py-4">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  A live camera session captures your face in real time and compares it against your enrolled student biometric. No pre-uploaded photo needed.
+                </p>
+                <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 px-3 py-2.5">
+                  <Monitor className="h-4 w-4 shrink-0 text-primary" />
+                  <p className="text-xs text-muted-foreground">
+                    Allow camera access when prompted. Good lighting + stay still = best results.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Active camera session */}
+            {livenessStatus === "ready" && livenessSessionId ? (
+              <>
+                {/* Detector — constrained width + height so it fits any screen */}
+                <div className="liveness-constrained mx-auto w-full max-w-md overflow-hidden">
+                  <FaceLivenessDetector
+                    sessionId={livenessSessionId}
+                    region={livenessRegion}
+                    displayText={livenessDisplayText}
+                    onUserCancel={() => {
+                      setLivenessStatus("failed");
+                      setLivenessError("Live verification was cancelled. Start again when you are ready.");
+                    }}
+                    onAnalysisComplete={async () => {
+                      setLivenessStatus("processing");
+                      setLivenessError("Analyzing live presence and confirming account ownership…");
+                      await pollLivenessResult(livenessSessionId)
+                        .then((result) => {
+                          if (result.passed && result.ownership_verified !== false) {
+                            toast.success("Live verification passed. Account ownership confirmed.");
+                          } else {
+                            toast.error(
+                              result.ownership_verified === false
+                                ? "The person in the live check is not the account owner."
+                                : "Live verification did not pass. Start a new check.",
+                            );
+                          }
+                        })
+                        .catch((pollError: unknown) => {
+                          setLivenessStatus("failed");
+                          setLivenessError(getVoteErrorMessage(pollError));
+                          toast.error(getVoteErrorMessage(pollError));
+                        });
+                    }}
+                    onError={(livenessUiError: unknown) => {
+                      setLivenessStatus("failed");
+                      setLivenessError(getVoteErrorMessage(livenessUiError));
+                    }}
+                  />
+                </div>
+                {/* Tips strip */}
+                <div className="grid grid-cols-3 divide-x border-t">
                   {[
-                    { label: "Ballot selections", done: allCategoriesSelected },
-                    { label: "Location approved", done: canContinueFromLocation },
-                    { label: "Live presence verified", done: livenessStatus === "passed" },
-                    { label: "Account ownership confirmed", done: ownershipVerified === true },
-                  ].map(({ label, done }) => (
-                    <div key={label} className="flex items-center gap-2.5">
-                      <div className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full border", done ? "border-foreground bg-foreground" : "border-muted-foreground/30")}>
-                        {done ? <CheckCircle2 className="h-3 w-3 text-background" /> : null}
-                      </div>
-                      <p className={cn("text-sm", done ? "text-foreground" : "text-muted-foreground")}>{label}</p>
+                    { label: "Lighting", tip: "Even light, no backlight" },
+                    { label: "Framing", tip: "One face, centered" },
+                    { label: "Stability", tip: "Hold still until done" },
+                  ].map(({ label, tip }) => (
+                    <div key={label} className="px-3 py-2.5 text-center">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
+                      <p className="mt-0.5 text-[11px] text-foreground">{tip}</p>
                     </div>
                   ))}
                 </div>
+              </>
+            ) : null}
+
+            {/* Result / status banner — shown after camera closes */}
+            {livenessStatus !== "ready" && livenessStatus !== "idle" && livenessStatus !== "creating_session" ? (
+              <div className={cn(
+                "mx-4 mb-3 flex items-start gap-3 rounded-xl border px-4 py-3",
+                livenessStatus === "passed"
+                  ? "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-700/40 dark:bg-emerald-950/30"
+                  : livenessStatus === "processing"
+                    ? "border-primary/20 bg-primary/5"
+                    : "border-destructive/30 bg-destructive/5",
+              )}>
+                {livenessStatus === "passed"
+                  ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  : <ScanFace className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {livenessStatus === "passed" ? "Verification complete"
+                      : livenessStatus === "processing" ? "Processing…"
+                      : livenessStatus === "failed" ? "Verification failed"
+                      : livenessStatus === "locked" ? "Temporarily locked"
+                      : "Status"}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {livenessError || (livenessStatus === "passed"
+                      ? "Live presence and account ownership confirmed. Proceed to review."
+                      : "")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Compact details table */}
+            <div className="mx-4 mb-4 overflow-hidden rounded-xl border">
+              <div className="divide-y">
+                {[
+                  { label: "Liveness score", value: typeof livenessConfidence === "number" ? `${livenessConfidence.toFixed(1)}%` : "—" },
+                  { label: "Account owner", value: ownershipVerified === null ? "Pending" : ownershipVerified ? "Confirmed" : "Not confirmed" },
+                  { label: "Face match", value: typeof compareConfidence === "number" ? `${compareConfidence.toFixed(1)}%` : "—" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <span className="text-xs text-muted-foreground">{label}</span>
+                    <span className="text-xs font-semibold text-foreground">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── STEP 4: Review ── */}
+      {currentStep === "review" ? (
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1fr_340px] lg:items-start">
+
+          {/* Left: selections + verifications */}
+          <div className="flex flex-col gap-3">
+            {/* Ballot selections */}
+            <div className="overflow-hidden rounded-2xl border">
+              <div className="flex items-center gap-2 border-b px-4 py-2.5">
+                <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="text-sm font-semibold text-foreground">Your ballot</p>
+              </div>
+              <div className="divide-y">
+                {reviewSelections.map(({ position, candidate }) => (
+                  <div key={position} className="flex items-center gap-3 px-4 py-3.5">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border">
+                      {candidate?.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={candidate.photo_url} alt={candidate.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground/50">
+                          {candidate?.name?.charAt(0) ?? "?"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{position}</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{candidate?.name || "Not selected"}</p>
+                    </div>
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Location + liveness chips */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="overflow-hidden rounded-xl border">
+                <div className="border-b px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Location</p>
+                </div>
+                <div className="px-3 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <p className="truncate text-xs font-semibold text-foreground">{location?.label || "—"}</p>
+                  </div>
+                  {locationCheckStatus === "allowed" ? (
+                    <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      {session.is_off_campus_allowed ? "Recorded for audit" : `Within ${formatMeters(locationCheck?.radius_meters)}`}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-xl border">
+                <div className="border-b px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Face check</p>
+                </div>
+                <div className="px-3 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <ScanFace className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <p className="text-xs font-semibold text-foreground">{ownershipVerified ? "Verified" : "Pending"}</p>
+                  </div>
+                  {typeof livenessConfidence === "number" ? (
+                    <p className="mt-1 text-[11px] text-muted-foreground">Score {livenessConfidence.toFixed(1)}%</p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right (sticky on desktop): submit panel */}
+          <div className="overflow-hidden rounded-2xl border lg:sticky lg:top-4">
+            <div className="border-b px-4 py-2.5">
+              <p className="text-sm font-semibold text-foreground">Submit your vote</p>
+            </div>
+            <div className="space-y-4 px-4 py-4">
+              {biometricLocked ? (
+                <Alert variant="destructive">
+                  <Clock3 className="h-4 w-4" />
+                  <AlertTitle>Submission locked</AlertTitle>
+                  <AlertDescription>Locked for {formatCountdown(lockoutSeconds)} due to repeated failed biometric attempts.</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {/* Checklist */}
+              <div className="space-y-2">
+                {[
+                  { label: "Ballot selections", done: allCategoriesSelected },
+                  { label: "Location approved", done: canContinueFromLocation },
+                  { label: "Live presence verified", done: livenessStatus === "passed" },
+                  { label: "Account ownership confirmed", done: ownershipVerified === true },
+                ].map(({ label, done }) => (
+                  <div key={label} className="flex items-center gap-2.5">
+                    <div className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      done ? "border-emerald-500 bg-emerald-500" : "border-border",
+                    )}>
+                      {done ? <CheckCircle2 className="h-3 w-3 text-white" /> : null}
+                    </div>
+                    <p className={cn("text-sm", done ? "text-foreground" : "text-muted-foreground")}>{label}</p>
+                  </div>
+                ))}
               </div>
 
-              <p className="text-sm leading-6 text-muted-foreground">
-                Submitting uses this liveness session as the biometric source for final verification. All checks passed — your ballot is ready.
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Once submitted, your ballot cannot be changed. All security checks must pass before your vote is recorded.
               </p>
 
               <Button
@@ -1391,7 +1314,7 @@ export default function StudentVotePage() {
                 onClick={() => void handleSubmitVote()}
               >
                 {submitVote.isPending ? (
-                  <LoadingButtonContent label="Submitting secure vote..." />
+                  <LoadingButtonContent label="Submitting…" />
                 ) : (
                   <>
                     <Vote className="mr-2 h-4 w-4" />
@@ -1399,98 +1322,74 @@ export default function StudentVotePage() {
                   </>
                 )}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       ) : null}
 
+      {/* ── Fixed bottom footer bar ── */}
       <div
         data-tour="student-vote-footer"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95 px-3 py-2.5 backdrop-blur-md sm:px-4 sm:py-3"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95 backdrop-blur-md"
       >
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center gap-3 rounded-xl border bg-background px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+        <div className="mx-auto max-w-3xl px-3 py-3 sm:px-4">
+          <div className="flex items-center gap-3">
+            {/* Status hint */}
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground sm:hidden">
-                {currentStep === "ballot" ? "Step 1 of 4" : currentStep === "location" ? "Step 2 of 4" : currentStep === "liveness" ? "Step 3 of 4" : "Step 4 of 4"}
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Step {currentStepIndex + 1} of {steps.length}
               </p>
-              <p className="mt-0.5 truncate text-sm font-medium text-foreground sm:mt-0">
-                {currentStep === "ballot"
-                  ? allCategoriesSelected
-                    ? `${categories.length} of ${categories.length} positions selected — ready to continue.`
-                    : `Select a candidate for each of the ${categories.length} position${categories.length !== 1 ? "s" : ""} to continue.`
-                  : currentStep === "location"
-                    ? canContinueFromLocation
-                      ? session.is_off_campus_allowed
-                        ? "Location recorded. Proceed to live verification."
-                        : "Location approved. Proceed to live verification."
-                      : locationCheckStatus === "denied"
-                        ? "You are outside the voting area. Re-capture inside the approved radius."
-                        : locationCheckStatus === "checking"
-                          ? "Checking whether you are within the voting area."
-                          : "Capture your location before continuing."
-                    : currentStep === "liveness"
-                      ? canContinueFromLiveness
-                        ? "Live verification passed. Proceed to final review."
-                        : "Complete live presence verification and account ownership check."
-                      : "Review your selections carefully, then submit your final ballot."}
-              </p>
+              <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{footerHint}</p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              {currentStep !== "ballot" ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-9 rounded-lg"
-                  onClick={() =>
-                    setCurrentStep(stepOrder[currentStepIndex - 1] || "ballot")
-                  }
-                >
-                  <ChevronLeft className="h-3.5 w-3.5 sm:mr-1" />
-                  <span className="hidden sm:inline">Back</span>
-                </Button>
-              ) : null}
+            {/* Back */}
+            {currentStep !== "ballot" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-10 shrink-0 rounded-xl px-3"
+                onClick={() => setCurrentStep(stepOrder[currentStepIndex - 1] || "ballot")}
+              >
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Back</span>
+              </Button>
+            ) : null}
 
-              {currentStep !== "review" ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-9 rounded-lg px-4"
-                  disabled={
-                    (currentStep === "ballot" && !allCategoriesSelected) ||
-                    (currentStep === "location" && !canContinueFromLocation) ||
-                    (currentStep === "liveness" && !canContinueFromLiveness)
-                  }
-                  onClick={() =>
-                    setCurrentStep(
-                      stepOrder[Math.min(currentStepIndex + 1, stepOrder.length - 1)],
-                    )
-                  }
-                >
-                  Continue
-                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-9 shrink-0 rounded-lg px-4 font-semibold"
-                  onClick={() => void handleSubmitVote()}
-                  disabled={submitVote.isPending || biometricLocked}
-                >
-                  {submitVote.isPending ? (
-                    <LoadingButtonContent label="Submitting..." />
-                  ) : (
-                    <>
-                      <Vote className="mr-1.5 h-3.5 w-3.5" />
-                      Submit ballot
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            {/* Continue / Submit */}
+            {currentStep !== "review" ? (
+              <Button
+                type="button"
+                size="sm"
+                className="h-10 shrink-0 rounded-xl px-4 font-semibold"
+                disabled={
+                  (currentStep === "ballot" && !allCategoriesSelected) ||
+                  (currentStep === "location" && !canContinueFromLocation) ||
+                  (currentStep === "liveness" && !canContinueFromLiveness)
+                }
+                onClick={() => setCurrentStep(stepOrder[Math.min(currentStepIndex + 1, stepOrder.length - 1)])}
+              >
+                Continue
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                className="h-10 shrink-0 rounded-xl px-4 font-semibold"
+                onClick={() => void handleSubmitVote()}
+                disabled={submitVote.isPending || biometricLocked}
+              >
+                {submitVote.isPending ? (
+                  <LoadingButtonContent label="Submitting…" />
+                ) : (
+                  <>
+                    <Vote className="mr-1.5 h-4 w-4" />
+                    Submit
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>

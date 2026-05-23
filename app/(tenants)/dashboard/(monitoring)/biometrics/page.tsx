@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Fingerprint, Lock, ShieldCheck } from "lucide-react";
 import {
   useAdminBiometricMetricsQuery,
@@ -19,10 +11,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import {
   TenantAccessRestricted,
-  TenantMetricCard,
-  TenantMetricGrid,
   TenantPageHeader,
-  TenantSectionCard,
 } from "@/components/tenants/shared";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
@@ -41,25 +30,16 @@ import {
 } from "@/components/ui/select";
 
 const confidenceChartConfig = {
-  average_compare_confidence: {
-    label: "Average compare confidence",
-    color: "var(--chart-1)",
-  },
+  average_compare_confidence: { label: "Avg compare confidence", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 const failureChartConfig = {
-  count: {
-    label: "Attempts",
-    color: "var(--chart-2)",
-  },
+  count: { label: "Attempts", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
 export default function TenantBiometricsPage() {
   const { membership } = useAuthStore();
-  const canViewAnalytics = hasAnyTenantPermission(membership, [
-    "analytics.view",
-    "tenant.manage",
-  ]);
+  const canViewAnalytics = hasAnyTenantPermission(membership, ["analytics.view", "tenant.manage"]);
   const [resultFilter, setResultFilter] = useState("all");
 
   const biometricMetricsQuery = useAdminBiometricMetricsQuery();
@@ -69,138 +49,96 @@ export default function TenantBiometricsPage() {
   });
 
   if (!canViewAnalytics) {
-    return (
-      <TenantAccessRestricted
-        title="Biometric monitoring restricted"
-        subtitle="Your university role does not allow access to biometric analytics."
-      />
-    );
+    return <TenantAccessRestricted title="Biometric monitoring restricted" subtitle="Your role does not allow biometric analytics access." />;
   }
 
   if (biometricMetricsQuery.isLoading || verificationLogsQuery.isLoading) {
-    return (
-      <ChangingLoadingState
-        messages={[
-          "Loading biometric metrics...",
-          "Compiling operational verification posture...",
-          "Preparing biometric activity feed...",
-        ]}
-      />
-    );
+    return <ChangingLoadingState messages={["Loading biometric metrics…", "Preparing verification feed…"]} />;
   }
 
   const metrics = biometricMetricsQuery.data?.metrics;
   const logs = verificationLogsQuery.data?.logs || [];
 
+  const kpi = [
+    { label: "Accepted", value: metrics?.summary.accepted_attempts?.toLocaleString() || "0", icon: ShieldCheck },
+    { label: "Rejected", value: metrics?.summary.rejected_attempts?.toLocaleString() || "0", icon: Fingerprint },
+    { label: "Liveness pass rate", value: `${((metrics?.summary.liveness_pass_rate || 0) * 100).toFixed(1)}%`, icon: Fingerprint },
+    { label: "Proxy accuracy", value: `${((metrics?.summary.proxy_accuracy || 0) * 100).toFixed(1)}%`, icon: Lock },
+  ];
+
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-2">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4">
       <TenantPageHeader
-        eyebrow="Tenant monitoring"
+        eyebrow="Monitoring"
         icon={<Fingerprint className="h-5 w-5" />}
-        title="Biometric verification"
-        subtitle="Track operational biometric performance, lockouts, failure patterns, and compare confidence without manual genuine or impostor review."
+        title="Biometrics"
+        subtitle="Operational verification posture, lockouts, failure patterns, and compare confidence."
         stats={[
-          {
-            label: "Pass rate",
-            value: `${((metrics?.summary.pass_rate || 0) * 100).toFixed(1)}%`,
-          },
-          {
-            label: "Proxy FAR",
-            value: `${((metrics?.summary.proxy_far || 0) * 100).toFixed(1)}%`,
-          },
-          {
-            label: "Proxy FRR",
-            value: `${((metrics?.summary.proxy_frr || 0) * 100).toFixed(1)}%`,
-          },
-          {
-            label: "Lockouts",
-            value: metrics?.summary.lockout_count?.toLocaleString() || "0",
-          },
+          { label: "Pass rate", value: `${((metrics?.summary.pass_rate || 0) * 100).toFixed(1)}%` },
+          { label: "Proxy FAR", value: `${((metrics?.summary.proxy_far || 0) * 100).toFixed(1)}%` },
+          { label: "Proxy FRR", value: `${((metrics?.summary.proxy_frr || 0) * 100).toFixed(1)}%` },
+          { label: "Lockouts", value: metrics?.summary.lockout_count?.toLocaleString() || "0" },
         ]}
       />
 
-      <TenantMetricGrid columns={4}>
-        <TenantMetricCard
-          label="Accepted attempts"
-          value={metrics?.summary.accepted_attempts?.toLocaleString() || "0"}
-          hint="Verification attempts accepted by the live voting safeguards."
-          icon={<ShieldCheck className="h-4 w-4" />}
-        />
-        <TenantMetricCard
-          label="Rejected attempts"
-          value={metrics?.summary.rejected_attempts?.toLocaleString() || "0"}
-          hint="Attempts rejected by liveness, compare, or other biometric checks."
-        />
-        <TenantMetricCard
-          label="Liveness pass rate"
-          value={`${((metrics?.summary.liveness_pass_rate || 0) * 100).toFixed(1)}%`}
-          hint="Share of completed liveness outcomes that passed the configured threshold."
-        />
-        <TenantMetricCard
-          label="Proxy accuracy"
-          value={`${((metrics?.summary.proxy_accuracy || 0) * 100).toFixed(1)}%`}
-          hint="Operational estimate based on system outcomes, not ground-truth labels."
-          icon={<Lock className="h-4 w-4" />}
-        />
-      </TenantMetricGrid>
+      {/* KPI strip */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {kpi.map((item) => (
+          <div key={item.label} className="flex items-center gap-3 rounded-xl border p-4">
+            <div className="rounded-md border bg-muted/30 p-1.5">
+              <item.icon className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{item.label}</p>
+              <p className="mt-0.5 text-base font-semibold tracking-tight text-foreground">{item.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <TenantSectionCard
-          title="Compare confidence trend"
-          description="Average face compare confidence across logged verification attempts."
-        >
-          <ChartContainer
-            config={confidenceChartConfig}
-            className="h-[280px] w-full"
-          >
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border p-4">
+          <p className="mb-3 text-sm font-medium text-foreground">Compare confidence trend</p>
+          <ChartContainer config={confidenceChartConfig} className="h-[220px] w-full">
             <AreaChart accessibilityLayer data={metrics?.confidence_trend || []}>
               <CartesianGrid vertical={false} />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} width={42} />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+              <YAxis tickLine={false} axisLine={false} width={36} tick={{ fontSize: 11 }} />
               <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
               <Area
                 type="monotone"
                 dataKey="average_compare_confidence"
                 stroke="var(--color-average_compare_confidence)"
                 fill="var(--color-average_compare_confidence)"
-                fillOpacity={0.18}
+                fillOpacity={0.15}
                 strokeWidth={2}
               />
             </AreaChart>
           </ChartContainer>
-        </TenantSectionCard>
+        </div>
 
-        <TenantSectionCard
-          title="Failure reasons"
-          description="Normalized biometric rejection reasons captured in tenant-scoped verification logs."
-        >
-          <ChartContainer
-            config={failureChartConfig}
-            className="h-[280px] w-full"
-          >
+        <div className="rounded-xl border p-4">
+          <p className="mb-3 text-sm font-medium text-foreground">Failure reasons</p>
+          <ChartContainer config={failureChartConfig} className="h-[220px] w-full">
             <BarChart accessibilityLayer data={metrics?.failure_reasons || []}>
               <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="reason"
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => String(value).slice(0, 14)}
-              />
-              <YAxis tickLine={false} axisLine={false} width={42} />
+              <XAxis dataKey="reason" tickLine={false} axisLine={false} tickFormatter={(v) => String(v).slice(0, 12)} tick={{ fontSize: 11 }} />
+              <YAxis tickLine={false} axisLine={false} width={36} tick={{ fontSize: 11 }} />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-              <Bar dataKey="count" fill="var(--color-count)" radius={10} />
+              <Bar dataKey="count" fill="var(--color-count)" radius={6} />
             </BarChart>
           </ChartContainer>
-        </TenantSectionCard>
+        </div>
       </div>
 
-      <TenantSectionCard
-        title="Recent biometric activity"
-        description="Inspect live vote verification outcomes, compare confidence, and lockout posture."
-        action={
+      {/* Recent activity */}
+      <div className="rounded-xl border">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <p className="text-sm font-medium text-foreground">Recent biometric activity</p>
           <Select value={resultFilter} onValueChange={setResultFilter}>
-            <SelectTrigger className="h-10 w-[150px]">
-              <SelectValue placeholder="Result" />
+            <SelectTrigger className="h-8 w-36 text-xs">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All results</SelectItem>
@@ -208,63 +146,29 @@ export default function TenantBiometricsPage() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
-        }
-      >
-        <div className="space-y-3">
-          {logs.length > 0 ? (
-            logs.map((log) => (
-              <div
-                key={log.id}
-                className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {log.user_id?.full_name || "Unknown student"}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {[
-                        log.session_id?.title,
-                        log.failure_reason?.replaceAll("_", " ") || log.result,
-                      ]
-                        .filter(Boolean)
-                        .join(" • ")}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={log.result === "accepted" ? "default" : "secondary"}>
-                      {log.result}
-                    </Badge>
-                    {log.lockout_triggered ? (
-                      <Badge variant="destructive">Lockout triggered</Badge>
-                    ) : null}
-                  </div>
+        </div>
+        {logs.length > 0 ? (
+          <div className="divide-y">
+            {logs.map((log) => (
+              <div key={log.id} className="flex items-start gap-4 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{log.user_id?.full_name || "Unknown"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {log.session_id?.title || "—"} · {log.failure_reason?.replaceAll("_", " ") || log.result}
+                    {" · "}Compare {typeof log.compare_confidence === "number" ? `${log.compare_confidence.toFixed(1)}%` : "n/a"}
+                  </p>
                 </div>
-                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                  <span>
-                    Compare:{" "}
-                    {typeof log.compare_confidence === "number"
-                      ? `${log.compare_confidence.toFixed(1)}%`
-                      : "n/a"}
-                  </span>
-                  <span>
-                    Liveness:{" "}
-                    {typeof log.liveness_confidence === "number"
-                      ? `${log.liveness_confidence.toFixed(1)}%`
-                      : log.liveness_status || "n/a"}
-                  </span>
-                  <span>Fail streak: {log.fail_streak || 0}</span>
-                  <span>{new Date(log.timestamp).toLocaleString()}</span>
+                <div className="flex shrink-0 flex-wrap gap-1.5 pt-0.5">
+                  <Badge variant={log.result === "accepted" ? "default" : "secondary"} className="text-[10px]">{log.result}</Badge>
+                  {log.lockout_triggered ? <Badge variant="destructive" className="text-[10px]">Lockout</Badge> : null}
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
-              No verification attempts matched the current filter.
-            </div>
-          )}
-        </div>
-      </TenantSectionCard>
+            ))}
+          </div>
+        ) : (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">No verification attempts matched the current filter.</p>
+        )}
+      </div>
     </div>
   );
 }

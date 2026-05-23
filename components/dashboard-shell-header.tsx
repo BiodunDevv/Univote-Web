@@ -290,9 +290,14 @@ export function DashboardShellHeader({
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-2">
-            {rootSegment !== "super-admin" ? (
-              <AdminChatWidget showTenant={false} />
-            ) : null}
+            <AdminChatWidget
+              showTenant={rootSegment === "super-admin"}
+              supportPath={
+                rootSegment === "super-admin"
+                  ? "/super-admin/support"
+                  : "/dashboard/support"
+              }
+            />
             <Button
               variant="outline"
               asChild

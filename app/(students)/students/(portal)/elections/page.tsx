@@ -94,16 +94,26 @@ export default function StudentElectionsPage() {
               }
             />
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {sessions.map((session) => (
                 <StudentSessionCard
                   key={session._id}
                   session={session}
                   href={
-                    session.has_voted
+                    session.has_voted && session.status === "active"
                       ? `/students/vote/${session._id}/submitted`
-                      : `/students/elections/${session._id}`
+                      : session.status === "ended"
+                        ? `/students/results/${session._id}`
+                        : `/students/elections/${session._id}`
                   }
+                  ctaLabel={
+                    session.status === "active" && !session.has_voted
+                      ? "Vote now"
+                      : session.status === "ended"
+                        ? "View results"
+                        : "View"
+                  }
+                  compact
                 />
               ))}
             </div>

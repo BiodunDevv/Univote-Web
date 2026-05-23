@@ -40,7 +40,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useNotificationSummaryQuery } from "@/lib/queries/notifications";
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
@@ -74,7 +73,6 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const { logout, admin } = useAuthStore();
-  const openSupportSheet = useAdminChatWidgetStore((state) => state.openTicket);
   const { data: unreadNotifications = 0 } = useNotificationSummaryQuery("admin");
   const [showLogout, setShowLogout] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
@@ -92,6 +90,8 @@ export function NavUser({
     scope === "super-admin"
       ? "/super-admin/notifications"
       : "/dashboard/notifications";
+  const supportPath =
+    scope === "super-admin" ? "/super-admin/support" : "/dashboard/support";
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -181,12 +181,10 @@ export function NavUser({
                     className="ml-auto"
                   />
                 </DropdownMenuItem>
-                {scope !== "super-admin" ? (
-                  <DropdownMenuItem onClick={() => openSupportSheet()}>
-                    <LifeBuoy />
-                    Support
-                  </DropdownMenuItem>
-                ) : null}
+                <DropdownMenuItem onClick={() => router.push(supportPath)}>
+                  <LifeBuoy />
+                  Support
+                </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem

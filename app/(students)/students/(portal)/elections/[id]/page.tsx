@@ -1,39 +1,126 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   AlertCircle,
+  CalendarDays,
   CheckCircle2,
   Layers3,
   MapPin,
   Users,
   Vote,
+  X,
 } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   PortalEmptyState,
-  PortalHero,
   PortalPage,
-  PortalSectionHeader,
 } from "@/components/students/portal/portal-page";
 import { formatDateTime } from "@/components/students/portal/utils";
 import { useStudentSessionDetailQuery } from "@/lib/queries/student";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-const truncate = (value: string | undefined, length: number) => {
-  if (!value || value.length <= length) return value || "";
-  return `${value.slice(0, length - 3)}...`;
+type Candidate = {
+  id: string;
+  name: string;
+  photo_url?: string | null;
+  bio?: string | null;
+  manifesto?: string | null;
 };
+
+function CandidateModal({
+  candidate,
+  position,
+  open,
+  onClose,
+}: {
+  candidate: Candidate | null;
+  position: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!candidate) return null;
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent showCloseButton={false} className="max-w-sm gap-0 overflow-hidden rounded-2xl p-0">
+        <DialogTitle className="sr-only">{candidate.name}</DialogTitle>
+
+        {/* Photo */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+          {candidate.photo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={candidate.photo_url}
+              alt={candidate.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Users className="h-10 w-10 text-muted-foreground/30" />
+            </div>
+          )}
+          {/* Close button — always visible regardless of photo */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          {/* Position + name overlay — only when there's a photo */}
+          {candidate.photo_url ? (
+            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-4 pb-3 pt-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">{position}</p>
+              <p className="text-base font-semibold text-white">{candidate.name}</p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-3">
+          {!candidate.photo_url ? (
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{position}</p>
+              <p className="mt-0.5 text-base font-semibold text-foreground">{candidate.name}</p>
+            </div>
+          ) : null}
+          {candidate.bio ? (
+            <div>
+              <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">About</p>
+              <p className="text-sm leading-relaxed text-foreground">{candidate.bio}</p>
+            </div>
+          ) : null}
+          {candidate.manifesto ? (
+            <>
+              {candidate.bio ? <Separator /> : null}
+              <div>
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Manifesto</p>
+                <p className="text-sm leading-relaxed text-foreground">{candidate.manifesto}</p>
+              </div>
+            </>
+          ) : null}
+          {!candidate.bio && !candidate.manifesto ? (
+            <p className="text-sm text-muted-foreground">No additional information provided.</p>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function StudentElectionDetailPage() {
   const params = useParams();
   const sessionId = params.id as string;
   const { data, isLoading, error } = useStudentSessionDetailQuery(sessionId);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState("");
 
   if (isLoading) {
     return (
@@ -66,7 +153,7 @@ export default function StudentElectionDetailPage() {
     session.status === "active" && session.eligible && !session.has_voted
       ? { href: `/students/vote/${session.id}`, label: "Cast your vote" }
       : session.has_voted
-        ? { href: `/students/vote/${session.id}/submitted`, label: "View your ballot" }
+        ? { href: `/students/vote/${session.id}/submitted`, label: "View ballot" }
         : session.status === "ended"
           ? { href: `/students/results/${session.id}`, label: "View results" }
           : null;
@@ -77,42 +164,92 @@ export default function StudentElectionDetailPage() {
     0,
   );
 
+  const isActive = session.status === "active";
+  const isUpcoming = session.status === "upcoming";
+
   return (
     <PortalPage>
-      {/* Hero */}
-      <PortalHero
-        eyebrow={
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={
-                session.status === "active"
-                  ? "default"
-                  : session.status === "upcoming"
-                    ? "secondary"
-                    : "outline"
-              }
-              className="text-[11px] capitalize"
+      {/* Hero card — login-page style with dot grid */}
+      <div className="animate-slide-up relative overflow-hidden rounded-2xl border px-5 py-5">
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.04]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern id="ed-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.2" fill="currentColor" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#ed-dots)" />
+        </svg>
+
+        <div className="relative space-y-3">
+          {/* Status + voted badges */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium",
+                isActive
+                  ? "border-emerald-300/60 bg-emerald-50/60 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+                  : isUpcoming
+                    ? "border-amber-300/50 bg-amber-50/50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/20 dark:text-amber-400"
+                    : "border-border bg-muted/30 text-muted-foreground",
+              )}
             >
-              {session.status}
-            </Badge>
+              {isActive ? (
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              ) : null}
+              <span className="capitalize">{session.status}</span>
+            </span>
             {session.has_voted ? (
-              <Badge variant="outline" className="border-emerald-300/60 bg-emerald-50/50 text-[11px] text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
-                <CheckCircle2 className="mr-1 h-3 w-3" />
+              <span className="flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-50/50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
+                <CheckCircle2 className="h-3 w-3" />
                 Vote submitted
-              </Badge>
+              </span>
             ) : null}
           </div>
-        }
-        title={session.title}
-        description={session.description || undefined}
-        actions={
-          primaryAction ? (
-            <Button asChild size="sm" className="rounded-xl">
+
+          {/* Title */}
+          <div>
+            <h1 className="text-xl font-semibold leading-snug text-foreground sm:text-2xl">
+              {session.title}
+            </h1>
+            {session.description ? (
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                {session.description}
+              </p>
+            ) : null}
+          </div>
+
+          {/* Inline meta row */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+              {formatDateTime(session.start_time)} — {formatDateTime(session.end_time)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              {totalCandidates} candidate{totalCandidates !== 1 ? "s" : ""} · {positionEntries.length} position{positionEntries.length !== 1 ? "s" : ""}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {session.is_off_campus_allowed ? "Anywhere" : "On-campus only"}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Layers3 className="h-3.5 w-3.5 shrink-0" />
+              {session.eligibility_scope.summary}
+            </span>
+          </div>
+
+          {/* CTA */}
+          {primaryAction ? (
+            <Button asChild size="sm" className="rounded-xl w-full sm:w-auto">
               <Link href={primaryAction.href}>{primaryAction.label}</Link>
             </Button>
-          ) : null
-        }
-      />
+          ) : null}
+        </div>
+      </div>
 
       {/* Not eligible alert */}
       {!session.eligible ? (
@@ -124,142 +261,93 @@ export default function StudentElectionDetailPage() {
         </Alert>
       ) : null}
 
-      {/* Key facts — 4 compact chips */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Card className="border shadow-none">
-          <CardContent className="p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Candidates</p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">{totalCandidates}</p>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none">
-          <CardContent className="p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Positions</p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">{positionEntries.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none col-span-2">
-          <CardContent className="p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Window</p>
-            <p className="mt-0.5 text-xs font-medium text-foreground">
-              {formatDateTime(session.start_time)} — {formatDateTime(session.end_time)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Ballot preview — native list style */}
+      <section className="animate-slide-up-1 flex flex-col gap-2.5">
+        <div className="flex items-center justify-between px-0.5">
+          <p className="text-sm font-semibold text-foreground">Candidates</p>
+          <p className="text-xs text-muted-foreground">{positionEntries.length} position{positionEntries.length !== 1 ? "s" : ""}</p>
+        </div>
 
-      {/* Eligibility + location — only info students care about */}
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Card className="border shadow-none">
-          <CardContent className="flex items-start gap-3 p-3.5">
-            <Layers3 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Eligibility scope</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">
-                {session.eligibility_scope.summary}
-              </p>
-              {!session.eligibility_scope.tenant_wide ? (
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {session.eligibility_scope.departments.map((d) => (
-                    <Badge key={d} variant="outline" className="text-[10px]">{d}</Badge>
-                  ))}
-                  {session.eligibility_scope.levels.map((l) => (
-                    <Badge key={l} variant="outline" className="text-[10px]">Level {l}</Badge>
-                  ))}
+        {positionEntries.length === 0 ? (
+          <PortalEmptyState
+            icon={Vote}
+            title="No candidates yet"
+            description="Candidates have not been published for this election."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {positionEntries.map(([position, candidates]) => (
+              <div key={position} className="overflow-hidden rounded-2xl border">
+                {/* Position header */}
+                <div className="flex items-center justify-between border-b px-4 py-2.5">
+                  <p className="text-sm font-semibold text-foreground">{position}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {candidates.length} candidate{candidates.length !== 1 ? "s" : ""}
+                  </p>
                 </div>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-none">
-          <CardContent className="flex items-start gap-3 p-3.5">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Voting location</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">
-                {session.is_off_campus_allowed
-                  ? "Vote from anywhere — off-campus allowed"
-                  : "Must be on campus to vote"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Ballot preview */}
-      <section className="space-y-3">
-        <PortalSectionHeader
-          icon={Users}
-          title="Ballot preview"
-          description="Browse the candidates per position before casting your vote."
-        />
+                {/* Candidate rows */}
+                <div className="divide-y">
+                  {candidates.map((candidate, idx) => (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCandidate(candidate);
+                        setSelectedPosition(position);
+                      }}
+                      className="press-scale flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                    >
+                      {/* Avatar */}
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border">
+                        {candidate.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={candidate.photo_url}
+                            alt={candidate.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground/60">
+                            {candidate.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
 
-        <div className="flex flex-col gap-3">
-          {positionEntries.length === 0 ? (
-            <PortalEmptyState
-              icon={Vote}
-              title="No candidates yet"
-              description="Candidates have not been published for this election."
-            />
-          ) : (
-            positionEntries.map(([position, candidates]) => (
-              <Card key={position} className="border shadow-none">
-                <CardHeader className="border-b px-4 py-3">
-                  <CardTitle className="flex items-center justify-between text-sm">
-                    {position}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {candidates.length} candidate{candidates.length !== 1 ? "s" : ""}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3">
-                  <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1">
-                    {candidates.map((candidate) => (
-                      <div
-                        key={candidate.id}
-                        className="w-[76vw] min-w-[76vw] shrink-0 snap-start rounded-xl border bg-muted/20 p-3.5 sm:w-72 sm:min-w-72"
-                      >
-                        {/* Photo */}
-                        <div className="mb-3 overflow-hidden rounded-lg border bg-muted aspect-[4/3]">
-                          {candidate.photo_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={candidate.photo_url}
-                              alt={candidate.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Users className="h-6 w-6 text-muted-foreground/40" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">{candidate.name}</p>
+                      {/* Name + bio snippet */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {candidate.name}
+                        </p>
                         {candidate.bio ? (
-                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
                             {candidate.bio}
                           </p>
-                        ) : null}
-                        {candidate.manifesto ? (
-                          <>
-                            <Separator className="my-2.5" />
-                            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                              Manifesto
-                            </p>
-                            <p className="text-xs leading-relaxed text-muted-foreground line-clamp-4">
-                              {candidate.manifesto}
-                            </p>
-                          </>
-                        ) : null}
+                        ) : (
+                          <p className="mt-0.5 text-xs text-muted-foreground/50">No bio</p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+
+                      {/* Number badge */}
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium text-muted-foreground">
+                        {idx + 1}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      {/* Candidate detail modal */}
+      <CandidateModal
+        candidate={selectedCandidate}
+        position={selectedPosition}
+        open={Boolean(selectedCandidate)}
+        onClose={() => setSelectedCandidate(null)}
+      />
     </PortalPage>
   );
 }

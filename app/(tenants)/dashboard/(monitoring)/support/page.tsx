@@ -1,36 +1,17 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAdminChatWidgetStore } from "@/lib/store/useAdminChatWidgetStore";
-import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-
-function TenantSupportPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const openTicket = useAdminChatWidgetStore((state) => state.openTicket);
-
-  useEffect(() => {
-    openTicket(searchParams.get("ticket"));
-    router.replace("/dashboard");
-  }, [openTicket, router, searchParams]);
-
-  return (
-    <ChangingLoadingState
-      fullHeight
-      messages={[
-        "Opening support sheet...",
-        "Preparing conversation inbox...",
-        "Returning to dashboard...",
-      ]}
-    />
-  );
-}
+import { SupportDesk } from "@/components/support/support-desk";
 
 export default function TenantSupportPage() {
   return (
-    <Suspense fallback={null}>
-      <TenantSupportPageContent />
-    </Suspense>
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 pb-4">
+      <SupportDesk
+        scope="admin"
+        title="Support inbox"
+        description="Review support requests, reply to conversations, and keep assignment and status updates moving."
+        allowCreate
+        showQueueFilters
+      />
+    </div>
   );
 }

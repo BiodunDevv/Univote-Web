@@ -56,10 +56,10 @@ function SettingAction({
     <button
       type="button"
       onClick={onClick}
-      className="press-scale flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
+      className="press-scale flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/20 active:bg-muted/30"
     >
       <span className="flex min-w-0 items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </span>
         <span className="min-w-0">
@@ -212,19 +212,19 @@ export default function StudentProfilePage() {
       {/* Account chips */}
       <div className="animate-slide-up-1 grid gap-2 sm:grid-cols-2">
         {data.email ? (
-          <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5">
+          <div className="flex items-center gap-3 rounded-xl border px-3 py-2.5">
             <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="truncate text-sm text-foreground">{data.email}</span>
           </div>
         ) : null}
-        <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5">
+        <div className="flex items-center gap-3 rounded-xl border px-3 py-2.5">
           <UserRound className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate text-sm text-foreground">
             {participantLabels.singular} account
           </span>
         </div>
         {showFaceField ? (
-          <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 sm:col-span-2">
+          <div className="flex items-center gap-3 rounded-xl border px-3 py-2.5 sm:col-span-2">
             <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="text-sm text-foreground">
               {data.has_facial_data
@@ -232,6 +232,18 @@ export default function StudentProfilePage() {
                 : "Face data not registered"}
             </span>
           </div>
+        ) : null}
+        {tenant?.branding?.support_email ? (
+          <a
+            href={`mailto:${tenant.branding.support_email}`}
+            className="flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors hover:bg-muted/20 sm:col-span-2"
+          >
+            <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Support</p>
+              <p className="truncate text-sm text-foreground">{tenant.branding.support_email}</p>
+            </div>
+          </a>
         ) : null}
       </div>
 
@@ -260,7 +272,7 @@ export default function StudentProfilePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 px-3 pb-3">
-          <div className="rounded-xl border bg-muted/10 p-1">
+          <div className="rounded-xl border p-1">
             <SettingAction
               icon={UserRound}
               label="Edit profile"
@@ -297,7 +309,7 @@ export default function StudentProfilePage() {
           </div>
 
           {/* Theme toggle */}
-          <div className="rounded-xl border bg-muted/10 p-3">
+          <div className="rounded-xl border p-3">
             <div className="mb-3 flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm font-semibold text-foreground">

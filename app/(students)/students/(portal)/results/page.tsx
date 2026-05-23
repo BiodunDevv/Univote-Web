@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, CheckCircle2, History, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, History, Trophy } from "lucide-react";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import {
   PortalEmptyState,
@@ -10,9 +10,8 @@ import {
   PortalPage,
 } from "@/components/students/portal/portal-page";
 import { useStudentSessionsQuery, useStudentVotingHistoryQuery } from "@/lib/queries/student";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/components/students/portal/utils";
 
 export default function StudentResultsPage() {
@@ -80,95 +79,81 @@ export default function StudentResultsPage() {
               description="There are no result-ready elections available yet."
             />
           ) : (
-            <div className="grid gap-3">
-              {resultSessions.map((session) => (
-                <Card
-                  key={session._id}
-                  className="press-scale rounded-2xl border shadow-none transition-colors hover:bg-muted/20"
-                >
-                  <CardHeader className="space-y-2 pb-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="text-[11px] capitalize">
-                        {session.status}
-                      </Badge>
-                      {session.has_voted ? (
-                        <Badge variant="outline" className="border-emerald-300/60 bg-emerald-50/50 text-[11px] text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                          You voted
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[11px]">
-                          View only
-                        </Badge>
+            <div className="overflow-hidden rounded-2xl border">
+              {resultSessions.map((session, idx) => {
+                const isActive = session.status === "active";
+                return (
+                  <Link
+                    key={session._id}
+                    href={`/students/results/${session._id}`}
+                    className={cn(
+                      "press-scale group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/20",
+                      idx < resultSessions.length - 1 && "border-b",
+                      isActive && "border-l-[3px] border-l-[var(--student-vote-accent)]",
+                    )}
+                  >
+                    {/* Status dot */}
+                    <span
+                      className={cn(
+                        "mt-0.5 h-2 w-2 shrink-0 rounded-full",
+                        isActive ? "animate-pulse bg-emerald-500" : "bg-muted-foreground/30",
                       )}
-                    </div>
-                    <CardTitle className="text-sm leading-snug">{session.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pb-4">
-                    <p className="text-xs text-muted-foreground">
-                      {session.status === "active" ? "Live board available" : "Final board published"} · Ends {formatDateTime(session.end_time)}
-                    </p>
-                    <Link
-                      href={`/students/results/${session._id}`}
-                      className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40"
-                    >
-                      <p className="text-sm font-medium text-foreground">
-                        {session.status === "active"
-                          ? "Live race board is updating"
-                          : "Final standings are published"}
+                    />
+
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {session.title}
                       </p>
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {isActive ? "Live tally updating" : "Final standings published"}
+                        {session.has_voted ? " · You voted" : ""}
+                      </p>
+                    </div>
+
+                    {/* Right */}
+                    {session.has_voted ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
           {historyQuery.data?.history?.length ? (
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {historyQuery.data.history.map((entry) => (
-                <Card
+                <div
                   key={`${entry.session.id}-${entry.voted_at}`}
-                  className="rounded-2xl border shadow-none"
+                  className="overflow-hidden rounded-2xl border"
                 >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-sm leading-snug">
-                        {entry.session.title}
-                      </CardTitle>
-                      <Badge
-                        variant="outline"
-                        className="shrink-0 border-emerald-300/60 bg-emerald-50/50 text-[11px] text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+                  {/* Session header */}
+                  <div className="flex items-center justify-between border-b px-4 py-2.5">
+                    <p className="text-sm font-semibold text-foreground">{entry.session.title}</p>
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3 w-3" />
+                      <span>{formatDateTime(entry.voted_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Vote rows */}
+                  <div className="divide-y">
+                    {entry.votes.map((vote) => (
+                      <div
+                        key={`${entry.session.id}-${vote.position}`}
+                        className="flex items-center justify-between gap-3 px-4 py-3"
                       >
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Recorded
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Submitted {formatDateTime(entry.voted_at)}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="pb-4">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {entry.votes.map((vote) => (
-                        <div
-                          key={`${entry.session.id}-${vote.position}`}
-                          className="rounded-xl border bg-muted/20 px-3 py-2.5"
-                        >
-                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                            {vote.position}
-                          </p>
-                          <p className="mt-0.5 text-sm font-semibold text-foreground">
-                            {vote.candidate.name}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        <p className="text-xs text-muted-foreground">{vote.position}</p>
+                        <p className="text-sm font-semibold text-foreground">{vote.candidate.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           ) : (

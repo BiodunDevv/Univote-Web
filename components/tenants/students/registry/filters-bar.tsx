@@ -69,6 +69,15 @@ export function StudentsRegistryFilters({
           ?.departments || []
       : collegeOptions.flatMap((college) => college.departments);
   const levelOptions = overview?.levels || [];
+  const selectedCollegeLabel =
+    selectedCollegeId !== "all"
+      ? collegeOptions.find((college) => college.id === selectedCollegeId)?.code
+      : undefined;
+  const selectedDepartmentLabel =
+    selectedDepartmentId !== "all"
+      ? departmentOptions.find((department) => department.id === selectedDepartmentId)
+          ?.code
+      : undefined;
 
   return (
     <Card className="border shadow-none">
@@ -87,7 +96,9 @@ export function StudentsRegistryFilters({
           {showCollegeFilter ? (
             <Select value={selectedCollegeId} onValueChange={onCollegeChange}>
               <SelectTrigger className="h-9 min-w-0 text-sm [&>span]:truncate">
-                <SelectValue placeholder="College" />
+                <SelectValue placeholder="College">
+                  {selectedCollegeLabel || "College"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Colleges</SelectItem>
@@ -97,7 +108,7 @@ export function StudentsRegistryFilters({
                     value={college.id}
                     className="max-w-[320px] truncate"
                   >
-                    {college.name}
+                    {college.code}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -110,7 +121,9 @@ export function StudentsRegistryFilters({
               onValueChange={onDepartmentChange}
             >
               <SelectTrigger className="h-9 min-w-0 text-sm [&>span]:truncate">
-                <SelectValue placeholder="Department" />
+                <SelectValue placeholder="Department">
+                  {selectedDepartmentLabel || "Department"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
@@ -120,7 +133,7 @@ export function StudentsRegistryFilters({
                     value={department.id}
                     className="max-w-[320px] truncate"
                   >
-                    {department.name}
+                    {department.code}
                   </SelectItem>
                 ))}
               </SelectContent>

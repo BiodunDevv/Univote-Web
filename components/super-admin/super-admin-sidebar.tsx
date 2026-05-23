@@ -6,9 +6,9 @@ import {
   Building2,
   FileText,
   Fingerprint,
+  LifeBuoy,
   LayoutDashboard,
   Megaphone,
-  Rocket,
   Settings2,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +60,7 @@ const superAdminNavMain: NavItem[] = [
 const superAdminNavProjects = [
   { name: "Announcements", url: "/super-admin/announcements", icon: Megaphone },
   { name: "Testimonials", url: "/super-admin/testimonials", icon: Megaphone },
+  { name: "Support", url: "/super-admin/support", icon: LifeBuoy },
   { name: "Biometrics", url: "/super-admin/biometrics", icon: Fingerprint },
   { name: "Audit Logs", url: "/super-admin/audit-logs", icon: FileText },
   { name: "System Health", url: "/super-admin/system-health", icon: Activity },

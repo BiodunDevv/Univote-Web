@@ -32,7 +32,7 @@ export function StudentLogoutConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia>
+          <AlertDialogMedia className="bg-transparent">
             <LogOut className="h-4 w-4" />
           </AlertDialogMedia>
           <AlertDialogTitle>Log out of Univote?</AlertDialogTitle>

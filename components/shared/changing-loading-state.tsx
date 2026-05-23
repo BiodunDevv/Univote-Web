@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { LogoIcon } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,7 @@ export function ChangingLoadingState({
   variant,
   className,
 }: ChangingLoadingStateProps) {
+  void intervalMs;
   const resolvedVariant = variant ?? (fullHeight ? "page" : "section");
 
   const normalizedMessages = useMemo(() => {
@@ -36,18 +37,7 @@ export function ChangingLoadingState({
     }
     return [message ?? "Loading..."];
   }, [message, messages]);
-
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (resolvedVariant === "inline" || normalizedMessages.length <= 1) return;
-
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % normalizedMessages.length);
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [intervalMs, normalizedMessages.length, resolvedVariant]);
+  const resolvedMessage = normalizedMessages[0];
 
   if (resolvedVariant === "inline") {
     return (
@@ -83,8 +73,8 @@ export function ChangingLoadingState({
             <LogoIcon className="h-4.5 w-4.5" />
           </span>
         </span>
-        <p className="text-xs font-medium text-foreground transition-opacity duration-100" aria-live="polite">
-          {normalizedMessages[index % normalizedMessages.length]}
+        <p className="text-xs font-medium text-foreground" aria-live="polite">
+          {resolvedMessage}
         </p>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   Building2,
   Fingerprint,
   FileBarChart,
+  LifeBuoy,
   GraduationCap,
   LayoutDashboard,
   FlaskConical,
@@ -75,7 +76,6 @@ const adminNavMain: NavItem[] = [
     icon: Vote,
     items: [
       { title: "All Elections", url: "/dashboard/elections" },
-      { title: "Live Elections", url: "/dashboard/elections?status=active" },
       { title: "Create Election", url: "/dashboard/elections/create" },
       { title: "Election Results", url: "/dashboard/election-analytics" },
     ],
@@ -124,6 +124,7 @@ const adminNavMain: NavItem[] = [
 const adminNavProjects = [
   { name: "Announcements", url: "/dashboard/announcements", icon: Megaphone },
   { name: "Notifications", url: "/dashboard/notifications", icon: Bell },
+  { name: "Support", url: "/dashboard/support", icon: LifeBuoy },
   { name: "System Health", url: "/dashboard/system-health", icon: Activity },
   { name: "Testing", url: "/dashboard/testing", icon: FlaskConical },
   { name: "Biometrics", url: "/dashboard/biometrics", icon: Fingerprint },

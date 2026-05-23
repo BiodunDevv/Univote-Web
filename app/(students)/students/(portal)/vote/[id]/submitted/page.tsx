@@ -103,7 +103,7 @@ export default function StudentSubmittedBallotPage() {
       </div>
 
       {/* Confirmation banner */}
-      <div className="animate-slide-up-2 flex items-start gap-3 rounded-2xl border border-emerald-300/60 bg-emerald-50/60 p-4 dark:border-emerald-700/40 dark:bg-emerald-950/20">
+      <div className="animate-slide-up-2 flex items-start gap-3 rounded-2xl border border-emerald-300/60 p-4 dark:border-emerald-700/40">
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
         <div className="space-y-0.5">
           <p className="text-sm font-semibold text-foreground">
@@ -126,9 +126,9 @@ export default function StudentSubmittedBallotPage() {
             {ballot.choices.map((choice) => (
               <div
                 key={`${choice.position}:${choice.candidate.id}`}
-                className="flex items-start gap-3 rounded-xl border bg-muted/20 p-3.5"
+                className="flex items-start gap-3 rounded-xl border p-3.5"
               >
-                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border bg-muted/30">
+                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border">
                   {choice.candidate.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
