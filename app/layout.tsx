@@ -1,5 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Crimson_Pro, Atkinson_Hyperlegible, Manrope } from "next/font/google";
 import "./globals.css";
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-crimson",
+  display: "swap",
+});
+
+const atkinsonHyperlegible = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-atkinson",
+  display: "swap",
+});
 import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { StudentPwaBootstrap } from "@/components/students/student-pwa-bootstrap";
@@ -16,6 +32,9 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "./seo";
+import { cn } from "@/lib/utils";
+
+const manrope = Manrope({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -70,8 +89,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", manrope.variable)}>
+      <body className={`antialiased ${crimsonPro.variable} ${atkinsonHyperlegible.variable}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

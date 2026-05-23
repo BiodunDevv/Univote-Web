@@ -160,7 +160,7 @@ export default function SuperAdminBiometricsPage() {
 
       <TenantSectionCard
         title="Recent verification activity"
-        description="Latest cross-university biometric attempts with tenant, student, session, compare confidence, and lockout posture."
+        description="Latest cross-university biometric attempts with tenant, student, election, compare confidence, and lockout posture."
       >
         <div className="space-y-3">
           {logs.length > 0 ? (

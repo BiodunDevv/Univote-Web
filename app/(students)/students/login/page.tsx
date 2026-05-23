@@ -9,33 +9,22 @@ import {
   ArrowLeft,
   ArrowRight,
   Building2,
+  ChevronRight,
   Eye,
   EyeOff,
+  GraduationCap,
+  KeyRound,
+  Lock,
   Search,
   ShieldCheck,
-  Smartphone,
-  Vote,
+  UserCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import {
@@ -50,6 +39,39 @@ import {
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+/* ── Subtle dot-grid SVG background ──────────────────────────────────────── */
+function DotGrid() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern
+          id="dot-pattern"
+          x="0"
+          y="0"
+          width="24"
+          height="24"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#dot-pattern)" />
+    </svg>
+  );
+}
 
 function StudentLoginPageContent() {
   const router = useRouter();
@@ -89,8 +111,7 @@ function StudentLoginPageContent() {
   const selectedOrganization =
     selectedOrganizationQuery.data?.organization ||
     organizationsQuery.data?.organizations.find(
-      (organization) =>
-        organization.slug === (hostTenantSlug || selectedOrgSlug),
+      (o) => o.slug === (hostTenantSlug || selectedOrgSlug),
     ) ||
     null;
 
@@ -122,47 +143,33 @@ function StudentLoginPageContent() {
             : undefined,
         }
       : null);
+
   const loginField = getTenantLoginIdentifier(effectiveTenant);
   const labels = getTenantParticipantLabels(effectiveTenant);
   const recoveryLabels = getTenantRecoveryIdentifierLabels(effectiveTenant);
 
   const restrictionMessage =
     restrictionReason === "TENANT_SUSPENDED"
-      ? "This university workspace is currently suspended. Student portal access is unavailable until an administrator restores the workspace."
+      ? "This university workspace is currently suspended."
       : restrictionReason === "TENANT_ACCESS_RESTRICTED"
-        ? "This university workspace is currently restricted. Try again later or contact an administrator."
+        ? "This university workspace is currently restricted. Try again later."
         : null;
 
   useEffect(() => {
-    if (
-      hasHydrated &&
-      token &&
-      !student?.first_login &&
-      !firstLoginPromptOpen
-    ) {
+    if (hasHydrated && token && !student?.first_login && !firstLoginPromptOpen) {
       router.replace(ref);
     }
-  }, [
-    firstLoginPromptOpen,
-    hasHydrated,
-    ref,
-    router,
-    student?.first_login,
-    token,
-  ]);
+  }, [firstLoginPromptOpen, hasHydrated, ref, router, student?.first_login, token]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     clearError();
-
     const targetTenantSlug = hostTenantSlug || selectedOrgSlug || null;
-
     try {
       const result = await login(email, password, targetTenantSlug);
       if (result.newDevice) {
         toast.info("New device detected", {
-          description:
-            "A security email has been sent to your registered address.",
+          description: "A security email has been sent to your registered address.",
         });
       }
       if (result.requiresPasswordChange) {
@@ -172,15 +179,10 @@ function StudentLoginPageContent() {
       }
       router.replace(ref);
     } catch (submitError) {
-      if (
-        submitError instanceof Error &&
-        submitError.message === "FIRST_LOGIN"
-      ) {
+      if (submitError instanceof Error && submitError.message === "FIRST_LOGIN") {
         const query = new URLSearchParams();
         query.set("ref", ref);
-        if (targetTenantSlug) {
-          query.set("organization", targetTenantSlug);
-        }
+        if (targetTenantSlug) query.set("organization", targetTenantSlug);
         router.replace(`/students/create-password?${query.toString()}`);
       }
     }
@@ -202,324 +204,257 @@ function StudentLoginPageContent() {
     router.push(`/students/create-password?${query.toString()}`);
   };
 
+  const showSignInForm = Boolean(selectedOrganization || hostTenantSlug);
+
   return (
-    <div className="min-h-svh overflow-x-hidden bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto mb-4 flex max-w-6xl items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" asChild className="rounded-xl px-3">
+    <div className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <DotGrid />
+
+      {/* Top bar */}
+      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
+        <Button variant="ghost" size="sm" asChild>
           <Link href="/">
             <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Website
+            Back to website
           </Link>
         </Button>
-        <AnimatedThemeToggler variant="header" className="h-9" />
+        <AnimatedThemeToggler variant="header" />
       </div>
-      <div className="mx-auto grid min-h-[calc(100svh-7rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-        <div className="relative overflow-hidden rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none hidden md:block">
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              <Vote className="h-3.5 w-3.5" />
-              {selectedOrganization ? labels.singular : "University"} access
-            </div>
-            <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              {selectedOrganization
-                ? `Sign in to enter your ${labels.singular.toLowerCase()} voting workspace.`
-                : "Choose your university and continue into the student voting app."}
-            </h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
-              {selectedOrganization
-                ? `Use your ${loginField.label.toLowerCase()} and password to open sessions, vote securely, and track results from one clean mobile-friendly portal.`
-                : "Search for your university workspace first. Once selected, you can sign in, install the app, and move straight into your student dashboard."}
-            </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Smartphone className="h-4 w-4 text-primary" />
-                  Mobile-first flow
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Install the student app, sign in once, and move through
-                  sessions and voting with a cleaner mobile experience.
-                </p>
-              </div>
-              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  Secure access
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Your university workspace keeps sign-in, recovery, and voting
-                  access scoped to your institution only.
-                </p>
-              </div>
-            </div>
+      {/* Centered form shell */}
+      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
 
-            {selectedOrganization ? (
-              <div className="mt-6 rounded-2xl border bg-background/80 p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  Selected university
-                </p>
-                <p className="mt-1 text-base font-semibold text-foreground">
-                  University Name: {selectedOrganization.name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  University Slug: {selectedOrganization.slug}
-                </p>
-              </div>
-            ) : null}
+          {/* Brand mark */}
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
+              <GraduationCap className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                {showSignInForm ? "Welcome back" : "Student portal"}
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {showSignInForm
+                  ? selectedOrganization
+                    ? `Signing in to ${selectedOrganization.name}`
+                    : "Sign in to your student portal"
+                  : "Select your university to continue"}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <Card className="overflow-hidden rounded-[2rem] border bg-card/95 shadow-none">
-          {!selectedOrganization && !hostTenantSlug ? (
-            <>
-              <CardHeader className="border-b bg-muted/10 pb-5">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl border bg-muted p-3">
-                    <Building2 className="h-5 w-5" />
+          {/* ── University picker ────────────────────────────────── */}
+          {!showSignInForm ? (
+            <div className="space-y-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search for your university…"
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+
+              {/* University list */}
+              <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-lg">
+                {organizationsQuery.isFetching ? (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    <LoadingButtonContent label="Searching…" />
                   </div>
-                  <div>
-                    <CardTitle>Select University</CardTitle>
-                    <CardDescription>
-                      Choose the university you belong to before signing in.
-                    </CardDescription>
+                ) : (organizationsQuery.data?.organizations || []).length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-8 text-center">
+                    <Building2 className="h-8 w-8 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">No universities found</p>
                   </div>
+                ) : (
+                  (organizationsQuery.data?.organizations || []).map((org) => (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() => setSelectedOrgSlug(org.slug)}
+                      className="flex w-full items-center gap-3 rounded-lg border bg-card px-3 py-3 text-left transition-colors hover:bg-accent active:scale-[0.99]"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-muted">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {org.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{org.slug}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  ))
+                )}
+              </div>
+
+              <p className="text-center text-xs text-muted-foreground">
+                Only registered university workspaces appear here.
+              </p>
+            </div>
+          ) : (
+            /* ── Sign-in form ────────────────────────────────────── */
+            <div className="space-y-4">
+              {/* University badge */}
+              {selectedOrganization ? (
+                <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-card">
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {selectedOrganization.name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {selectedOrganization.slug}
+                    </p>
+                  </div>
+                  {!hostTenantSlug ? (
+                    <button
+                      type="button"
+                      onClick={resetOrganizationSelection}
+                      className="shrink-0 text-xs font-medium text-primary hover:underline"
+                    >
+                      Change
+                    </button>
+                  ) : null}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4 p-3">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Identifier field */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-email" className="flex items-center gap-1.5">
+                    <UserCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                    {loginField.label}
+                  </Label>
                   <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search universities"
-                    className="h-11 rounded-2xl pl-9"
+                    id="login-email"
+                    type="email"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    placeholder={loginField.placeholder}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
                   />
                 </div>
 
-                {organizationsQuery.isFetching ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    disabled
-                  >
-                    <LoadingButtonContent label="Fetching universities..." />
-                  </Button>
-                ) : null}
-
-                <div className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
-                  {(organizationsQuery.data?.organizations || []).map(
-                    (organization) => (
-                      <button
-                        key={organization.id}
-                        type="button"
-                        onClick={() => setSelectedOrgSlug(organization.slug)}
-                        className="flex w-full items-start justify-between rounded-2xl border border-border/70 bg-card/50 p-3 text-left transition-colors hover:bg-muted/30"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">
-                            {organization.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {organization.slug}
-                          </p>
-                        </div>
-                        <ArrowRight className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                      </button>
-                    ),
-                  )}
-                </div>
-
-                {organizationsQuery.data?.organizations.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>
-                      No universities matched your search.
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-              </CardContent>
-            </>
-          ) : (
-            <>
-              <CardHeader className="border-b bg-muted/10 pb-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border bg-muted p-3">
-                      <ShieldCheck className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle>Portal Sign In</CardTitle>
-                      <CardDescription>
-                        {selectedOrganization
-                          ? `Continue to ${selectedOrganization.name}.`
-                          : `Continue to the Univote ${labels.singular.toLowerCase()} portal.`}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  {!hostTenantSlug ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-xl px-3"
-                      onClick={resetOrganizationSelection}
-                    >
-                      <ArrowLeft className="mr-1.5 h-4 w-4" />
-                      Back
-                    </Button>
-                  ) : null}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 p-3">
-                {selectedOrganization ? (
-                  <div className="rounded-2xl border bg-muted/20 p-4">
-                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                      University
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">
-                      {selectedOrganization.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedOrganization.slug}
-                    </p>
-                    {!hostTenantSlug ? (
-                      <button
-                        type="button"
-                        onClick={resetOrganizationSelection}
-                        className="mt-3 text-xs font-medium underline underline-offset-4"
-                      >
-                        Change university
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">{loginField.label}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      placeholder={loginField.placeholder}
-                      className="h-11 rounded-2xl"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className="h-11 rounded-2xl pr-10"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
+                {/* Password field */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password" className="flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                      Password
+                    </Label>
                     <Link
                       href={
                         selectedOrganization
                           ? `/students/forgot-password?organization=${selectedOrganization.slug}${email.trim() ? `&email=${encodeURIComponent(email.trim())}` : ""}`
                           : `/students/forgot-password${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ""}`
                       }
-                      className="text-sm font-medium text-foreground underline underline-offset-4"
+                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                     >
                       Forgot password?
                     </Link>
                   </div>
-
-                  {restrictionMessage ? (
-                    <Alert>
-                      <AlertDescription>{restrictionMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-
-                  {error ? (
-                    <Alert variant="destructive">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  ) : null}
-
-                  <Button
-                    type="submit"
-                    className="h-11 w-full rounded-2xl"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <LoadingButtonContent label="Signing in..." />
-                    ) : (
-                      <>
-                        Continue to {labels.singular.toLowerCase()} portal
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-                  <p>
-                    Password recovery is available through{" "}
-                    {recoveryLabels.length > 0
-                      ? recoveryLabels.join(" or ").toLowerCase()
-                      : "your recovery details"}
-                    .
-                  </p>
-                  <p className="mt-2">
-                    Admin access lives in the management portal.{" "}
-                    <Link
-                      href="/auth/signin"
-                      className="font-medium text-foreground underline underline-offset-4"
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="pr-10"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      Sign in as an administrator
-                    </Link>
-                    .
-                  </p>
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </CardContent>
-            </>
+
+                {restrictionMessage ? (
+                  <Alert>
+                    <AlertDescription>{restrictionMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {error ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <LoadingButtonContent label="Signing in…" />
+                  ) : (
+                    <>
+                      Sign in
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <Separator />
+
+              {/* Footer links */}
+              <div className="space-y-2 text-center text-xs text-muted-foreground">
+                <p className="flex items-center justify-center gap-1.5">
+                  <KeyRound className="h-3 w-3" />
+                  Recovery via{" "}
+                  {recoveryLabels.length > 0
+                    ? recoveryLabels.join(" or ").toLowerCase()
+                    : "your recovery details"}
+                  .
+                </p>
+                <p>
+                  Not a student?{" "}
+                  <Link
+                    href="/auth/signin"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    Admin sign in
+                  </Link>
+                </p>
+              </div>
+            </div>
           )}
-        </Card>
+        </div>
       </div>
 
-      <Dialog
-        open={firstLoginPromptOpen}
-        onOpenChange={setFirstLoginPromptOpen}
-      >
+      {/* First-login prompt */}
+      <Dialog open={firstLoginPromptOpen} onOpenChange={setFirstLoginPromptOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Secure your account</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Secure your account
+            </DialogTitle>
             <DialogDescription>
-              You just signed in with the default password for the first time.
-              Change it now for better security, or continue and update it from
-              your profile immediately after entry.
+              You signed in with a default password. Create a personal password
+              now to keep your account secure.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-            Recommended: create a new password now so your student portal stays
-            protected before you continue.
+          <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            Recommended: set your password now before continuing to the portal.
           </div>
           <DialogFooter className="gap-2 sm:justify-end">
             <Button
@@ -530,10 +465,11 @@ function StudentLoginPageContent() {
                 router.replace(postLoginRoute);
               }}
             >
-              Continue with current password
+              Skip for now
             </Button>
             <Button type="button" onClick={routeToCreatePassword}>
-              Change password now
+              Set password
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </DialogFooter>
         </DialogContent>

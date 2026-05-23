@@ -91,7 +91,7 @@ export function CandidateSheet({
   const description =
     mode === "view"
       ? "Review the candidate profile and ballot placement."
-      : "Use the form below to keep the session ballot accurate and complete.";
+      : "Use the form below to keep the election ballot accurate and complete.";
 
   const handleUpload = async (file: File) => {
     setUploading(true);

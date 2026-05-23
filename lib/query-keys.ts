@@ -5,6 +5,8 @@ export const queryKeys = {
     organizations: (search: string) =>
       ["public", "organizations", search] as const,
     organization: (slug: string) => ["public", "organization", slug] as const,
+    liveSession: (tenantSlug: string, liveCode: string) =>
+      ["public", "live-session", tenantSlug, liveCode] as const,
     applicationStatus: (email: string, reference?: string) =>
       ["public", "application-status", email, reference || "any"] as const,
   },
@@ -42,6 +44,7 @@ export const queryKeys = {
     adminSummary: () => ["sessions", "admin", "summary"] as const,
     adminDetail: (id: string) => ["sessions", "admin", "detail", id] as const,
     adminStats: (id: string) => ["sessions", "admin", "stats", id] as const,
+    adminLive: (id: string) => ["sessions", "admin", "live", id] as const,
     studentList: (filters: Record<string, unknown>) =>
       ["sessions", "student", "list", filters] as const,
     studentDetail: (id: string) =>

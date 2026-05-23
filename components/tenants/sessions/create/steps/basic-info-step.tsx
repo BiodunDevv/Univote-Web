@@ -36,7 +36,7 @@ export function BasicInfoStep({
             htmlFor="title"
             className="text-xs font-medium text-muted-foreground"
           >
-            Session Title
+            Election Title
           </Label>
           <Input
             id="title"
@@ -60,7 +60,7 @@ export function BasicInfoStep({
             name="description"
             value={formData.description}
             onChange={onInputChange}
-            placeholder="Briefly explain what this session covers"
+            placeholder="Briefly explain what this election covers"
             rows={3}
             className="resize-none text-sm"
           />

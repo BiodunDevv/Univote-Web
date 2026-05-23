@@ -318,7 +318,7 @@ export default function PlatformTenantDetailPage() {
           },
           { label: "Colleges", value: stats.colleges, sub: null },
           {
-            label: "Sessions",
+            label: "Elections",
             value: stats.sessions.total,
             sub: `${stats.sessions.active} active`,
           },

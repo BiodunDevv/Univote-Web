@@ -141,7 +141,7 @@ export default function FooterSection() {
             href="/auth/signin"
             className="rounded-full border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Admin Access
+            Admin Console
           </Link>
           <Link
             href="/super-admin"

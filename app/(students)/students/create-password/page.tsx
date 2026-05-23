@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -33,11 +32,31 @@ export default function StudentCreatePasswordPage() {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const ref = searchParams.get("ref") || "/students/home";
   const labels = getTenantParticipantLabels(tenant);
+
+  const strength =
+    newPassword.length === 0
+      ? 0
+      : newPassword.length < 6
+        ? 1
+        : newPassword.length < 10
+          ? 2
+          : /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword)
+            ? 4
+            : 3;
+
+  const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][strength];
+  const strengthColor = [
+    "",
+    "bg-destructive",
+    "bg-amber-400",
+    "bg-blue-500",
+    "bg-emerald-500",
+  ][strength];
 
   useEffect(() => {
     if (hasHydrated && !firstLoginToken && !(token && student?.first_login)) {
@@ -54,12 +73,10 @@ export default function StudentCreatePasswordPage() {
       setLocalError("Password must be at least 6 characters long.");
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setLocalError("Passwords do not match.");
       return;
     }
-
     if (newPassword === "1234") {
       setLocalError("Choose a password different from the default password.");
       return;
@@ -70,95 +87,128 @@ export default function StudentCreatePasswordPage() {
   };
 
   return (
-    <div className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100svh-4rem)] max-w-xl items-center">
-        <Card className="w-full border shadow-none">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border bg-muted p-3">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle>Create a new password</CardTitle>
-                <CardDescription>
-                  Secure your account before entering the {labels.singular.toLowerCase()} portal.
-                </CardDescription>
-              </div>
+    <div className="flex min-h-svh flex-col bg-background">
+      {/* Top banner */}
+      <div className="border-b bg-linear-to-r from-(--student-hero-from) to-(--student-hero-to) px-4 py-5 sm:px-6">
+        <div className="mx-auto max-w-md">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border bg-background/80">
+              <ShieldCheck className="h-5 w-5 text-primary" />
             </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-              Use at least 6 characters. This password replaces the temporary default password used for your first sign in.
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                First sign-in
+              </p>
+              <h1 className="font-display text-xl font-semibold text-foreground">
+                Create a new password
+              </h1>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-1.5">
-                <Label htmlFor="new-password">New password</Label>
-                <div className="relative">
-                  <Input
-                    id="new-password"
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword((current) => !current)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showNewPassword ? "Hide password" : "Show password"}
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirm-password">Confirm password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirm-password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((current) => !current)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
+      {/* Form */}
+      <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-md space-y-5">
+          <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+            Secure your {labels.singular.toLowerCase()} account before entering
+            the portal. Use at least 6 characters — this replaces the temporary
+            default password.
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password">New password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNew ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="h-11 rounded-xl pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNew((v) => !v)}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={showNew ? "Hide password" : "Show password"}
+                >
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
 
-              {localError || error ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{localError || error}</AlertDescription>
-                </Alert>
+              {/* Strength meter */}
+              {newPassword.length > 0 ? (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div
+                        key={step}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          step <= strength ? strengthColor : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Strength:{" "}
+                    <span className="font-medium text-foreground">
+                      {strengthLabel}
+                    </span>
+                  </p>
+                </div>
               ) : null}
+            </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <LoadingButtonContent label="Securing account..." />
-                ) : (
-                  "Create password"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password">Confirm password</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="h-11 rounded-xl pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword && confirmPassword !== newPassword ? (
+                <p className="text-xs text-destructive">
+                  Passwords do not match.
+                </p>
+              ) : null}
+            </div>
+
+            {localError || error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{localError || error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Button
+              type="submit"
+              className="press-scale h-11 w-full rounded-xl font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <LoadingButtonContent label="Securing account..." />
+              ) : (
+                "Create password & enter portal"
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

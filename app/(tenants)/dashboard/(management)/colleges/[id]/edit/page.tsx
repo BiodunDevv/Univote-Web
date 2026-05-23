@@ -203,7 +203,7 @@ export default function EditCollegePage() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <TenantSectionCard
           title="College identity"
-          description="These fields shape how the college appears across student management, reporting, and session eligibility."
+          description="These fields shape how the college appears across student management, reporting, and election eligibility."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">

@@ -70,13 +70,14 @@ const adminNavMain: NavItem[] = [
     icon: GraduationCap,
   },
   {
-    title: "Sessions",
-    url: "/dashboard/sessions",
+    title: "Elections",
+    url: "/dashboard/elections",
     icon: Vote,
     items: [
-      { title: "All Sessions", url: "/dashboard/sessions" },
-      { title: "Create Session", url: "/dashboard/sessions/create" },
-      { title: "Results & Analytics", url: "/dashboard/election-analytics" },
+      { title: "All Elections", url: "/dashboard/elections" },
+      { title: "Live Elections", url: "/dashboard/elections?status=active" },
+      { title: "Create Election", url: "/dashboard/elections/create" },
+      { title: "Election Results", url: "/dashboard/election-analytics" },
     ],
   },
   {
@@ -217,7 +218,7 @@ export function AdminSidebar({
     () =>
       adminNavMain
         .map((item) =>
-          item.title === "Sessions" && !advancedAnalyticsEnabled
+          item.title === "Elections" && !advancedAnalyticsEnabled
             ? {
                 ...item,
                 items: item.items?.filter(
@@ -230,7 +231,7 @@ export function AdminSidebar({
           switch (item.title) {
             case "Students":
               return canViewParticipants;
-            case "Sessions":
+            case "Elections":
             case "Candidates":
               return canManageSessions;
             case "Colleges":

@@ -23,7 +23,7 @@ type LoadingButtonContentProps = {
 export function ChangingLoadingState({
   messages,
   message,
-  intervalMs = 850,
+  intervalMs = 450,
   fullHeight = false,
   variant,
   className,
@@ -58,7 +58,7 @@ export function ChangingLoadingState({
         )}
       >
         <span className="inline-flex h-4 w-4 items-center justify-center">
-          <span className="animate-spin animation-duration-[0.75s] text-current">
+          <span className="animate-spin [animation-duration:500ms] text-current">
             <LogoIcon className="h-3.5 w-3.5" />
           </span>
         </span>
@@ -73,17 +73,17 @@ export function ChangingLoadingState({
         "flex items-center justify-center px-3 py-8",
         resolvedVariant === "page"
           ? "min-h-screen"
-          : "min-h-[180px] rounded-xl border bg-card/40",
+          : "min-h-[140px] rounded-xl border",
         className,
       )}
     >
       <div className="flex flex-col items-center gap-2.5 text-center">
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/90 shadow-sm">
-          <span className="animate-spin animation-duration-[0.75s] text-primary">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 shadow-sm">
+          <span className="animate-spin [animation-duration:500ms] text-primary">
             <LogoIcon className="h-4.5 w-4.5" />
           </span>
         </span>
-        <p className="text-xs font-medium text-foreground transition-opacity duration-150">
+        <p className="text-xs font-medium text-foreground transition-opacity duration-100" aria-live="polite">
           {normalizedMessages[index % normalizedMessages.length]}
         </p>
       </div>

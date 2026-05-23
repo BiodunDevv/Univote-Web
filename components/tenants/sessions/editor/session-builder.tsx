@@ -314,8 +314,8 @@ export function SessionBuilder({
       setStepIssues(validationIssues);
       setError(
         mode === "create"
-          ? "Resolve the highlighted issues before creating this session."
-          : "Resolve the highlighted issues before updating this session.",
+          ? "Resolve the highlighted issues before creating this election."
+          : "Resolve the highlighted issues before updating this election.",
       );
 
       const firstInvalidStep = SESSION_CREATION_STEPS.find(
@@ -343,8 +343,8 @@ export function SessionBuilder({
         submitError instanceof Error
           ? submitError.message
           : mode === "create"
-            ? "Failed to create session"
-            : "Failed to update session",
+            ? "Failed to create election"
+            : "Failed to update election",
       );
     }
   };
@@ -510,7 +510,7 @@ export function SessionBuilder({
             onCancel={onCancel}
             isSubmitting={isSubmitting}
             canSubmit={fullValidationIssues.length === 0}
-            submitLabel={mode === "create" ? "Create Session" : "Save Session"}
+            submitLabel={mode === "create" ? "Create Election" : "Save Election"}
             submittingLabel={mode === "create" ? "Creating..." : "Saving..."}
           />
         </form>

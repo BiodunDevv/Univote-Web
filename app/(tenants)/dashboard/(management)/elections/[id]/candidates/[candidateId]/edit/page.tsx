@@ -6,5 +6,5 @@ export default async function EditCandidateRedirectPage({
   params: Promise<{ id: string; candidateId: string }>;
 }) {
   const { id, candidateId } = await params;
-  redirect(`/dashboard/sessions/${id}?candidateId=${candidateId}&mode=edit`);
+  redirect(`/dashboard/elections/${id}?candidateId=${candidateId}&mode=edit`);
 }

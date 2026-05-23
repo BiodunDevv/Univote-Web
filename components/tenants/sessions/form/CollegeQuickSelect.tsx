@@ -35,7 +35,7 @@ export default function CollegeQuickSelect({
         <span className="text-[10px] text-muted-foreground hidden sm:inline">
           {departmentMode
             ? "Tap to select all departments"
-            : `Choose the one college of ${participantPluralLabel.toLowerCase()} that should access this session`}
+            : `Choose the one college of ${participantPluralLabel.toLowerCase()} that should access this election`}
         </span>
       </div>
       <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
@@ -82,7 +82,7 @@ export default function CollegeQuickSelect({
       ) : (
         <p className="text-[10px] sm:text-xs text-muted-foreground">
           Choose the one college of {participantPluralLabel.toLowerCase()} that
-          should access this session.
+          should access this election.
         </p>
       )}
     </div>

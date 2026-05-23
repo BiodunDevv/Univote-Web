@@ -11,6 +11,7 @@ import {
   StudentDashboardResponse,
   StudentFinalResultsResponse,
   StudentLiveResultsResponse,
+  StudentLocationCheckResponse,
   StudentPortalUser,
   StudentSessionEligibilityScope,
   StudentSessionDetail,
@@ -233,6 +234,27 @@ export function useSubmitVoteMutation() {
         }),
       ]);
     },
+  });
+}
+
+export function useStudentLocationCheckMutation() {
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      location,
+    }: {
+      sessionId: string;
+      location: { lat: number; lng: number };
+    }) =>
+      apiRequest<StudentLocationCheckResponse>("/api/vote/location-check", {
+        method: "POST",
+        auth: "student",
+        data: {
+          session_id: sessionId,
+          lat: location.lat,
+          lng: location.lng,
+        },
+      }),
   });
 }
 

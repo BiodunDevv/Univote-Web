@@ -20,12 +20,12 @@ export function TenantMetricCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[1.5rem] border border-border/70 bg-background/80 shadow-none",
+        "border shadow-none",
         className,
       )}
     >
-      <CardContent className="flex items-start justify-between gap-3 p-2">
-        <div className="space-y-1.5">
+      <CardContent className="flex items-start justify-between gap-3 p-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <p className={compactUi.typography.eyebrow}>
             {label}
           </p>
@@ -37,7 +37,7 @@ export function TenantMetricCard({
           ) : null}
         </div>
         {icon ? (
-          <div className="rounded-2xl border border-border/70 bg-muted/40 p-2 text-foreground">
+          <div className="rounded-md border p-2 text-foreground">
             {icon}
           </div>
         ) : null}

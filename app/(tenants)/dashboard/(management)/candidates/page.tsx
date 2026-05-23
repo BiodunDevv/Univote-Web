@@ -109,7 +109,7 @@ export default function CandidatesPage() {
       <ChangingLoadingState
         messages={[
           "Loading candidate directory...",
-          "Fetching session relationships...",
+          "Fetching election relationships...",
           "Preparing ballot management view...",
         ]}
       />
@@ -131,14 +131,14 @@ export default function CandidatesPage() {
         eyebrow="Tenant ballots"
         icon={<Users className="h-5 w-5" />}
         title="Candidate Directory"
-        subtitle="Review who is on each ballot, how positions are distributed, and which sessions are pulling the highest vote totals."
+        subtitle="Review who is on each ballot, how positions are distributed, and which elections are pulling the highest vote totals."
         stats={[
           {
             label: "Candidates",
             value: candidates.length.toLocaleString(),
           },
           {
-            label: "Sessions represented",
+            label: "Elections represented",
             value: new Set(candidates.map((candidate) => candidate.session_id._id)).size.toLocaleString(),
           },
           {
@@ -154,13 +154,13 @@ export default function CandidatesPage() {
 
       <TenantSectionCard
         title="Refine the directory"
-        description="Search instantly by candidate, position, or session name, then narrow the live directory without refetching."
+        description="Search instantly by candidate, position, or election name, then narrow the live directory without refetching."
       >
         <div className="grid gap-3 md:grid-cols-3">
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search candidates, positions, or sessions"
+              placeholder="Search candidates, positions, or elections"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="pl-9"
@@ -168,10 +168,10 @@ export default function CandidatesPage() {
           </div>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by session status" />
+              <SelectValue placeholder="Filter by election status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All session statuses</SelectItem>
+              <SelectItem value="all">All election statuses</SelectItem>
               <SelectItem value="upcoming">Upcoming</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="ended">Ended</SelectItem>
@@ -179,10 +179,10 @@ export default function CandidatesPage() {
           </Select>
           <Select value={sessionId} onValueChange={setSessionId}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by session" />
+              <SelectValue placeholder="Filter by election" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All sessions</SelectItem>
+              <SelectItem value="all">All elections</SelectItem>
               {(sessionsQuery.data?.sessions || []).map((session) => (
                 <SelectItem key={session._id} value={session._id}>
                   {session.title}
@@ -245,7 +245,7 @@ export default function CandidatesPage() {
             <TenantEmptyState
               icon={Users}
               title="No candidate distribution yet"
-              description="Once candidates are attached to sessions, this chart will show how the ballot is shaped."
+              description="Once candidates are attached to elections, this chart will show how the ballot is shaped."
             />
           )}
         </TenantSectionCard>
@@ -281,7 +281,7 @@ export default function CandidatesPage() {
 
       <TenantSectionCard
         title="Candidate registry"
-        description="Card-first ballot registry with live filtering for session, lifecycle, vote totals, and candidate metadata."
+        description="Card-first ballot registry with live filtering for election, lifecycle, vote totals, and candidate metadata."
       >
         {candidates.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -309,7 +309,7 @@ export default function CandidatesPage() {
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                      Session
+                      Election
                     </p>
                     <p className="mt-1 text-sm font-medium">{candidate.session_id.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -340,7 +340,7 @@ export default function CandidatesPage() {
           <TenantEmptyState
             icon={Vote}
             title="No candidates matched this view"
-            description="Adjust the live filters, or add candidates from an upcoming session editor."
+            description="Adjust the live filters, or add candidates from an upcoming election editor."
           />
         )}
       </TenantSectionCard>

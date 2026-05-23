@@ -8,7 +8,6 @@ import {
   PortalEmptyState,
   PortalHero,
   PortalPage,
-  PortalStackCard,
 } from "@/components/students/portal/portal-page";
 import { useStudentSessionsQuery, useStudentVotingHistoryQuery } from "@/lib/queries/student";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +34,7 @@ export default function StudentResultsPage() {
       <ChangingLoadingState
         messages={[
           "Loading results workspace...",
-          "Pulling session tallies...",
+          "Pulling election tallies...",
           "Refreshing vote history...",
         ]}
       />
@@ -46,51 +45,11 @@ export default function StudentResultsPage() {
     <PortalPage>
       <PortalHero
         eyebrow="Results"
-        title="Tallies and history"
-        description="Review live races, final standings, and your recorded vote history in one election board."
-        className="p-4 sm:p-5"
+        title="Tallies & history"
+        description="Review live races, final standings, and your recorded vote history."
       />
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        <PortalStackCard className="space-y-1.5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Trophy className="h-4 w-4 text-primary" />
-            Result boards
-          </div>
-          <p className="text-2xl font-semibold text-foreground">
-            {resultSessions.length}
-          </p>
-          <p className="text-xs leading-5 text-muted-foreground">
-            Live and final election boards available to you.
-          </p>
-        </PortalStackCard>
-        <PortalStackCard className="space-y-1.5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ArrowUpRight className="h-4 w-4 text-primary" />
-            Live races
-          </div>
-          <p className="text-2xl font-semibold text-foreground">
-            {resultSessions.filter((session) => session.status === "active").length}
-          </p>
-          <p className="text-xs leading-5 text-muted-foreground">
-            Sessions still updating while voting remains open.
-          </p>
-        </PortalStackCard>
-        <PortalStackCard className="space-y-1.5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <History className="h-4 w-4 text-primary" />
-            Recorded votes
-          </div>
-          <p className="text-2xl font-semibold text-foreground">
-            {historyQuery.data?.history?.length || 0}
-          </p>
-          <p className="text-xs leading-5 text-muted-foreground">
-            Ballots currently visible in your personal history.
-          </p>
-        </PortalStackCard>
-      </div>
-
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
+      <Tabs value={tab} onValueChange={setTab} className="animate-slide-up-1 w-full">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-linear-to-r from-background to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-5 bg-linear-to-l from-background to-transparent" />
@@ -100,13 +59,13 @@ export default function StudentResultsPage() {
           >
             <TabsTrigger
               value="results"
-              className="shrink-0 px-3 py-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 sm:px-4"
+              className="shrink-0 px-3 py-2 text-sm data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
             >
               Session results
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="shrink-0 px-3 py-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 sm:px-4"
+              className="shrink-0 px-3 py-2 text-sm data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10"
             >
               Vote history
             </TabsTrigger>
@@ -116,57 +75,50 @@ export default function StudentResultsPage() {
         <TabsContent value="results" className="mt-4">
           {resultSessions.length === 0 ? (
             <PortalEmptyState
+              icon={Trophy}
               title="No results yet"
-              description="There are no result-ready sessions available yet."
+              description="There are no result-ready elections available yet."
             />
           ) : (
-            <div className="grid gap-2.5">
+            <div className="grid gap-3">
               {resultSessions.map((session) => (
-                <Card key={session._id} className="rounded-2xl border shadow-none">
+                <Card
+                  key={session._id}
+                  className="press-scale rounded-2xl border shadow-none transition-colors hover:bg-muted/20"
+                >
                   <CardHeader className="space-y-2 pb-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="text-[11px] capitalize">
                         {session.status}
                       </Badge>
-                      <Badge variant="outline" className="text-[11px]">
-                        {session.has_voted ? "You voted" : "Eligible"}
-                      </Badge>
+                      {session.has_voted ? (
+                        <Badge variant="outline" className="border-emerald-300/60 bg-emerald-50/50 text-[11px] text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          You voted
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[11px]">
+                          View only
+                        </Badge>
+                      )}
                     </div>
-                    <CardTitle className="text-sm">{session.title}</CardTitle>
+                    <CardTitle className="text-sm leading-snug">{session.title}</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2.5">
-                    <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
-                      {session.description || "No description provided."}
+                  <CardContent className="space-y-3 pb-4">
+                    <p className="text-xs text-muted-foreground">
+                      {session.status === "active" ? "Live board available" : "Final board published"} · Ends {formatDateTime(session.end_time)}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className="rounded-full border bg-muted/20 px-2.5 py-1">
-                        {session.status === "active" ? "Live board available" : "Final board available"}
-                      </span>
-                      <span className="rounded-full border bg-muted/20 px-2.5 py-1">
-                        {session.has_voted ? "Your vote recorded" : "View-only access"}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Ends {formatDateTime(session.end_time)}
-                    </p>
-                    <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/20 px-3 py-2">
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                          Board status
-                        </p>
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {session.status === "active"
-                            ? "Live race board is updating"
-                            : "Final standings are published"}
-                        </p>
-                      </div>
-                      <Link
-                        href={`/students/results/${session._id}`}
-                        className="inline-flex shrink-0 items-center rounded-xl border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
-                      >
-                        Open
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/students/results/${session._id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40"
+                    >
+                      <p className="text-sm font-medium text-foreground">
+                        {session.status === "active"
+                          ? "Live race board is updating"
+                          : "Final standings are published"}
+                      </p>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
@@ -176,32 +128,40 @@ export default function StudentResultsPage() {
 
         <TabsContent value="history" className="mt-4">
           {historyQuery.data?.history?.length ? (
-            <div className="grid gap-2.5">
+            <div className="grid gap-3">
               {historyQuery.data.history.map((entry) => (
-                <Card key={`${entry.session.id}-${entry.voted_at}`} className="rounded-2xl border shadow-none">
+                <Card
+                  key={`${entry.session.id}-${entry.voted_at}`}
+                  className="rounded-2xl border shadow-none"
+                >
                   <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <CardTitle className="text-sm">{entry.session.title}</CardTitle>
-                      <Badge variant="outline" className="text-[11px]">
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-sm leading-snug">
+                        {entry.session.title}
+                      </CardTitle>
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 border-emerald-300/60 bg-emerald-50/50 text-[11px] text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+                      >
                         <CheckCircle2 className="mr-1 h-3 w-3" />
                         Recorded
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2.5">
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Submitted {formatDateTime(entry.voted_at)}
                     </p>
-                    <div className="grid gap-2">
+                  </CardHeader>
+                  <CardContent className="pb-4">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       {entry.votes.map((vote) => (
                         <div
                           key={`${entry.session.id}-${vote.position}`}
-                          className="rounded-2xl border bg-muted/20 p-3"
+                          className="rounded-xl border bg-muted/20 px-3 py-2.5"
                         >
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                             {vote.position}
                           </p>
-                          <p className="mt-1 text-sm font-medium text-foreground">
+                          <p className="mt-0.5 text-sm font-semibold text-foreground">
                             {vote.candidate.name}
                           </p>
                         </div>
@@ -213,6 +173,7 @@ export default function StudentResultsPage() {
             </div>
           ) : (
             <PortalEmptyState
+              icon={History}
               title="No history yet"
               description="Your vote history will appear here after you submit ballots."
             />

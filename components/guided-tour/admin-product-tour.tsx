@@ -45,9 +45,9 @@ export function AdminProductTour({ scope }: AdminProductTourProps) {
             {
               element: "[data-tour='tenant-guide-sessions']",
               popover: {
-                title: "Create your first session",
+                title: "Create your first election",
                 description:
-                  "When your workspace settings are ready, move here to create the first election or ballot session.",
+                  "When your workspace settings are ready, move here to create the first election or ballot election.",
                 side: "bottom" as const,
               },
             },
@@ -67,7 +67,7 @@ export function AdminProductTour({ scope }: AdminProductTourProps) {
         popover: {
           title: "Primary navigation",
           description:
-            "Your sidebar is the fastest way to move through participants, sessions, settings, and the rest of your workspace.",
+            "Your sidebar is the fastest way to move through participants, elections, settings, and the rest of your workspace.",
           side: "right" as const,
         },
       },

@@ -21,7 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const segmentLabels: Record<string, string> = {
   dashboard: "Dashboard",
   "super-admin": "Platform Console",
-  sessions: "Sessions",
+  elections: "Elections",
   create: "Create",
   edit: "Edit",
   colleges: "Colleges",
@@ -52,7 +52,7 @@ function titleFromSegment(segment: string, previous?: string) {
   }
 
   if (/^[a-f0-9]{20,}$/i.test(segment) || /^[a-f0-9-]{8,}$/i.test(segment)) {
-    if (previous === "sessions") return "Session Details";
+    if (previous === "elections") return "Election Details";
     if (previous === "admins") return "Admin Details";
     if (previous === "colleges") return "College Details";
     if (previous === "students" || previous === "participants") {
@@ -160,9 +160,9 @@ export function DashboardShellHeader({
             isTenantParticipantFieldEnabled(tenant, "department"),
         },
         {
-          value: "/dashboard/sessions",
-          label: "Sessions",
-          match: (path: string) => path.startsWith("/dashboard/sessions"),
+          value: "/dashboard/elections",
+          label: "Elections",
+          match: (path: string) => path.startsWith("/dashboard/elections"),
           visible: true,
         },
         {
@@ -269,11 +269,11 @@ export function DashboardShellHeader({
     `/${rootSegment}`;
 
   return (
-    <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-2 py-3">
+    <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/85">
+      <div className="mx-auto flex w-full flex-col gap-3 px-3 py-3 sm:px-4 lg:px-5">
         <div className="flex w-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 md:flex-1">
-            <SidebarTrigger className="shrink-0 rounded-lg border border-border/70 bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground" />
+            <SidebarTrigger className="shrink-0 border bg-background transition-colors hover:bg-accent hover:text-accent-foreground" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-foreground md:hidden">
                 {currentTitle}
@@ -308,7 +308,7 @@ export function DashboardShellHeader({
                 />
               </Link>
             </Button>
-            <div className="hidden items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground md:flex">
+            <div className="hidden items-center gap-2 rounded-md border bg-background px-3 py-1 text-xs text-muted-foreground md:flex">
               <span>Search</span>
               <Kbd>/</Kbd>
             </div>
@@ -330,13 +330,13 @@ export function DashboardShellHeader({
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-5 bg-linear-to-l from-background to-transparent" />
             <TabsList
               variant="line"
-              className="h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto border-b border-border/70 px-0 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto border-b px-0 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {navTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="shrink-0 px-3 py-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 sm:px-4"
+                  className="shrink-0 px-3 py-2 text-xs data-[state=active]:border-primary/40 data-[state=active]:bg-muted sm:px-4"
                 >
                   {tab.label}
                 </TabsTrigger>

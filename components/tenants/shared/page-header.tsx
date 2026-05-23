@@ -30,7 +30,7 @@ interface TenantPageHeaderProps {
 export function TenantPageHeader({
   title,
   subtitle,
-  eyebrow = "Tenant workspace",
+  eyebrow,
   icon,
   onBack,
   actions,
@@ -45,20 +45,20 @@ export function TenantPageHeader({
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[2rem] border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0%,transparent_42%),linear-gradient(135deg,hsl(var(--card))_0%,hsl(var(--card))_55%,hsl(var(--muted)/0.22)_100%)] shadow-none p-1 px-1",
+        "border shadow-none",
         className,
       )}
     >
-      <CardContent className="space-y-3 p-3">
+      <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1 space-y-3">
-            <div className={cn("flex flex-wrap items-center gap-2", compactUi.typography.eyebrow)}>
+          <div className="min-w-0 flex-1">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               {showSidebarToggle && !open ? (
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   onClick={toggleSidebar}
-                  className="rounded-full border border-border/70"
+                  className="border"
                 >
                   <Menu className="h-4 w-4" />
                 </Button>
@@ -68,17 +68,19 @@ export function TenantPageHeader({
                   variant="ghost"
                   size="icon-sm"
                   onClick={onBack}
-                  className="rounded-full border border-border/70"
+                  className="border"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               ) : null}
-              <span>{eyebrow}</span>
+              {eyebrow ? (
+                <span className={compactUi.typography.eyebrow}>{eyebrow}</span>
+              ) : null}
             </div>
 
             <div className="flex items-start gap-3">
               {icon ? (
-                <div className="hidden rounded-2xl border border-border/70 bg-background/80 p-2 text-foreground shadow-sm sm:flex">
+                <div className="hidden rounded-md border p-2 text-foreground sm:flex">
                   {icon}
                 </div>
               ) : null}
@@ -115,12 +117,12 @@ export function TenantPageHeader({
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-border/70 bg-background/75 p-4 shadow-sm"
+                className="rounded-md border p-3"
               >
                 <p className={compactUi.typography.eyebrow}>
                   {stat.label}
                 </p>
-                <div className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                <div className="mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                   {stat.value}
                 </div>
               </div>

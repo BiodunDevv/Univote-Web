@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock3,
+  ExternalLink,
   MapPin,
   Pencil,
   ShieldCheck,
@@ -222,15 +223,6 @@ function SessionDetailsPageContent() {
       ? requestedMode
       : null;
 
-  if (hasHydrated && token && !canManageSessions) {
-    return (
-      <TenantAccessRestricted
-        title="Session access is restricted"
-        description="Your current university role can’t open session administration details. Ask your workspace owner for session management access if you need to review or update election sessions."
-      />
-    );
-  }
-
   useEffect(() => {
     if (!hasHydrated) return;
     if (!token) {
@@ -246,8 +238,14 @@ function SessionDetailsPageContent() {
     },
     [sessionId],
   );
-  const colleges = collegesQuery.data?.colleges ?? [];
-  const eligibleDepartmentIds = session?.eligible_departments ?? [];
+  const colleges = useMemo(
+    () => collegesQuery.data?.colleges ?? [],
+    [collegesQuery.data?.colleges],
+  );
+  const eligibleDepartmentIds = useMemo(
+    () => session?.eligible_departments ?? [],
+    [session?.eligible_departments],
+  );
 
   const eligibleDepartmentsByCollege = useMemo<
     SessionDetailsLoadedProps["eligibleDepartmentsByCollege"]
@@ -274,7 +272,10 @@ function SessionDetailsPageContent() {
   }, [colleges, eligibleDepartmentIds]);
 
   // Keep all hook-backed derivations above conditional returns.
-  const sessionCandidates = session?.candidates ?? [];
+  const sessionCandidates = useMemo(
+    () => session?.candidates ?? [],
+    [session?.candidates],
+  );
   const displayedCandidates = useMemo(
     () =>
       candidateState.sessionId === sessionId && candidateState.value
@@ -330,6 +331,15 @@ function SessionDetailsPageContent() {
     [pathname, router, searchParams],
   );
 
+  if (hasHydrated && token && !canManageSessions) {
+    return (
+      <TenantAccessRestricted
+        title="Election access is restricted"
+        description="Your current university role can’t open election administration details. Ask your workspace owner for election management access if you need to review or update elections."
+      />
+    );
+  }
+
   const combinedError =
     sessionDetailQuery.error ||
     sessionStatsQuery.error ||
@@ -348,12 +358,12 @@ function SessionDetailsPageContent() {
             <p className="text-sm text-muted-foreground">
               {combinedError instanceof Error
                 ? combinedError.message
-                : "Failed to load session"}
+                : "Failed to load election"}
             </p>
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => router.push("/dashboard/sessions")}
+                onClick={() => router.push("/dashboard/elections")}
               >
                 Back to Sessions
               </Button>
@@ -380,9 +390,9 @@ function SessionDetailsPageContent() {
     return (
       <ChangingLoadingState
         messages={[
-          "Loading session details...",
+          "Loading election details...",
           "Pulling turnout and candidate data...",
-          "Preparing session workspace...",
+          "Preparing election workspace...",
         ]}
       />
     );
@@ -511,7 +521,7 @@ function SessionDetailsLoaded({
               </h1>
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
                 {currentSession.description ||
-                  "No session description provided."}
+                  "No election description provided."}
               </p>
             </div>
           </div>
@@ -519,7 +529,7 @@ function SessionDetailsLoaded({
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
-              onClick={() => router.push("/dashboard/sessions")}
+              onClick={() => router.push("/dashboard/elections")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -528,13 +538,20 @@ function SessionDetailsLoaded({
               <Button
                 variant="outline"
                 onClick={() =>
-                  router.push(`/dashboard/sessions/${sessionId}/edit`)
+                  router.push(`/dashboard/elections/${sessionId}/edit`)
                 }
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Session
               </Button>
             ) : null}
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/dashboard/elections/${sessionId}/live`)}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open Live Page
+            </Button>
           </div>
         </div>
       </div>
@@ -677,7 +694,7 @@ function SessionDetailsLoaded({
 
             <SessionCandidateManager
               title="Candidate Workspace"
-              description="View and manage session candidates without leaving this page."
+              description="View and manage election candidates without leaving this page."
               candidates={displayedCandidates}
               categories={currentSession.categories}
               canManage={canManageCandidates}
@@ -786,7 +803,7 @@ function SessionDetailsLoaded({
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {currentSession.eligible_college
-                      ? "This session is restricted to one college scope."
+                      ? "This election is restricted to one college scope."
                       : "No college restriction configured."}
                   </p>
                 </div>

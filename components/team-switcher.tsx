@@ -32,7 +32,7 @@ export function TeamSwitcher({
           size="lg"
           className="cursor-default data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-            <activeTeam.logo className="size-4" />
+          <activeTeam.logo className="size-4" />
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">{activeTeam.name}</span>
             <span className="truncate text-xs">{activeTeam.plan}</span>

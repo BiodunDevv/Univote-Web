@@ -56,12 +56,12 @@ export default function NotificationsPage() {
     {
       key: "email_on_new_vote" as const,
       title: "New vote alerts",
-      description: "Notify administrators when new votes land in active sessions.",
+      description: "Notify administrators when new votes land in active elections.",
     },
     {
       key: "email_on_session_end" as const,
-      title: "Session end digest",
-      description: "Send a summary when a voting session closes.",
+      title: "Election end digest",
+      description: "Send a summary when an election closes.",
     },
     {
       key: "email_on_student_upload" as const,

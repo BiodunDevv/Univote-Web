@@ -94,7 +94,7 @@ export function ReviewSubmitStep({
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">Session Title</p>
+            <p className="text-xs text-muted-foreground">Election Title</p>
             <p className="font-medium text-foreground">
               {formData.title || "Not provided"}
             </p>

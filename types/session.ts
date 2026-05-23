@@ -37,6 +37,8 @@ export interface VotingSession {
   eligible_levels?: string[];
   is_off_campus_allowed?: boolean;
   results_public?: boolean;
+  live_public_code?: string | null;
+  live_sequence?: number | null;
   candidates?: SessionCandidate[];
 }
 

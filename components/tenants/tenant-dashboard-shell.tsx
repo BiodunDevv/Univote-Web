@@ -4,7 +4,7 @@ import * as React from "react";
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Settings2, Vote, Building2 } from "lucide-react";
+import { ArrowRight, Building2, Settings2, Vote } from "lucide-react";
 import { type AuthSessionData, useAuthStore } from "@/lib/store/useAuthStore";
 import {
   buildPublicAppUrl,
@@ -53,7 +53,8 @@ export function TenantDashboardShell({
   }, [pathname]);
 
   const tenantSlug = tenant?.slug || null;
-  const [showWorkspaceGuide, setShowWorkspaceGuide] = React.useState(false);
+  const [workspaceGuideDismissed, setWorkspaceGuideDismissed] =
+    React.useState(false);
   const needsTenantHostRedirect =
     Boolean(tenantSlug) &&
     admin?.role !== "super_admin" &&
@@ -103,11 +104,11 @@ export function TenantDashboardShell({
     token,
   ]);
 
-  useEffect(() => {
-    if (!hasHydrated || !tenantSlug || admin?.role === "super_admin") return;
-
-    setShowWorkspaceGuide(shouldShowWorkspaceGuide(tenantSlug));
-  }, [admin?.role, hasHydrated, tenantSlug]);
+  const showWorkspaceGuide =
+    hasHydrated &&
+    admin?.role !== "super_admin" &&
+    !workspaceGuideDismissed &&
+    shouldShowWorkspaceGuide(tenantSlug);
 
   if (!hasHydrated || !token || !admin) {
     return (
@@ -141,24 +142,24 @@ export function TenantDashboardShell({
         <SidebarInset>
           <AdminProductTour scope="tenant" />
           <DashboardShellHeader />
-          <div className="flex min-w-0 w-full max-w-full flex-1 flex-col overflow-x-hidden p-2">
+          <main className="flex min-w-0 w-full max-w-full flex-1 flex-col overflow-x-hidden px-3 py-3 sm:px-4 lg:px-5">
             {showWorkspaceGuide ? (
-              <Card className="mb-3 border-primary/20 bg-linear-to-r from-primary/5 via-background to-background">
-                <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0 space-y-1">
+              <Card className="mb-4 border shadow-none">
+                <CardContent className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">
                       Review your workspace before inviting your team
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Start with settings to confirm student structure, then
                       review your application status and publish your first
-                      session.
+                      election.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button asChild size="sm" data-tour="tenant-guide-settings">
                       <Link href="/dashboard/settings">
-                        <Settings2 className="mr-2 size-4" />
+                        <Settings2 className="mr-2 h-4 w-4" />
                         Open settings
                       </Link>
                     </Button>
@@ -169,7 +170,7 @@ export function TenantDashboardShell({
                       data-tour="tenant-guide-application"
                     >
                       <Link href="/dashboard/application">
-                        <Building2 className="mr-2 size-4" />
+                        <Building2 className="mr-2 h-4 w-4" />
                         Application
                       </Link>
                     </Button>
@@ -179,9 +180,9 @@ export function TenantDashboardShell({
                       variant="outline"
                       data-tour="tenant-guide-sessions"
                     >
-                      <Link href="/dashboard/sessions">
-                        <Vote className="mr-2 size-4" />
-                        Sessions
+                      <Link href="/dashboard/elections">
+                        <Vote className="mr-2 h-4 w-4" />
+                        Elections
                       </Link>
                     </Button>
                     {structureEnabled ? (
@@ -192,7 +193,7 @@ export function TenantDashboardShell({
                         data-tour="tenant-guide-structure"
                       >
                         <Link href="/dashboard/structure/colleges">
-                          <Building2 className="mr-2 size-4" />
+                          <Building2 className="mr-2 h-4 w-4" />
                           Colleges
                         </Link>
                       </Button>
@@ -202,18 +203,18 @@ export function TenantDashboardShell({
                       variant="ghost"
                       onClick={() => {
                         dismissWorkspaceGuide(tenantSlug);
-                        setShowWorkspaceGuide(false);
+                        setWorkspaceGuideDismissed(true);
                       }}
                     >
                       Continue
-                      <ArrowRight className="ml-2 size-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ) : null}
             {children}
-          </div>
+          </main>
         </SidebarInset>
       </SidebarProvider>
     </div>

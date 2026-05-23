@@ -26,28 +26,28 @@ export function SessionOverviewCards({ overview }: SessionOverviewCardsProps) {
 
   const cards = [
     {
-      label: "Total sessions",
+      label: "Total elections",
       value: data.total_sessions,
       icon: Calendar,
-      hint: "All election sessions currently tracked in the tenant.",
+      hint: "All elections currently tracked in the tenant.",
     },
     {
       label: "Active",
       value: data.active_sessions,
       icon: Vote,
-      hint: "Sessions that are open for voting right now.",
+      hint: "Elections that are open for voting right now.",
     },
     {
       label: "Upcoming",
       value: data.upcoming_sessions,
       icon: Clock3,
-      hint: "Prepared sessions waiting for their opening window.",
+      hint: "Prepared elections waiting for their opening window.",
     },
     {
       label: "Ended",
       value: data.ended_sessions,
       icon: CheckCircle2,
-      hint: "Sessions already closed and available for review.",
+      hint: "Elections already closed and available for review.",
     },
   ];
 

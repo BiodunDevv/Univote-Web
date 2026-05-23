@@ -33,7 +33,7 @@ export function RecentSessionsCard({
   return (
     <Card className="border shadow-none">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">Recent Sessions</CardTitle>
+        <CardTitle className="text-base">Recent Elections</CardTitle>
         <Clock className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -64,7 +64,7 @@ export function RecentSessionsCard({
             ))
           ) : (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              No sessions found
+              No elections found
             </p>
           )}
         </div>

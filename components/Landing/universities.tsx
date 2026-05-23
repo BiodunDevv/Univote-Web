@@ -13,7 +13,7 @@ export default function ContentSection() {
             <p className="text-muted-foreground">
               Univote helps schools organize secure elections without paperwork.{" "}
               <span className="text-accent-foreground font-bold">
-                Create sessions, upload candidates,
+                Create elections, upload candidates,
               </span>{" "}
               and monitor results in real time.
             </p>
@@ -25,7 +25,7 @@ export default function ContentSection() {
                   <h3 className="text-sm font-medium">Create Elections</h3>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  Set up voting sessions, manage candidates, and define election
+                  Set up elections, manage candidates, and define election
                   rules.
                 </p>
               </div>
@@ -52,7 +52,7 @@ export default function ContentSection() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="size-4" />
-                  <h3 className="text-sm font-medium">Monitor Sessions</h3>
+                  <h3 className="text-sm font-medium">Monitor Elections</h3>
                 </div>
                 <p className="text-muted-foreground text-sm">
                   Approve admins, track votes, and ensure smooth election

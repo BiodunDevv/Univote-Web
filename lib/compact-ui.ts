@@ -1,8 +1,8 @@
 export const compactUi = {
   typography: {
     eyebrow:
-      "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground",
-    pageTitle: "text-lg font-semibold tracking-tight text-foreground sm:text-xl",
+      "text-xs font-medium text-muted-foreground",
+    pageTitle: "text-xl font-semibold tracking-tight text-foreground sm:text-2xl",
     sectionTitle: "text-sm font-semibold text-foreground",
     cardTitle: "text-sm font-semibold text-foreground",
     body: "text-sm leading-6 text-foreground",

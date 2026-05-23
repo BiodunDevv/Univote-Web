@@ -29,9 +29,11 @@ import { PortalPage } from "@/components/students/portal/portal-page";
 import {
   fetchVoteLivenessSessionResult,
   useCreateVoteLivenessSessionMutation,
+  useStudentLocationCheckMutation,
   useStudentSessionDetailQuery,
   useSubmitVoteMutation,
 } from "@/lib/queries/student";
+import type { StudentLocationCheckResponse } from "@/types/student-portal";
 import { ApiError } from "@/lib/api/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +43,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 type VoteStep = "ballot" | "location" | "liveness" | "review";
+type LocationCheckStatus = "idle" | "checking" | "allowed" | "denied" | "error";
 type LivenessStatus =
   | "idle"
   | "creating_session"
@@ -176,13 +179,13 @@ function getVoteErrorMessage(error: unknown) {
 
   switch (details.code) {
     case "ALREADY_VOTED":
-      return "Your vote has already been recorded for this session.";
+      return "Your vote has already been recorded for this election.";
     case "MOBILE_DEVICE_REQUIRED":
       return "This ballot can only be completed from a mobile device. Open the student app on your phone and try again.";
     case "NO_REGISTERED_FACE":
       return "Your biometric profile is not enrolled or needs to be refreshed. Please contact your university administrator.";
     case "GEOFENCE_VIOLATION":
-      return "You are outside the approved voting radius for this session. Move into the allowed area and try again.";
+      return "You are outside the approved voting radius for this election. Move into the allowed area and try again.";
     case "LIVENESS_REQUIRED":
       return "Complete the live presence check before submitting your vote.";
     case "LIVENESS_FAILED":
@@ -208,6 +211,12 @@ function formatCountdown(totalSeconds: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function formatMeters(value?: number | null) {
+  if (typeof value !== "number") return "—";
+  if (value >= 1000) return `${(value / 1000).toFixed(2)} km`;
+  return `${value.toLocaleString()} m`;
+}
+
 function getLocationErrorMessage(error: GeolocationPositionError) {
   const rawMessage = error.message || "";
 
@@ -227,6 +236,35 @@ function getLocationErrorMessage(error: GeolocationPositionError) {
   }
 
   return rawMessage || "Failed to capture location.";
+}
+
+function getLocationCheckErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case "GEOFENCE_VIOLATION":
+        return "You are outside the approved voting area. Move within the voting radius and capture your location again.";
+      case "SESSION_INACTIVE":
+        return "This election is not active right now.";
+      case "ALREADY_VOTED":
+        return "Your vote has already been recorded for this election.";
+      case "COLLEGE_MISMATCH":
+      case "DEPARTMENT_MISMATCH":
+      case "LEVEL_MISMATCH":
+        return "You are not eligible to vote in this election.";
+      case "INVALID_COORDINATES":
+        return "Your device returned invalid coordinates. Turn location services on and try again.";
+      case "SESSION_NOT_FOUND":
+        return "This election could not be found.";
+      default:
+        return error.message || "We could not verify your voting location.";
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "We could not verify your voting location. Check your connection and try again.";
 }
 
 async function resolveStudentLocationName(coords: { lat: number; lng: number }) {
@@ -308,6 +346,7 @@ export default function StudentVotePage() {
   const { data, isLoading, error } = useStudentSessionDetailQuery(sessionId);
   const submitVote = useSubmitVoteMutation();
   const createLivenessSession = useCreateVoteLivenessSessionMutation();
+  const locationCheckMutation = useStudentLocationCheckMutation();
   const [selectedByCategory, setSelectedByCategory] = useState<
     Record<string, string>
   >({});
@@ -319,6 +358,11 @@ export default function StudentVotePage() {
   } | null>(null);
   const [currentStep, setCurrentStep] = useState<VoteStep>("ballot");
   const [isLocating, setIsLocating] = useState(false);
+  const [locationCheckStatus, setLocationCheckStatus] =
+    useState<LocationCheckStatus>("idle");
+  const [locationCheck, setLocationCheck] =
+    useState<StudentLocationCheckResponse | null>(null);
+  const [locationCheckMessage, setLocationCheckMessage] = useState("");
   const [livenessStatus, setLivenessStatus] = useState<LivenessStatus>(
     hasAwsLivenessWebConfig ? "idle" : "unsupported",
   );
@@ -346,7 +390,8 @@ export default function StudentVotePage() {
   const allCategoriesSelected =
     categories.length > 0 &&
     categories.every(([position]) => Boolean(selectedByCategory[position]));
-  const canContinueFromLocation = Boolean(location);
+  const canContinueFromLocation =
+    Boolean(location) && locationCheckStatus === "allowed" && locationCheck?.allowed === true;
   const canContinueFromLiveness =
     livenessStatus === "passed" &&
     ownershipVerified === true &&
@@ -382,7 +427,7 @@ export default function StudentVotePage() {
       <ChangingLoadingState
         messages={[
           "Loading ballot...",
-          "Checking session controls...",
+          "Checking election controls...",
           "Preparing secure voting flow...",
         ]}
       />
@@ -420,7 +465,7 @@ export default function StudentVotePage() {
                     Your ballot has already been recorded
                   </p>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    You have already submitted your vote for this session. View your submitted ballot receipt or check the live results below.
+                    You have already submitted your vote for this election. View your submitted ballot receipt or check the live results below.
                   </p>
                 </div>
               </div>
@@ -446,12 +491,12 @@ export default function StudentVotePage() {
       <Alert variant="destructive">
         <ShieldAlert className="h-4 w-4" />
         <AlertTitle>
-          {!session.eligible ? "Not eligible" : "Session unavailable"}
+          {!session.eligible ? "Not eligible" : "Election unavailable"}
         </AlertTitle>
         <AlertDescription>
           {!session.eligible
-            ? session.eligibility_reason || "You are not eligible to vote in this session."
-            : "This session is not currently accepting votes. Check back when it is active."}
+            ? session.eligibility_reason || "You are not eligible to vote in this election."
+            : "This election is not currently accepting votes. Check back when it is active."}
         </AlertDescription>
       </Alert>
     );
@@ -465,6 +510,12 @@ export default function StudentVotePage() {
   };
 
   const startLivenessCheck = async () => {
+    if (!canContinueFromLocation) {
+      setLivenessError("Capture and verify your voting location before starting live verification.");
+      toast.error("Capture and verify your voting location before starting live verification.");
+      return;
+    }
+
     if (biometricLocked) {
       setLivenessStatus("locked");
       return;
@@ -546,6 +597,18 @@ export default function StudentVotePage() {
     );
   };
 
+  const resetLivenessCheck = () => {
+    setLivenessStatus(hasAwsLivenessWebConfig ? "idle" : "unsupported");
+    setLivenessError("");
+    setLivenessSessionId("");
+    setLivenessRegion(awsGuestRegion);
+    setLivenessConfidence(null);
+    setLivenessThreshold(null);
+    setOwnershipVerified(null);
+    setCompareConfidence(null);
+    setCompareThreshold(null);
+  };
+
   const captureLocation = async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by this browser.");
@@ -553,6 +616,10 @@ export default function StudentVotePage() {
     }
 
     setIsLocating(true);
+    setLocationCheckStatus("idle");
+    setLocationCheck(null);
+    setLocationCheckMessage("");
+    resetLivenessCheck();
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -564,6 +631,7 @@ export default function StudentVotePage() {
         };
 
         setLocation(nextLocation);
+        setLocationCheckStatus("checking");
 
         try {
           const resolved = await resolveStudentLocationName({
@@ -584,16 +652,54 @@ export default function StudentVotePage() {
           });
         }
 
+        try {
+          const check = await locationCheckMutation.mutateAsync({
+            sessionId,
+            location: {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            },
+          });
+
+          setLocationCheck(check);
+          setLocationCheckStatus(check.allowed ? "allowed" : "denied");
+          setLocationCheckMessage(check.message);
+
+          if (check.allowed) {
+            toast.success(
+              session.is_off_campus_allowed
+                ? "Location recorded. You can continue to live verification."
+                : "You are within the approved voting area.",
+            );
+          } else {
+            resetLivenessCheck();
+            toast.error(check.message);
+          }
+        } catch (checkError) {
+          const message = getLocationCheckErrorMessage(checkError);
+          const payload =
+            checkError instanceof ApiError
+              ? (checkError.payload as StudentLocationCheckResponse | undefined)
+              : undefined;
+
+          setLocationCheck(payload || null);
+          setLocationCheckStatus(
+            payload?.code === "GEOFENCE_VIOLATION" ? "denied" : "error",
+          );
+          setLocationCheckMessage(message);
+          resetLivenessCheck();
+          toast.error(message);
+        }
+
         setIsLocating(false);
-        toast.success(
-          session.is_off_campus_allowed
-            ? "Location captured successfully."
-            : "Location captured. You can continue to secure verification.",
-        );
       },
       (locationError) => {
         toast.error(getLocationErrorMessage(locationError));
         setIsLocating(false);
+        setLocationCheckStatus("error");
+        setLocationCheck(null);
+        setLocationCheckMessage(getLocationErrorMessage(locationError));
+        resetLivenessCheck();
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -603,11 +709,13 @@ export default function StudentVotePage() {
     if (
       !allCategoriesSelected ||
       !location ||
+      locationCheckStatus !== "allowed" ||
+      locationCheck?.allowed !== true ||
       livenessStatus !== "passed" ||
       ownershipVerified === false
     ) {
       toast.error(
-        "Complete ballot selection, location capture, and live verification before submitting.",
+        "Complete ballot selection, approved location check, and live verification before submitting.",
       );
       return;
     }
@@ -645,95 +753,76 @@ export default function StudentVotePage() {
 
   return (
     <PortalPage className="flex min-h-full flex-col gap-3 pb-28 lg:pb-32">
-      <section
+      {/* Compact app-style header — title + step strip */}
+      <div
         data-tour="student-vote-hero"
-        className="rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:rounded-3xl sm:p-6"
+        className="flex flex-col gap-2.5 rounded-2xl border bg-card px-4 py-3.5"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-          <div className="min-w-0 space-y-2.5">
-            <Badge variant="outline">Active ballot</Badge>
-            <div className="space-y-2">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl lg:text-3xl">
-                {session.title}
-              </h1>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Complete your ballot, confirm your location, pass live presence
-                verification, and submit securely. Univote uses AWS Rekognition
-                to match your live capture against your enrolled student profile
-                automatically.
-              </p>
-            </div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Active ballot
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+              {session.title}
+            </p>
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-1.5">
-            <Badge variant="secondary" className="capitalize">
-              {session.status}
-            </Badge>
-            <Badge variant="outline">
-              {session.is_off_campus_allowed
-                ? "Flexible location"
-                : "Geofence enforced"}
-            </Badge>
-            <Badge variant="outline">Liveness-first</Badge>
+          <Badge variant="outline" className="shrink-0 text-[10px]">
+            {session.is_off_campus_allowed ? "Flexible location" : "Geofenced"}
+          </Badge>
+        </div>
+
+        {/* Step pills */}
+        <div className="flex items-center gap-1.5">
+          {([
+            ["ballot", "Ballot"],
+            ["location", "Location"],
+            ["liveness", "Liveness"],
+            ["review", "Review"],
+          ] as const).map(([value, label], index) => {
+            const isCompleted =
+              (value === "ballot" && allCategoriesSelected && currentStep !== "ballot") ||
+              (value === "location" && canContinueFromLocation && currentStep !== "location" && currentStepIndex > 1) ||
+              (value === "liveness" && canContinueFromLiveness && currentStep === "review");
+            const isCurrent = currentStep === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => goToStep(value as VoteStep)}
+                className="disabled:pointer-events-none"
+                disabled={
+                  (value === "location" && !allCategoriesSelected) ||
+                  (value === "liveness" && !canContinueFromLocation) ||
+                  (value === "review" && !canContinueFromLiveness)
+                }
+              >
+                <span
+                  className={cn(
+                    "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors",
+                    isCurrent
+                      ? "border-foreground bg-foreground text-background"
+                      : isCompleted
+                        ? "border-emerald-300/60 bg-emerald-50/60 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+                        : "border-border bg-transparent text-muted-foreground",
+                  )}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                  ) : (
+                    <span className="tabular-nums">{index + 1}</span>
+                  )}
+                  <span className="hidden sm:inline">{label}</span>
+                  <span className="sm:hidden">{isCurrent ? label : ""}</span>
+                </span>
+              </button>
+            );
+          })}
+          <div className="ml-auto min-w-0 flex-1">
+            <Progress value={progress} className="h-1" />
           </div>
         </div>
-      </section>
-
-      <Card className="border shadow-none">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-foreground text-background text-xs font-bold">
-                {currentStepIndex + 1}
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  Voting progress
-                </p>
-                <p className="text-sm font-semibold text-foreground capitalize">
-                  {currentStep === "ballot" ? "Ballot selections" : currentStep === "location" ? "Location confirmation" : currentStep === "liveness" ? "Live verification" : "Final review"}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {([
-                ["ballot", "Ballot"],
-                ["location", "Location"],
-                ["liveness", "Liveness"],
-                ["review", "Review"],
-              ] as const).map(([value, label], index) => {
-                const isCompleted =
-                  (value === "ballot" && allCategoriesSelected && currentStep !== "ballot") ||
-                  (value === "location" && canContinueFromLocation && currentStep !== "location" && currentStepIndex > 1) ||
-                  (value === "liveness" && canContinueFromLiveness && currentStep === "review");
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => goToStep(value as VoteStep)}
-                    className="disabled:pointer-events-none"
-                    disabled={
-                      (value === "location" && !allCategoriesSelected) ||
-                      (value === "liveness" && !canContinueFromLocation) ||
-                      (value === "review" && !canContinueFromLiveness)
-                    }
-                  >
-                    <Badge
-                      variant={currentStep === value ? "default" : isCompleted ? "secondary" : "outline"}
-                      className="rounded-full px-2.5 py-1 text-[11px] gap-1"
-                    >
-                      {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : <span>{index + 1}.</span>}
-                      {label}
-                    </Badge>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="mt-3">
-            <Progress value={progress} className="h-1.5" />
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {currentStep === "ballot" ? (
         <div className="grid gap-3 lg:gap-4" data-tour="student-vote-ballot">
@@ -741,7 +830,7 @@ export default function StudentVotePage() {
             <Card key={position} className="border shadow-none">
               <CardHeader className="pb-2 pt-4 sm:pt-5">
                 <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-sm sm:text-base">{position}</CardTitle>
+                  <CardTitle className="text-sm">{position}</CardTitle>
                   <Badge variant={selectedByCategory[position] ? "secondary" : "outline"} className="shrink-0 text-[11px]">
                     {selectedByCategory[position] ? "Selected" : `${candidates.length} candidate${candidates.length !== 1 ? "s" : ""}`}
                   </Badge>
@@ -808,7 +897,7 @@ export default function StudentVotePage() {
         <div className="grid gap-3 lg:grid-cols-[1fr_380px] lg:gap-4">
           <Card className="border shadow-none">
             <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-base sm:text-lg">Confirm your voting location</CardTitle>
+              <CardTitle className="text-sm font-semibold">Confirm your voting location</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pb-4 sm:pb-5">
               <div className="rounded-2xl border bg-muted/20 p-4 sm:rounded-3xl">
@@ -820,8 +909,8 @@ export default function StudentVotePage() {
                     </p>
                     <p className="text-sm leading-6 text-muted-foreground">
                       {session.is_off_campus_allowed
-                        ? "This session allows flexible voting locations. Your coordinates are still recorded in the secure audit trail."
-                        : "Your device must be within the approved voting radius for this session. Step outside the boundary and your vote will not be accepted."}
+                        ? "This election allows flexible voting locations. Your coordinates are still recorded in the secure audit trail."
+                        : "Your device must be within the approved voting radius for this election. Step outside the boundary and your vote will not be accepted."}
                     </p>
                   </div>
                 </div>
@@ -843,14 +932,34 @@ export default function StudentVotePage() {
 
           <Card className="border shadow-none">
             <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-base">Location status</CardTitle>
+              <CardTitle className="text-sm font-semibold">Location status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pb-4 sm:pb-5">
               <div className="rounded-2xl border bg-muted/15 p-3 sm:rounded-3xl sm:p-4">
                 <div className="flex items-center gap-2">
-                  <div className={cn("h-2 w-2 rounded-full shrink-0", location ? "bg-green-500" : "bg-amber-400")} />
+                  <div
+                    className={cn(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      locationCheckStatus === "allowed" && "bg-green-500",
+                      locationCheckStatus === "denied" && "bg-destructive",
+                      locationCheckStatus === "checking" && "bg-amber-400",
+                      (locationCheckStatus === "idle" ||
+                        locationCheckStatus === "error") &&
+                        "bg-muted-foreground",
+                    )}
+                  />
                   <p className="text-sm font-semibold text-foreground">
-                    {location ? "Location captured" : "Awaiting location"}
+                    {locationCheckStatus === "allowed"
+                      ? session.is_off_campus_allowed
+                        ? "Location recorded"
+                        : "Within voting area"
+                      : locationCheckStatus === "denied"
+                        ? "Outside voting area"
+                        : locationCheckStatus === "checking"
+                          ? "Checking voting area"
+                          : locationCheckStatus === "error"
+                            ? "Location check needed"
+                            : "Awaiting location"}
                   </p>
                 </div>
                 {location ? (
@@ -871,6 +980,49 @@ export default function StudentVotePage() {
                         </p>
                       </div>
                     </div>
+                    {locationCheckStatus === "checking" ? (
+                      <p className="text-xs text-muted-foreground">
+                        Confirming your coordinates with the voting area...
+                      </p>
+                    ) : null}
+                    {locationCheckStatus === "allowed" ? (
+                      <div className="rounded-lg border bg-background px-3 py-2">
+                        <p className="text-xs font-medium text-foreground">
+                          {locationCheck?.message ||
+                            "Location approved for this election."}
+                        </p>
+                        {!session.is_off_campus_allowed ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Distance: {formatMeters(locationCheck?.distance_meters)} of{" "}
+                            {formatMeters(locationCheck?.radius_meters)} allowed.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {locationCheckStatus === "denied" ||
+                    locationCheckStatus === "error" ? (
+                      <Alert variant="destructive">
+                        <ShieldAlert className="h-4 w-4" />
+                        <AlertTitle>
+                          {locationCheckStatus === "denied"
+                            ? "Move closer to the voting area"
+                            : "Location could not be verified"}
+                        </AlertTitle>
+                        <AlertDescription>
+                          {locationCheckMessage ||
+                            "Capture your location again to continue."}
+                          {locationCheck?.distance_meters &&
+                          locationCheck?.radius_meters ? (
+                            <span className="mt-2 block">
+                              Distance:{" "}
+                              {formatMeters(locationCheck.distance_meters)}.
+                              Allowed radius:{" "}
+                              {formatMeters(locationCheck.radius_meters)}.
+                            </span>
+                          ) : null}
+                        </AlertDescription>
+                      </Alert>
+                    ) : null}
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground">
@@ -880,7 +1032,11 @@ export default function StudentVotePage() {
               </div>
               <Button type="button" variant={location ? "outline" : "default"} className="w-full" onClick={captureLocation} disabled={isLocating}>
                 <LocateFixed className="mr-2 h-4 w-4" />
-                {isLocating ? "Capturing location..." : location ? "Re-capture location" : "Capture current location"}
+                {isLocating || locationCheckStatus === "checking"
+                  ? "Checking location..."
+                  : location
+                    ? "Re-capture location"
+                    : "Capture current location"}
               </Button>
             </CardContent>
           </Card>
@@ -914,7 +1070,7 @@ export default function StudentVotePage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <Badge variant="outline">AWS Face Liveness</Badge>
-                    <CardTitle className="text-base sm:text-lg">Live presence verification</CardTitle>
+                    <CardTitle className="text-sm font-semibold">Live presence verification</CardTitle>
                   </div>
                   <Button
                     type="button"
@@ -1039,7 +1195,7 @@ export default function StudentVotePage() {
 
             <Card className="border shadow-none">
               <CardHeader className="pb-3 pt-4 sm:pt-5">
-                <CardTitle className="text-base">Verification details</CardTitle>
+                <CardTitle className="text-sm font-semibold">Verification details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pb-4 sm:pb-5">
                 <div className="space-y-1">
@@ -1085,7 +1241,7 @@ export default function StudentVotePage() {
               <CardHeader className="pb-3 pt-4 sm:pt-5">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-foreground" />
-                  <CardTitle className="text-base sm:text-lg">Your ballot selections</CardTitle>
+                  <CardTitle className="text-sm font-semibold">Your ballot selections</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 pb-4 sm:pb-5">
@@ -1152,6 +1308,13 @@ export default function StudentVotePage() {
                       ) : (
                         <p className="mt-1 text-xs text-muted-foreground">Not captured</p>
                       )}
+                      {locationCheckStatus === "allowed" ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {session.is_off_campus_allowed
+                            ? "Recorded for audit"
+                            : `Approved within ${formatMeters(locationCheck?.radius_meters)} radius`}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </CardContent>
@@ -1186,7 +1349,7 @@ export default function StudentVotePage() {
 
           <Card className="border shadow-none lg:sticky lg:top-4">
             <CardHeader className="pb-3 pt-4 sm:pt-5">
-              <CardTitle className="text-base sm:text-lg">Submit your vote</CardTitle>
+              <CardTitle className="text-sm font-semibold">Submit your vote</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pb-4 sm:pb-5">
               {biometricLocked ? (
@@ -1203,7 +1366,7 @@ export default function StudentVotePage() {
                 <div className="space-y-2.5">
                   {[
                     { label: "Ballot selections", done: allCategoriesSelected },
-                    { label: "Location captured", done: Boolean(location) },
+                    { label: "Location approved", done: canContinueFromLocation },
                     { label: "Live presence verified", done: livenessStatus === "passed" },
                     { label: "Account ownership confirmed", done: ownershipVerified === true },
                   ].map(({ label, done }) => (
@@ -1258,8 +1421,14 @@ export default function StudentVotePage() {
                     : `Select a candidate for each of the ${categories.length} position${categories.length !== 1 ? "s" : ""} to continue.`
                   : currentStep === "location"
                     ? canContinueFromLocation
-                      ? "Location captured. Proceed to live verification."
-                      : "Capture your location before continuing."
+                      ? session.is_off_campus_allowed
+                        ? "Location recorded. Proceed to live verification."
+                        : "Location approved. Proceed to live verification."
+                      : locationCheckStatus === "denied"
+                        ? "You are outside the voting area. Re-capture inside the approved radius."
+                        : locationCheckStatus === "checking"
+                          ? "Checking whether you are within the voting area."
+                          : "Capture your location before continuing."
                     : currentStep === "liveness"
                       ? canContinueFromLiveness
                         ? "Live verification passed. Proceed to final review."

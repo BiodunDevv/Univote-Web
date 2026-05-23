@@ -65,7 +65,7 @@ export function EligibilityStep({
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 This workspace does not use structure-based access rules. Every eligible{" "}
-                {participantPluralLabel.toLowerCase()} will be able to access this session automatically.
+                {participantPluralLabel.toLowerCase()} will be able to access this election automatically.
               </p>
             </div>
           ) : null}
@@ -115,7 +115,7 @@ export function EligibilityStep({
                   ? "Select at least one department first"
                   : collegeEligibilityEnabled
                     ? "Select one college first"
-                    : "Select the session scope first"
+                    : "Select the election scope first"
               }
               onLevelChange={onLevelChange}
             />

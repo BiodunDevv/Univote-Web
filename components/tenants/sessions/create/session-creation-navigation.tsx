@@ -22,7 +22,7 @@ export function SessionCreationNavigation({
   onCancel,
   isSubmitting,
   canSubmit,
-  submitLabel = "Create Session",
+  submitLabel = "Create Election",
   submittingLabel = "Creating...",
 }: SessionCreationNavigationProps) {
   return (

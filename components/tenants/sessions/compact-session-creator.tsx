@@ -197,7 +197,7 @@ export function CompactSessionCreator({
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="title" className="text-xs font-medium">
-                Session Title *
+                Election Title *
               </Label>
               <Input
                 id="title"
@@ -255,7 +255,7 @@ export function CompactSessionCreator({
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Explain what this session is about"
+              placeholder="Explain what this election is about"
               rows={2}
               className="resize-none text-sm"
             />
@@ -464,7 +464,7 @@ export function CompactSessionCreator({
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-red-900 dark:text-red-200">
-                Please fix these issues before creating the session:
+                Please fix these issues before creating the election:
               </p>
               <ul className="text-sm text-red-800 dark:text-red-300 list-disc list-inside space-y-0.5">
                 {validationIssues.map((issue, i) => (
@@ -487,16 +487,16 @@ export function CompactSessionCreator({
           Cancel
         </Button>
         <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Session"}
+          {isSubmitting ? "Creating..." : "Create Election"}
         </Button>
       </div>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmSubmit} onOpenChange={setConfirmSubmit}>
         <AlertDialogContent>
-          <AlertDialogTitle>Create Session?</AlertDialogTitle>
+          <AlertDialogTitle>Create Election?</AlertDialogTitle>
           <AlertDialogDescription>
-            You're about to create a voting session with the following details:
+            You're about to create a voting election with the following details:
             <ul className="mt-3 space-y-1 text-sm text-foreground ml-4 list-disc">
               <li>
                 <strong>{formData.title}</strong>
@@ -515,7 +515,7 @@ export function CompactSessionCreator({
                 try {
                   await onSubmit(formData, eligibleCollegeIds);
                 } catch (error) {
-                  console.error("Failed to create session:", error);
+                  console.error("Failed to create election:", error);
                 }
               }}
               disabled={isSubmitting}

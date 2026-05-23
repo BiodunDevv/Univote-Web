@@ -49,7 +49,7 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   "students.manage": "Create, update, and deactivate participant records.",
   "participants.manage": "Manage participant records in unified views.",
   "participants.view": "Read-only participant access.",
-  "sessions.manage": "Create and manage voting sessions and ballots.",
+  "sessions.manage": "Create and manage elections and ballots.",
   "support.manage": "Access and manage support desk tickets.",
   "analytics.view": "View analytics and monitoring dashboards.",
   "admins.manage": "Invite and manage tenant administrators.",

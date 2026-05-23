@@ -133,10 +133,6 @@ export default function DashboardWelcomePage() {
     tenantContext,
     "college",
   );
-  const showDepartmentStructure = isTenantParticipantFieldEnabled(
-    tenantContext,
-    "department",
-  );
   const showLevelStructure = isTenantParticipantFieldEnabled(
     tenantContext,
     "level",
@@ -178,7 +174,7 @@ export default function DashboardWelcomePage() {
   } satisfies ChartConfig;
 
   const openSession = (sessionId: string) => {
-    router.push(`/dashboard/sessions/${sessionId}`);
+    router.push(`/dashboard/elections/${sessionId}`);
   };
 
   if (dashboardQuery.isLoading) {
@@ -195,12 +191,11 @@ export default function DashboardWelcomePage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 p-0">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4">
       <TenantPageHeader
-        eyebrow="Tenant operations"
         icon={<LayoutDashboard className="h-5 w-5" />}
-        title="Operational dashboard"
-        subtitle={`Track ${participantLabels.singular.toLowerCase()} readiness, election activity, turnout momentum, and recent actions from one workspace.`}
+        title="Dashboard"
+        subtitle={`Track ${participantLabels.singular.toLowerCase()} readiness, election activity, turnout, and recent actions from one workspace.`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -209,8 +204,8 @@ export default function DashboardWelcomePage() {
             >
               Reports
             </Button>
-            <Button onClick={() => router.push("/dashboard/sessions/create")}>
-              New session
+            <Button onClick={() => router.push("/dashboard/elections/create")}>
+              New election
             </Button>
           </div>
         }
@@ -228,13 +223,13 @@ export default function DashboardWelcomePage() {
             value: overview?.total_students?.toLocaleString() || "0",
           },
           {
-            label: "Active sessions",
+            label: "Active elections",
             value: overview?.active_sessions?.toLocaleString() || "0",
           },
         ]}
       />
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-4">
         {dashboardQuery.isFetching ? (
           <ChangingLoadingState
             messages={[
@@ -250,11 +245,11 @@ export default function DashboardWelcomePage() {
             title="Participation landscape"
             description={
               showLevelStructure
-                ? `Readiness by ${levelDimensionLabel.toLowerCase()} and a quick view into the current ${participantLabels.singular.toLowerCase()} session schedule.`
-                : `Current ${participantLabels.singular.toLowerCase()} readiness and a quick view into the session schedule.`
+                ? `Readiness by ${levelDimensionLabel.toLowerCase()} and a quick view into the current election schedule.`
+                : `Current ${participantLabels.singular.toLowerCase()} readiness and a quick view into the election schedule.`
             }
             action={
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+              <div className="inline-flex items-center gap-2 rounded-md border bg-muted px-3 py-1 text-xs text-muted-foreground">
                 <BarChart3 className="h-3.5 w-3.5" />
                 Live refresh
               </div>
@@ -270,17 +265,17 @@ export default function DashboardWelcomePage() {
               ) : (
                 <Card className="border shadow-none">
                   <CardContent className="flex h-full min-h-80 flex-col items-center justify-center gap-3 p-6 text-center">
-                    <div className="rounded-2xl border border-border/70 bg-muted/30 p-3 text-muted-foreground">
+                    <div className="rounded-md border bg-muted p-3 text-muted-foreground">
                       <Building2 className="h-5 w-5" />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-sm font-medium">
                         Structure insights are streamlined
                       </p>
                       <p className="max-w-sm text-sm text-muted-foreground">
                         This workspace is not organizing{" "}
                         {participantLabels.plural.toLowerCase()} by level, so the
-                        operational focus stays on sessions, turnout, and recent
+                        operational focus stays on elections, turnout, and recent
                         activity.
                       </p>
                     </div>
@@ -289,8 +284,8 @@ export default function DashboardWelcomePage() {
               )}
 
               <Card className="border shadow-none">
-                <CardContent className="space-y-4 p-4">
-                  <div className="space-y-1">
+                <CardContent className="flex flex-col gap-4 p-4">
+                  <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-foreground">
                       Voting momentum
                     </p>
@@ -339,8 +334,8 @@ export default function DashboardWelcomePage() {
           title="Coverage and engagement"
           description={
             showCollegeStructure
-              ? `See where ${participantLabels.singular.toLowerCase()} density lives across visible colleges and who is consistently participating across sessions.`
-              : `Track participation consistency and engagement across recent sessions.`
+              ? `See where ${participantLabels.singular.toLowerCase()} density lives across visible colleges and who is consistently participating across elections.`
+              : `Track participation consistency and engagement across recent elections.`
           }
         >
           <div className="grid gap-3 lg:grid-cols-[1.2fr_0.9fr]">
@@ -362,7 +357,7 @@ export default function DashboardWelcomePage() {
 
         <TenantSectionCard
           title="Recent movement"
-          description="Stay on top of administrative activity and the latest configured or active sessions."
+          description="Stay on top of administrative activity and the latest configured or active elections."
         >
           <div className="grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
             <RecentActivitiesCard activities={recentActivities} />
@@ -373,14 +368,14 @@ export default function DashboardWelcomePage() {
           </div>
         </TenantSectionCard>
 
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="border shadow-none">
             <CardContent className="flex items-center gap-3 p-2">
-              <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">
+              <div className="rounded-md border bg-muted p-2">
                 <Fingerprint className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-xs font-medium text-muted-foreground">
                   Proxy accuracy
                 </p>
                 <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
@@ -389,14 +384,14 @@ export default function DashboardWelcomePage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
+          <Card className="border shadow-none">
             <CardContent className="flex items-center gap-3 p-2">
-              <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">
+              <div className="rounded-md border bg-muted p-2">
                 <Vote className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  Avg votes / session
+                <p className="text-xs font-medium text-muted-foreground">
+                  Avg votes / election
                 </p>
                 <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                   {overview?.avg_votes_per_session?.toLocaleString?.() ||
@@ -406,13 +401,13 @@ export default function DashboardWelcomePage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
+          <Card className="border shadow-none">
             <CardContent className="flex items-center gap-3 p-2">
-              <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">
+              <div className="rounded-md border bg-muted p-2">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-xs font-medium text-muted-foreground">
                   New {participantLabels.plural.toLowerCase()}
                 </p>
                 <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
@@ -422,13 +417,13 @@ export default function DashboardWelcomePage() {
             </CardContent>
           </Card>
           {showCollegeStructure ? (
-            <Card className="rounded-[1.75rem] border border-border/70 shadow-none">
+            <Card className="border shadow-none">
               <CardContent className="flex items-center gap-3 p-2">
-                <div className="rounded-2xl border border-border/70 bg-muted/40 p-2">
+                <div className="rounded-md border bg-muted p-2">
                   <BarChart3 className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Colleges
                   </p>
                   <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">

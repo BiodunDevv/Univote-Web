@@ -21,15 +21,15 @@ export function TenantSectionCard({
   contentClassName?: string;
 }) {
   return (
-    <Card className={cn("rounded-[1.75rem] border border-border/70 shadow-none", className)}>
-      <CardHeader className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:justify-between">
+    <Card className={cn("border shadow-none", className)}>
+      <CardHeader className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className={compactUi.typography.sectionTitle}>{title}</CardTitle>
           {description ? <CardDescription className="mt-1 text-xs">{description}</CardDescription> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </CardHeader>
-      <CardContent className={cn("px-3 pb-3 pt-0", contentClassName)}>{children}</CardContent>
+      <CardContent className={cn("p-4", contentClassName)}>{children}</CardContent>
     </Card>
   );
 }

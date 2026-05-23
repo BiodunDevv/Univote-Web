@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarClock, Camera, Eye, Headset } from "lucide-react";
+import { CalendarClock, Camera, Headset, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   ChangingLoadingState,
@@ -84,24 +84,24 @@ export default function StudentProfileEditPage() {
   const cooldownBlocked =
     typeof nextPhotoUpdateAt === "string" &&
     new Date(nextPhotoUpdateAt).getTime() > Date.now() &&
-    !hasApprovedPhotoReset &&
-    photoUrl !== (profileQuery.data.photo_url || "");
+    !hasApprovedPhotoReset;
+
   const initials = (fullName || profileQuery.data.full_name)
     .split(" ")
     .slice(0, 2)
     .map((part) => part.charAt(0))
     .join("")
     .toUpperCase();
+
   const photoPreview = photoUrl || profileQuery.data.photo_url || "";
+
   const nextPhotoUpdateText = hasApprovedPhotoReset
-    ? "Your support-approved photo reset is active. You can make one profile photo update now, and the approval will be consumed after a successful save."
+    ? "Support-approved reset active — one update available now."
     : profileQuery.data.next_profile_photo_update_at
-      ? `Next self-service update opens ${new Date(
+      ? `Next self-service update: ${new Date(
           profileQuery.data.next_profile_photo_update_at,
-        ).toLocaleDateString("en-NG", {
-          dateStyle: "medium",
-        })}.`
-      : "You can update your photo now. After a successful change, the next self-service update opens in six months.";
+        ).toLocaleDateString("en-NG", { dateStyle: "medium" })}.`
+      : "After a successful change, the next self-service update opens in six months.";
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -123,7 +123,7 @@ export default function StudentProfileEditPage() {
     try {
       const response = await createSupportTicket.mutateAsync({
         subject: "Profile photo reset request",
-        description: `I need an early profile photo reset so I can upload a new picture before the self-service cooldown expires.\n\nStudent: ${
+        description: `I need an early profile photo reset.\n\nStudent: ${
           profileQuery.data?.full_name
         }\nIdentifier: ${
           profileQuery.data?.matric_no || profileQuery.data?.email || "N/A"
@@ -135,70 +135,64 @@ export default function StudentProfileEditPage() {
         category: "account",
         priority: "medium",
       });
-      toast.success("Photo reset request sent for review");
-      router.push(`/students/profile?tab=support&ticket=${response.ticket?.id || ""}`);
+      toast.success("Photo reset request sent");
+      router.push(
+        `/students/profile?tab=support&ticket=${response.ticket?.id || ""}`,
+      );
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create support request",
+        error instanceof Error ? error.message : "Failed to create request",
       );
     }
   };
 
   return (
     <PortalPage className="min-h-[calc(100dvh-7rem)]">
-      <div className="grid min-h-full gap-4 lg:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
-        <Card className="rounded-4xl border shadow-none lg:sticky lg:top-3 lg:h-fit">
+      <div className="animate-slide-up grid min-h-full gap-4 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]">
+        {/* Photo panel */}
+        <Card className="rounded-2xl border shadow-none lg:sticky lg:top-3 lg:h-fit">
           <CardHeader className="space-y-3 pb-2">
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-base">Profile photo</CardTitle>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 rounded-xl px-2 text-xs"
-                onClick={() => router.push("/students/profile")}
-              >
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                View profile
-              </Button>
-            </div>
+            <CardTitle className="text-sm font-semibold">
+              Profile photo
+            </CardTitle>
             <div className="flex justify-center">
               <Dialog>
                 <DialogTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full border bg-muted/20 p-1 transition hover:bg-muted/35"
-                    aria-label="Open profile photo preview"
+                    className="press-scale relative rounded-full transition"
+                    aria-label="Preview profile photo"
                   >
-                    <Avatar className="h-36 w-36 rounded-full">
+                    <Avatar className="h-32 w-32 rounded-full border-2 border-border">
                       <AvatarImage
-                      className="object-cover"
+                        className="object-cover"
                         src={photoPreview || undefined}
                         alt={fullName || "Profile photo"}
                       />
-                      <AvatarFallback className="text-2xl">
+                      <AvatarFallback className="text-2xl font-semibold">
                         {initials || "ST"}
                       </AvatarFallback>
                     </Avatar>
+                    <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-foreground text-background">
+                      <Camera className="h-3.5 w-3.5" />
+                    </span>
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-sm">
                   <DialogHeader>
                     <DialogTitle>Profile photo</DialogTitle>
                     <DialogDescription>
                       Full-size preview of your current profile image.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="rounded-2xl border bg-muted/20 p-2">
-                    <Avatar className="h-[300px] w-full rounded-xl">
+                  <div className="overflow-hidden rounded-2xl border bg-muted/20">
+                    <Avatar className="h-72 w-full rounded-none">
                       <AvatarImage
                         src={photoPreview || undefined}
                         alt={fullName || "Profile photo"}
                         className="object-cover"
                       />
-                      <AvatarFallback className="text-3xl">
+                      <AvatarFallback className="text-4xl font-semibold">
                         {initials || "ST"}
                       </AvatarFallback>
                     </Avatar>
@@ -216,16 +210,15 @@ export default function StudentProfileEditPage() {
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (file) {
-                  void handleUpload(file);
-                }
+                if (file) void handleUpload(file);
                 event.target.value = "";
               }}
             />
+
             <Button
               type="button"
               variant="outline"
-              className="w-full rounded-2xl"
+              className="press-scale w-full rounded-xl"
               disabled={uploading || cooldownBlocked}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -243,7 +236,7 @@ export default function StudentProfileEditPage() {
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full rounded-2xl"
+                className="press-scale w-full rounded-xl"
                 onClick={() => void handlePhotoResetRequest()}
                 disabled={createSupportTicket.isPending}
               >
@@ -258,45 +251,21 @@ export default function StudentProfileEditPage() {
               </Button>
             ) : null}
 
-            <div className="flex items-start gap-2 rounded-2xl border bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
-              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
+            <div className="flex items-start gap-2.5 rounded-xl border bg-muted/20 px-3 py-3">
+              <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 {nextPhotoUpdateText}
                 {cooldownBlocked
-                  ? " Need an earlier change? Send a reset request and the support team can approve or decline it in your support thread."
-                  : hasApprovedPhotoReset
-                    ? " Make sure the image is a clear single-person facial photo. Random pictures or non-face images will be rejected automatically."
-                    : ""}
-              </span>
+                  ? " Send a reset request for early approval."
+                  : ""}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="flex min-h-full flex-col rounded-4xl border shadow-none">
-          <CardHeader className="pb-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  Profile settings
-                </p>
-                <CardTitle className="mt-1 text-lg">
-                  Edit your details
-                </CardTitle>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-xl"
-                onClick={() => router.push("/students/profile")}
-              >
-                <ArrowLeft className="mr-1.5 h-4 w-4" />
-                Back
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="flex flex-1 flex-col space-y-5">
+        {/* Form panel */}
+        <Card className="flex min-h-full flex-col rounded-2xl border shadow-none">
+          <CardContent className="flex flex-1 flex-col space-y-5 pt-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="full-name">Full name</Label>
@@ -308,7 +277,7 @@ export default function StudentProfileEditPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -319,18 +288,30 @@ export default function StudentProfileEditPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="photo-url">Photo URL</Label>
-              <Input
-                id="photo-url"
-                value={photoUrl}
-                className="h-11 rounded-xl"
-                onChange={(event) => setPhotoUrl(event.target.value)}
-                placeholder="https://example.com/photo.jpg"
-                disabled={cooldownBlocked}
-              />
+              <div className="relative">
+                <Input
+                  id="photo-url"
+                  value={photoUrl}
+                  className="h-11 rounded-xl pr-9"
+                  onChange={(event) => setPhotoUrl(event.target.value)}
+                  placeholder="https://example.com/photo.jpg"
+                  disabled={cooldownBlocked}
+                />
+                {photoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setPhotoUrl("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear photo URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Paste an image URL or upload directly from your device.
+                Paste an image URL or upload directly from your device above.
               </p>
             </div>
 
@@ -347,21 +328,22 @@ export default function StudentProfileEditPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
-                  variant="outline"
-                  className="rounded-2xl"
+                  variant="ghost"
+                  className="rounded-xl"
                   onClick={() => router.push("/students/profile")}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="rounded-2xl"
+                  className="press-scale rounded-xl"
                   onClick={async () => {
                     await updateProfile.mutateAsync({
                       full_name: fullName,
                       email,
                       photo_url: photoUrl || null,
                     });
-                    toast.success("Profile updated");
+                    toast.success("Profile updated successfully");
+                    router.push("/students/profile");
                   }}
                   disabled={updateProfile.isPending || cooldownBlocked}
                 >

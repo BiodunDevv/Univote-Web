@@ -24,6 +24,7 @@ import type {
   SystemHealth,
 } from "@/lib/store/useSettingsStore";
 import type { TenantContext } from "@/types/tenant";
+import type { AdminLiveSessionResponse } from "@/types/live-session";
 
 type QueryHookOptions = {
   enabled?: boolean;
@@ -843,6 +844,26 @@ export function useAdminSessionStatsQuery(
           signal,
         },
       ),
+  });
+}
+
+export function useAdminSessionLiveQuery(
+  sessionId: string,
+  options?: QueryHookOptions,
+) {
+  return useQuery({
+    enabled: (options?.enabled ?? true) && Boolean(sessionId),
+    queryKey: queryKeys.sessions.adminLive(sessionId),
+    queryFn: ({ signal }) =>
+      apiRequest<AdminLiveSessionResponse>(
+        `/api/admin/sessions/${sessionId}/live`,
+        {
+          auth: "admin",
+          signal,
+        },
+      ),
+    refetchInterval: (query) =>
+      query.state.data?.session.is_live ? 5000 : 60000,
   });
 }
 

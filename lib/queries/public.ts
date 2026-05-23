@@ -10,6 +10,7 @@ import type {
   TenantApplicationResponse,
   TenantApplicationStatusResponse,
 } from "@/types/landing";
+import type { PublicLiveSessionResponse } from "@/types/live-session";
 
 export function usePublicLandingQuery() {
   return useQuery({
@@ -63,6 +64,27 @@ export function usePublicOrganizationQuery(slug: string, enabled = true) {
         },
       ),
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function usePublicLiveSessionQuery(
+  tenantSlug: string,
+  liveCode: string,
+  enabled = true,
+) {
+  return useQuery({
+    enabled: enabled && Boolean(tenantSlug) && Boolean(liveCode),
+    queryKey: queryKeys.public.liveSession(tenantSlug, liveCode),
+    queryFn: ({ signal }) =>
+      apiRequest<PublicLiveSessionResponse>(
+        `/api/public/live/${tenantSlug}/${liveCode}`,
+        {
+          signal,
+          redirectOnAuthError: false,
+        },
+      ),
+    refetchInterval: (query) =>
+      query.state.data?.session.is_live ? 10000 : 60000,
   });
 }
 

@@ -16,7 +16,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
         disallow: [
           "/students/home",
-          "/students/sessions",
+          "/students/elections",
           "/students/vote",
           "/students/results",
           "/students/profile",

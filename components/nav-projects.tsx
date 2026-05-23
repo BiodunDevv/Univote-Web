@@ -37,7 +37,7 @@ export function NavProjects({
                 {item.badge ? (
                   <Badge
                     variant="default"
-                    className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                    className="ml-auto h-5 min-w-5 rounded-md px-1.5 text-[10px] font-semibold"
                   >
                     {item.badge}
                   </Badge>

@@ -107,13 +107,13 @@ export function validateSessionStep(
 
   if (step === "basic") {
     if (!formData.title.trim()) {
-      errors.push("Session title is required.");
+      errors.push("Election title is required.");
     }
     if (!formData.description.trim()) {
-      errors.push("Session description is required.");
+      errors.push("Election description is required.");
     }
     if (formData.title.trim().length > 0 && formData.title.trim().length < 4) {
-      errors.push("Session title should be at least 4 characters.");
+      errors.push("Election title should be at least 4 characters.");
     }
     if (formData.categories.length === 0) {
       errors.push("Add at least one voting category.");

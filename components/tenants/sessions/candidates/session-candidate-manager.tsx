@@ -49,7 +49,7 @@ function getCandidateKey(candidate: SessionCandidate, index: number) {
 
 export function SessionCandidateManager({
   title = "Candidates",
-  description = "Manage who appears on the ballot for this session.",
+  description = "Manage who appears on the ballot for this election.",
   candidates,
   categories,
   canManage,

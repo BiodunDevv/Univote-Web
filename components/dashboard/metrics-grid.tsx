@@ -27,7 +27,7 @@ export function MetricsGrid({
         icon={Users}
       />
       <MetricCard
-        label="Active Sessions"
+        label="Active Elections"
         value={overview?.active_sessions ?? 0}
         icon={Vote}
       />

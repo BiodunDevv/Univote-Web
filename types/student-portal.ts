@@ -231,3 +231,16 @@ export interface StudentSubmittedBallotResponse {
     }>;
   };
 }
+
+export interface StudentLocationCheckResponse {
+  allowed: boolean;
+  code: string;
+  message: string;
+  distance_meters?: number | null;
+  radius_meters?: number | null;
+  center?: {
+    lat: number;
+    lng: number;
+  } | null;
+  checked_at: string;
+}

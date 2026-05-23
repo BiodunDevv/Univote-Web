@@ -88,13 +88,13 @@ function StudentForgotPasswordPageContent() {
       </div>
 
       <div className="mx-auto grid min-h-[calc(100svh-7rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-        <div className="relative hidden overflow-hidden rounded-2xl border bg-linear-to-br from-card via-card to-muted/30 p-5 shadow-none md:block">
+        <div className="relative hidden overflow-hidden rounded-2xl border bg-linear-to-br from-(--student-hero-from) via-card to-(--student-hero-to) p-5 shadow-none md:block">
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               <Vote className="h-3.5 w-3.5" />
               Password recovery
             </div>
-            <h1 className="mt-5 max-w-xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="font-display mt-5 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
               Recover your {labels.singular.toLowerCase()} voting portal
               password
             </h1>

@@ -47,7 +47,7 @@ function getSessionUpdateErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "We could not save this session right now. Please review your changes and try again.";
+  return "We could not save this election right now. Please review your changes and try again.";
 }
 
 export default function EditSessionPage() {
@@ -90,7 +90,7 @@ export default function EditSessionPage() {
 
   useEffect(() => {
     if (currentSession && currentSession.status === "ended") {
-      router.replace(`/dashboard/sessions/${sessionId}`);
+      router.replace(`/dashboard/elections/${sessionId}`);
     }
   }, [currentSession, router, sessionId]);
 
@@ -108,7 +108,7 @@ export default function EditSessionPage() {
     return (
       <ChangingLoadingState
         messages={[
-          "Loading session configuration...",
+          "Loading election configuration...",
           needsStructureData
             ? "Syncing university eligibility scope..."
             : "Applying tenant-wide eligibility...",
@@ -121,8 +121,8 @@ export default function EditSessionPage() {
   if (!canManageSessions) {
     return (
       <TenantAccessRestricted
-        title="Session editing is restricted"
-        description="Your current university role can’t update voting sessions. Ask your workspace owner for session management access if you need to make changes."
+        title="Election editing is restricted"
+        description="Your current university role can’t update voting elections. Ask your workspace owner for election management access if you need to make changes."
       />
     );
   }
@@ -139,7 +139,7 @@ export default function EditSessionPage() {
       (needsStructureData && collegesQuery.error instanceof Error
         ? collegesQuery.error.message
         : undefined) ||
-      "Failed to load this session";
+      "Failed to load this election";
 
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -149,7 +149,7 @@ export default function EditSessionPage() {
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => router.push("/dashboard/sessions")}
+                onClick={() => router.push("/dashboard/elections")}
               >
                 Back
               </Button>
@@ -175,18 +175,18 @@ export default function EditSessionPage() {
     <SessionBuilder
       key={sessionId}
       mode="edit"
-      title="Edit Session Wizard"
+      title="Edit Election"
       description={
         currentSession.status === "active"
-          ? "This session is live. You can still update presentation and operational fields, extend the closing time, and widen eligibility coverage. Ballot structure and candidate deletion remain locked while votes are being recorded."
+          ? "This election is live. You can still update presentation and operational fields, extend the closing time, and widen eligibility coverage. Ballot structure and candidate deletion remain locked while votes are being recorded."
           : needsStructureData
-            ? "Update this session using the same college and department eligibility workflow as session creation."
-            : "Update this session using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
+            ? "Update this election using the same college and department eligibility workflow as election creation."
+            : "Update this election using the same guided workflow. This tenant uses tenant-wide eligibility, so all eligible members remain included automatically."
       }
       colleges={colleges}
       initialData={initialData}
       isSubmitting={updateSession.isPending}
-      onCancel={() => router.push(`/dashboard/sessions/${sessionId}`)}
+      onCancel={() => router.push(`/dashboard/elections/${sessionId}`)}
       onSubmit={async (formData, eligibleCollegeIds) => {
         const payload = buildSessionPayload(formData, eligibleCollegeIds);
         const sessionPayload =
@@ -220,7 +220,7 @@ export default function EditSessionPage() {
         } catch (submitError) {
           throw new Error(getSessionUpdateErrorMessage(submitError));
         }
-        router.push(`/dashboard/sessions/${sessionId}`);
+        router.push(`/dashboard/elections/${sessionId}`);
       }}
       onCreateCandidate={(payload) => createCandidate.mutateAsync(payload)}
       onUpdateCandidate={(candidateId, payload) =>
@@ -239,7 +239,7 @@ export default function EditSessionPage() {
       liveEditGuidance={
         currentSession.status === "active"
           ? [
-              "You can extend the closing time, but you cannot shorten a live session.",
+              "You can extend the closing time, but you cannot shorten a live election.",
               "Eligibility can only be widened while voting is live. Existing departments and levels cannot be removed.",
               "You can update title, description, location, off-campus access, and results visibility.",
               "Ballot structure, candidate creation, and candidate deletion remain locked to protect recorded votes.",

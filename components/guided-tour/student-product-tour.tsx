@@ -18,7 +18,7 @@ export function StudentProductTour() {
           popover: {
             title: "Your student workspace",
             description:
-              "This area keeps your major student tools close, from sessions and voting to results and profile updates.",
+              "This area keeps your major student tools close, from elections and voting to results and profile updates.",
             side: "right" as const,
           },
         },
@@ -27,7 +27,7 @@ export function StudentProductTour() {
           popover: {
             title: "Move between sections quickly",
             description:
-              "Use these links to move between Home, Sessions, Vote, Results, and Profile without losing your place.",
+              "Use these links to move between Home, Elections, Vote, Results, and Profile without losing your place.",
             side: "right" as const,
           },
         },
@@ -43,7 +43,7 @@ export function StudentProductTour() {
         {
           element: "[data-tour='student-vote-hero']",
           popover: {
-            title: "Understand the voting session",
+            title: "Understand the election",
             description:
               "This area explains the ballot, the verification flow, and gives you a reliable route back to the vote center.",
             side: "bottom" as const,
@@ -143,7 +143,7 @@ export function StudentProductTour() {
               Learn the student portal in one quick walkthrough
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              We will show you where to find sessions, vote securely, view results, and manage your account.
+              We will show you where to find elections, vote securely, view results, and manage your account.
             </p>
           </div>
         </div>

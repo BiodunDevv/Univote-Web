@@ -19,7 +19,7 @@ export default function StudentVoteLandingPage() {
     return (
       <ChangingLoadingState
         messages={[
-          "Loading vote-ready sessions...",
+          "Loading vote-ready elections...",
           "Checking active ballots...",
           "Preparing fast access actions...",
         ]}
@@ -36,14 +36,14 @@ export default function StudentVoteLandingPage() {
       <PortalHero
         eyebrow="Vote"
         title="Vote center"
-        description="Open an active ballot on your phone for the smoothest voting flow. Upcoming sessions stay here so you can review them early."
+        description="Open an active ballot on your phone for the smoothest voting flow. Upcoming elections stay here so you can review them early."
       />
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.12fr)_minmax(280px,0.88fr)]">
         {sessions.length === 0 ? (
           <PortalEmptyState
             title="No ready ballots"
-            description="There are no active or upcoming sessions available to vote in right now."
+            description="There are no active or upcoming elections available to vote in right now."
           />
         ) : (
           <div className="grid gap-2.5">
@@ -80,7 +80,7 @@ export default function StudentVoteLandingPage() {
             <p className="text-sm leading-6 text-muted-foreground">
               The full ballot flow uses live verification and location capture
               in one smooth mobile experience. Desktop still works for browsing
-              sessions, results, and your profile.
+              elections, results, and your profile.
             </p>
           </div>
         </PortalStackCard>

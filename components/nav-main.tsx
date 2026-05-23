@@ -36,11 +36,11 @@ export function NavMain({
     isActive?: boolean;
     comingSoon?: boolean;
     items?: {
-    title: string;
-    url: string;
-    comingSoon?: boolean;
-    badge?: string | number | null;
-  }[];
+      title: string;
+      url: string;
+      comingSoon?: boolean;
+      badge?: string | number | null;
+    }[];
     badge?: string | number | null;
   }[];
 }) {
@@ -107,7 +107,7 @@ export function NavMain({
                             {subItem.badge ? (
                               <Badge
                                 variant="default"
-                                className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                                className="ml-auto h-5 min-w-5 rounded-md px-1.5 text-[10px] font-semibold"
                               >
                                 {subItem.badge}
                               </Badge>
@@ -141,7 +141,7 @@ export function NavMain({
                   {item.badge ? (
                     <Badge
                       variant="default"
-                      className="ml-auto h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold"
+                      className="ml-auto h-5 min-w-5 rounded-md px-1.5 text-[10px] font-semibold"
                     >
                       {item.badge}
                     </Badge>

@@ -78,7 +78,7 @@ export default function SystemHealthPage() {
   const collectionTotals = [
     { label: participantLabels.plural, count: database.students.total },
     { label: "Votes", count: database.votes.total },
-    { label: "Sessions", count: database.sessions.total },
+    { label: "Elections", count: database.sessions.total },
     { label: "Admins", count: database.admins.total },
     { label: "Colleges", count: database.colleges },
     { label: "Audit", count: database.audit_logs },
@@ -160,8 +160,8 @@ export default function SystemHealthPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <TenantSectionCard
-          title="Session distribution"
-          description="How session records are currently split across lifecycle states."
+          title="Election distribution"
+          description="How election records are currently split across lifecycle states."
           contentClassName="space-y-3"
         >
           {database.sessions.by_status.map((entry) => (
@@ -170,7 +170,7 @@ export default function SystemHealthPage() {
               className="rounded-2xl border border-border/70 bg-muted/20 p-4"
             >
               <p className="text-sm font-semibold text-foreground">
-                Session status: {entry._id}
+                Election status: {entry._id}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {entry.count.toLocaleString()} records

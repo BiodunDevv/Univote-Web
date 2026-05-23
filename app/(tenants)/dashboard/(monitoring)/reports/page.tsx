@@ -85,13 +85,13 @@ export default function ReportsPage() {
         key: "votes",
         label: "Vote records",
         description:
-          "Download vote records for one session or export the full voting history for this university.",
+          "Download vote records for one election or export the full voting history for this university.",
         filters: [
           {
             key: "votesSessionId",
-            label: "Session",
+            label: "Election",
             options: [
-              { value: "all", label: "All sessions" },
+              { value: "all", label: "All elections" },
               ...sessions.map((session) => ({
                 value: session._id,
                 label: session.title,
@@ -159,9 +159,9 @@ export default function ReportsPage() {
       },
       {
         key: "sessions",
-        label: "Sessions",
+        label: "Elections",
         description:
-          "Export session definitions and candidate setup by lifecycle state.",
+          "Export election definitions and candidate setup by lifecycle state.",
         filters: [
           {
             key: "sessionStatus",
@@ -238,7 +238,7 @@ export default function ReportsPage() {
         eyebrow="Tenant reporting"
         icon={<FileBarChart className="h-5 w-5" />}
         title="Reports Center"
-        subtitle="Generate filtered exports for votes, students, sessions, administrator assignments, and audit history from one review-ready workspace."
+        subtitle="Generate filtered exports for votes, students, elections, administrator assignments, and audit history from one review-ready workspace."
         stats={[
           {
             label: "Export sets",
@@ -249,7 +249,7 @@ export default function ReportsPage() {
             value: state.format.toUpperCase(),
           },
           {
-            label: "Session filters",
+            label: "Election filters",
             value: sessions.length.toLocaleString(),
           },
           {

@@ -58,7 +58,7 @@ export default function CreateSessionPage() {
     return (
       <ChangingLoadingState
         messages={[
-          "Loading session setup...",
+          "Loading election setup...",
           needsStructureData
             ? "Fetching college and department structure..."
             : "Applying tenant-wide eligibility...",
@@ -71,8 +71,8 @@ export default function CreateSessionPage() {
   if (!canManageSessions) {
     return (
       <TenantAccessRestricted
-        title="Session creation is restricted"
-        description="Your current university role can’t create voting sessions. Ask your workspace owner for session management access if you need to launch or edit sessions."
+        title="Election creation is restricted"
+        description="Your current university role can’t create voting elections. Ask your workspace owner for election management access if you need to launch or edit elections."
       />
     );
   }
@@ -101,23 +101,23 @@ export default function CreateSessionPage() {
 
   return (
     <SessionBuilder
-      key="create-session"
+      key="create-election"
       mode="create"
-      title="Create Session"
+      title="Create Election"
       description={
         needsStructureData
-          ? "A compact, guided flow to launch a voting session fast with schedule, geofence, eligibility, and ballot setup."
-          : "A compact, guided flow to launch a session quickly. Eligibility applies tenant-wide for this workspace."
+          ? "A compact, guided flow to launch a voting election fast with schedule, geofence, eligibility, and ballot setup."
+          : "A compact, guided flow to launch an election quickly. Eligibility applies tenant-wide for this workspace."
       }
       colleges={colleges}
       initialData={initialData}
       isSubmitting={createSession.isPending}
-      onCancel={() => router.push("/dashboard/sessions")}
+      onCancel={() => router.push("/dashboard/elections")}
       onSubmit={async (formData, eligibleCollegeIds) => {
         await createSession.mutateAsync(
           buildSessionPayload(formData, eligibleCollegeIds),
         );
-        router.push("/dashboard/sessions");
+        router.push("/dashboard/elections");
       }}
     />
   );

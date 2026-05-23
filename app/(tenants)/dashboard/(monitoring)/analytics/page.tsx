@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
       <ChangingLoadingState
         messages={[
           "Loading analytics overview...",
-          "Compiling session metrics...",
+          "Compiling election metrics...",
           "Preparing biometric operations insights...",
         ]}
       />
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
         <p className="text-sm text-muted-foreground">
           {analyticsQuery.error instanceof Error
             ? analyticsQuery.error.message
-            : "Retry in a moment. If the problem persists, review recent imports and session activity."}
+            : "Retry in a moment. If the problem persists, review recent imports and election activity."}
         </p>
       </TenantSectionCard>
     );
@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
         eyebrow="Tenant monitoring"
         icon={<BarChart3 className="h-5 w-5" />}
         title="Analytics Overview"
-        subtitle="Follow turnout momentum, session performance, and operational biometric posture from one chart-driven workspace."
+        subtitle="Follow turnout momentum, election performance, and operational biometric posture from one chart-driven workspace."
         stats={[
           {
             label: "Participation",
@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
         <TenantMetricCard
           label="Votes recorded"
           value={analytics.overview.total_votes.toLocaleString()}
-          hint={`${analytics.overview.active_sessions.toLocaleString()} active sessions and ${analytics.overview.upcoming_sessions.toLocaleString()} upcoming.`}
+          hint={`${analytics.overview.active_sessions.toLocaleString()} active elections and ${analytics.overview.upcoming_sessions.toLocaleString()} upcoming.`}
           icon={<Vote className="h-4 w-4" />}
         />
         <TenantMetricCard
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <TenantSectionCard
           title="Vote trend"
-          description="Daily voting volume across the sessions contributing to advanced analytics."
+          description="Daily voting volume across the elections contributing to advanced analytics."
         >
           <ChartContainer config={trendChartConfig} className="h-[280px] w-full">
             <AreaChart accessibilityLayer data={analytics.vote_trend}>
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
 
         <TenantSectionCard
           title="Turnout snapshots"
-          description="Current turnout posture for the most active session windows."
+          description="Current turnout posture for the most active election windows."
         >
           <ChartContainer config={turnoutChartConfig} className="h-[280px] w-full">
             <BarChart accessibilityLayer data={analytics.turnout_snapshots}>

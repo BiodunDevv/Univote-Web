@@ -7,8 +7,7 @@ import {
   ChevronRight,
   Edit,
   Eye,
-  Globe,
-  Layers3,
+  ExternalLink,
   MapPin,
   Plus,
   Search,
@@ -45,26 +44,41 @@ import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 import { cn } from "@/lib/utils";
 
 const INITIAL_LOADING_MESSAGES = [
-  "Getting all sessions...",
+  "Getting all elections...",
   "Calculating turnout and vote signals...",
-  "Preparing session cards...",
+  "Preparing election cards...",
   "Finalizing data...",
 ];
 
 const REFETCH_LOADING_MESSAGES = [
-  "Refreshing sessions...",
-  "Syncing latest session updates...",
-  "Rebuilding session list...",
+  "Refreshing elections...",
+  "Syncing latest election updates...",
+  "Rebuilding election list...",
 ];
 
-export default function SessionsPage() {
+function getInitialStatusFilter() {
+  if (typeof window === "undefined") return "all";
+
+  const requestedStatus = new URLSearchParams(window.location.search).get(
+    "status",
+  );
+
+  return requestedStatus === "active" ||
+    requestedStatus === "upcoming" ||
+    requestedStatus === "ended"
+    ? requestedStatus
+    : "all";
+}
+
+export default function ElectionsPage() {
   const router = useRouter();
   const { token, hasHydrated, membership } = useAuthStore();
   const canManageSessions = hasAnyTenantPermission(membership, [
     "sessions.manage",
     "tenant.manage",
   ]);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] =
+    useState<string>(getInitialStatusFilter);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -79,7 +93,10 @@ export default function SessionsPage() {
     enabled: isAuthorized,
   });
   const deleteSession = useDeleteSessionMutation();
-  const sessions = sessionsQuery.data?.sessions ?? [];
+  const sessions = useMemo(
+    () => sessionsQuery.data?.sessions ?? [],
+    [sessionsQuery.data?.sessions],
+  );
   const filteredSessions = useMemo(() => {
     const term = debouncedSearch.toLowerCase();
     return sessions.filter((session) => {
@@ -133,21 +150,15 @@ export default function SessionsPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    if (page > pagination.pages) {
-      setPage(pagination.pages);
-    }
-  }, [page, pagination.pages]);
-
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete \"${title}\"?`)) return;
 
     try {
       await deleteSession.mutateAsync(id);
-      toast.success("Session deleted");
+      toast.success("Election deleted");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete session",
+        error instanceof Error ? error.message : "Failed to delete election",
       );
     }
   };
@@ -159,9 +170,9 @@ export default function SessionsPage() {
       case "upcoming":
         return "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300";
       case "ended":
-        return "border-border bg-muted/60 text-muted-foreground";
+        return "border-border text-muted-foreground";
       default:
-        return "border-border bg-muted/60 text-muted-foreground";
+        return "border-border text-muted-foreground";
     }
   };
 
@@ -214,35 +225,15 @@ export default function SessionsPage() {
     return "Voting window has ended";
   };
 
-  const getEligibilitySummary = (session: (typeof sessions)[number]) => {
-    const parts: string[] = [];
-    if (session.eligible_college) parts.push(session.eligible_college);
-    if (session.eligible_departments?.length) {
-      parts.push(
-        session.eligible_departments.length === 1
-          ? session.eligible_departments[0]
-          : `${session.eligible_departments.length} departments`,
-      );
-    }
-    if (session.eligible_levels?.length) {
-      parts.push(
-        session.eligible_levels.length === 1
-          ? `${session.eligible_levels[0]} level`
-          : `${session.eligible_levels.length} levels`,
-      );
-    }
-    return parts.length > 0 ? parts.join(" • ") : "All eligible students";
-  };
-
   if (!hasHydrated || !token) {
-    return <ChangingLoadingState messages={["Preparing your session..."]} />;
+    return <ChangingLoadingState messages={["Preparing your election..."]} />;
   }
 
   if (!canManageSessions) {
     return (
       <TenantAccessRestricted
-        title="Sessions access restricted"
-        subtitle="Your university role does not allow session and ballot management."
+        title="Elections access restricted"
+        subtitle="Your university role does not allow election and ballot management."
       />
     );
   }
@@ -255,25 +246,24 @@ export default function SessionsPage() {
     !isFirstLoad;
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-0">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4">
       <TenantPageHeader
-        eyebrow="Tenant sessions"
         icon={<Vote className="h-5 w-5" />}
-        title="Session Management"
-        subtitle="Create, review, manage, and retire voting sessions with one consistent operational surface. Upcoming sessions allow full editing, while live sessions stay in a safe edit mode."
+        title="Elections"
+        subtitle="Create, review, manage, and retire voting elections. Upcoming elections allow full editing, while live elections stay in a controlled edit mode."
         actions={
           <Button
-            onClick={() => router.push("/dashboard/sessions/create")}
+            onClick={() => router.push("/dashboard/elections/create")}
             size="sm"
             className="h-10"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create Session
+            Create Election
           </Button>
         }
         stats={[
           {
-            label: "Total sessions",
+            label: "Total elections",
             value: sessionSummary?.total_sessions?.toLocaleString() || "0",
           },
           {
@@ -299,7 +289,7 @@ export default function SessionsPage() {
                 ? sessionsQuery.error.message
                 : sessionSummaryQuery.error instanceof Error
                   ? sessionSummaryQuery.error.message
-                  : "Failed to refresh sessions"}
+                  : "Failed to refresh elections"}
             </p>
             <Button
               variant="outline"
@@ -318,8 +308,8 @@ export default function SessionsPage() {
       ) : null}
 
       <TenantSectionCard
-        title="Filter sessions"
-        description="Search and filter by lifecycle state without triggering a server refresh on every change."
+        title="Filter elections"
+        description="Search by title, description, or location, then narrow by lifecycle state."
       >
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative w-full md:max-w-sm">
@@ -327,7 +317,7 @@ export default function SessionsPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search sessions by title, description, or location"
+              placeholder="Search elections by title, description, or location"
               className="h-9 pl-8 text-sm"
             />
           </div>
@@ -363,22 +353,25 @@ export default function SessionsPage() {
           )}
 
           <TenantSectionCard
-            title="Session registry"
+            title="Election registry"
             description="Card-based registry for lifecycle state, schedule, turnout, eligibility, and candidate setup."
-            contentClassName="space-y-4 overflow-hidden"
+            contentClassName="overflow-hidden"
           >
             <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               {visibleSessions.map((session) => (
                 <div
                   key={session._id}
-                  className="flex h-full flex-col rounded-3xl border border-border/70 bg-card/70 p-4 shadow-none"
+                  className="flex h-full flex-col rounded-lg border p-4 shadow-none"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-1">
+                    <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant="outline"
-                          className={cn("capitalize", getStatusColor(session.status))}
+                          className={cn(
+                            "capitalize",
+                            getStatusColor(session.status),
+                          )}
                         >
                           {session.status}
                         </Badge>
@@ -398,9 +391,9 @@ export default function SessionsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 rounded-full"
+                      className="shrink-0"
                       onClick={() =>
-                        router.push(`/dashboard/sessions/${session._id}`)
+                        router.push(`/dashboard/elections/${session._id}`)
                       }
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -408,10 +401,10 @@ export default function SessionsPage() {
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                    <div className="rounded-md border p-3">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <p className="text-xs font-medium uppercase tracking-[0.14em]">
+                        <p className="text-xs font-medium">
                           Window
                         </p>
                       </div>
@@ -423,10 +416,10 @@ export default function SessionsPage() {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                    <div className="rounded-md border p-3">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        <p className="text-xs font-medium uppercase tracking-[0.14em]">
+                        <p className="text-xs font-medium">
                           Location
                         </p>
                       </div>
@@ -442,8 +435,8 @@ export default function SessionsPage() {
                   </div>
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-border/70 bg-background p-3">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs font-medium text-muted-foreground">
                         Turnout
                       </p>
                       <p className="mt-2 text-lg font-semibold text-foreground">
@@ -453,8 +446,8 @@ export default function SessionsPage() {
                         students voted
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-border/70 bg-background p-3">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs font-medium text-muted-foreground">
                         Ballots
                       </p>
                       <p className="mt-2 text-lg font-semibold text-foreground">
@@ -464,43 +457,23 @@ export default function SessionsPage() {
                         accepted ballots
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-border/70 bg-background p-3">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs font-medium text-muted-foreground">
                         Setup
                       </p>
                       <p className="mt-2 text-lg font-semibold text-foreground">
                         {(session.candidates?.length || 0).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        candidates across {(session.categories?.length || 0).toLocaleString()} categories
+                        candidates across{" "}
+                        {(session.categories?.length || 0).toLocaleString()}{" "}
+                        categories
                       </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-2xl border border-border/70 bg-background p-3">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Layers3 className="h-4 w-4" />
-                      <p className="text-xs font-medium uppercase tracking-[0.14em]">
-                        Eligibility
-                      </p>
-                    </div>
-                    <p className="mt-2 text-sm font-medium text-foreground">
-                      {getEligibilitySummary(session)}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
-                        <Vote className="h-3 w-3" />
-                        {session.categories?.length || 0} ballot categories
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
-                        <Globe className="h-3 w-3" />
-                        {session.results_public ? "Public results" : "Restricted results"}
-                      </span>
                     </div>
                   </div>
 
                   <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                    {session.description || "No session description provided."}
+                    {session.description || "No election description provided."}
                   </p>
 
                   <div className="mt-auto flex flex-wrap gap-2 pt-4">
@@ -509,11 +482,22 @@ export default function SessionsPage() {
                       size="sm"
                       className="flex-1 min-w-[120px]"
                       onClick={() =>
-                        router.push(`/dashboard/sessions/${session._id}`)
+                        router.push(`/dashboard/elections/${session._id}`)
                       }
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 min-w-[120px]"
+                      onClick={() =>
+                        router.push(`/dashboard/elections/${session._id}/live`)
+                      }
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Live
                     </Button>
                     {session.status !== "ended" ? (
                       <Button
@@ -521,7 +505,7 @@ export default function SessionsPage() {
                         size="sm"
                         className="flex-1 min-w-[120px]"
                         onClick={() =>
-                          router.push(`/dashboard/sessions/${session._id}/edit`)
+                          router.push(`/dashboard/elections/${session._id}/edit`)
                         }
                       >
                         <Edit className="mr-2 h-4 w-4" />
@@ -550,19 +534,19 @@ export default function SessionsPage() {
               icon={Calendar}
               title={
                 statusFilter === "all"
-                  ? "No sessions found"
-                  : `No ${statusFilter} sessions`
+                  ? "No elections found"
+                  : `No ${statusFilter} elections`
               }
               description={
                 statusFilter === "all"
-                  ? "Create your first voting session to start collecting ballots and results."
-                  : `There are no sessions in the ${statusFilter} state right now.`
+                  ? "Create your first voting election to start collecting ballots and results."
+                  : `There are no elections in the ${statusFilter} state right now.`
               }
               action={
                 statusFilter === "all"
                   ? {
-                      label: "Create Session",
-                      onClick: () => router.push("/dashboard/sessions/create"),
+                      label: "Create Election",
+                      onClick: () => router.push("/dashboard/elections/create"),
                     }
                   : undefined
               }
