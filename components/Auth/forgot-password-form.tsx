@@ -18,9 +18,9 @@ import {
   AtSignIcon,
   Building2,
   CheckCircle2,
-  GraduationCap,
   KeyRound,
 } from "lucide-react";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
 
 const AUTH_INPUT_CLASS = "text-base md:text-sm";
 
@@ -56,9 +56,7 @@ export function ForgotPasswordForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="mb-8 flex flex-col items-center gap-3 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-          <GraduationCap className="h-7 w-7 text-primary" />
-        </div>
+        <AuthBrandMark />
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Reset your password

@@ -6,13 +6,11 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowRight,
   Building2,
   ChevronRight,
   Eye,
   EyeOff,
-  GraduationCap,
   KeyRound,
   Lock,
   Search,
@@ -36,7 +34,6 @@ import {
 } from "@/lib/tenant-config";
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   Dialog,
   DialogContent,
@@ -50,33 +47,10 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
+import { AuthPageShell } from "@/components/Auth/auth-page-shell";
 
 const AUTH_INPUT_CLASS = "text-base md:text-sm";
-
-/* ── Subtle dot-grid SVG background ──────────────────────────────────────── */
-function DotGrid() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern
-          id="dot-pattern"
-          x="0"
-          y="0"
-          width="24"
-          height="24"
-          patternUnits="userSpaceOnUse"
-        >
-          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#dot-pattern)" />
-    </svg>
-  );
-}
 
 function StudentLoginPageContent() {
   const router = useRouter();
@@ -227,28 +201,10 @@ function StudentLoginPageContent() {
   const showSignInForm = Boolean(selectedOrganization || hostTenantSlug);
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <DotGrid />
-
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Back to website
-          </Link>
-        </Button>
-        <AnimatedThemeToggler variant="header" />
-      </div>
-
-      {/* Centered form shell */}
-      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-sm">
+    <AuthPageShell backHref="/" backLabel="Back to website">
           {/* Brand mark */}
           <div className="mb-8 flex flex-col items-center gap-3 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-              <GraduationCap className="h-7 w-7 text-primary" />
-            </div>
+            <AuthBrandMark />
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 {showSignInForm ? "Welcome back" : "Student portal"}
@@ -487,9 +443,6 @@ function StudentLoginPageContent() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
       {/* First-login prompt */}
       <Dialog
         open={firstLoginPromptOpen}
@@ -527,7 +480,7 @@ function StudentLoginPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AuthPageShell>
   );
 }
 

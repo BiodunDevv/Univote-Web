@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
-  ArrowLeft,
   Building2,
   CheckCircle2,
   Clock3,
@@ -27,7 +26,8 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
+import { AuthPageShell } from "@/components/Auth/auth-page-shell";
 import {
   InputGroup,
   InputGroupAddon,
@@ -87,17 +87,29 @@ function getApplicationStatusTone(status?: string) {
 export default function ApplicationStatusClientPage() {
   const compactInputClass = "text-base md:text-sm";
   const searchParams = useSearchParams();
+  const queryEmail = (searchParams.get("email") || "").trim().toLowerCase();
+  const queryReference = (searchParams.get("reference") || "")
+    .trim()
+    .toUpperCase();
+  const [initialTracked] = useState(() => {
+    const tracked = readTrackedTenantApplication();
+    return tracked && shouldKeepTrackedApplication(tracked.status)
+      ? tracked
+      : null;
+  });
+  const initialLookupEmail = queryEmail || initialTracked?.email || "";
+  const initialLookupReference = queryReference || initialTracked?.reference || "";
   const [reference, setReference] = useState("");
   const [email, setEmail] = useState("");
-  const [lookupReference, setLookupReference] = useState("");
-  const [lookupEmail, setLookupEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [lookupReference, setLookupReference] = useState(initialLookupReference);
+  const [lookupEmail, setLookupEmail] = useState(initialLookupEmail);
+  const [submitted, setSubmitted] = useState(Boolean(initialLookupEmail));
   const [trackedSummary, setTrackedSummary] = useState<{
     reference: string;
     email: string;
     name?: string | null;
     status?: string | null;
-  } | null>(null);
+  } | null>(initialTracked);
   const statusQuery = useTenantApplicationStatusQuery(
     lookupEmail,
     lookupReference,
@@ -106,31 +118,21 @@ export default function ApplicationStatusClientPage() {
 
   const application = statusQuery.data?.application;
   const statusTone = getApplicationStatusTone(application?.status);
+  const visibleTrackedSummary = useMemo(() => {
+    if (!application) return trackedSummary;
+    if (!shouldKeepTrackedApplication(application.status)) return null;
+
+    return {
+      reference: application.reference || lookupReference,
+      email: application.contact_email || lookupEmail,
+      name: application.name,
+      status: application.status,
+    };
+  }, [application, lookupEmail, lookupReference, trackedSummary]);
   const timeline = useMemo(
     () => application?.status_timeline || [],
     [application?.status_timeline],
   );
-
-  useEffect(() => {
-    const queryEmail = (searchParams.get("email") || "").trim().toLowerCase();
-    const queryReference = (searchParams.get("reference") || "")
-      .trim()
-      .toUpperCase();
-    const tracked = readTrackedTenantApplication();
-
-    const initialEmail = queryEmail || tracked?.email || "";
-    const initialReference = queryReference || tracked?.reference || "";
-
-    if (initialEmail) {
-      setLookupEmail(initialEmail);
-      setLookupReference(initialReference);
-      setSubmitted(true);
-    }
-
-    if (tracked && shouldKeepTrackedApplication(tracked.status)) {
-      setTrackedSummary(tracked);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     if (!application) return;
@@ -142,53 +144,23 @@ export default function ApplicationStatusClientPage() {
         name: application.name,
         status: application.status,
       };
-      setTrackedSummary(nextTracked);
       writeTrackedTenantApplication(nextTracked);
       return;
     }
 
     clearTrackedTenantApplication();
-    setTrackedSummary(null);
   }, [application, lookupEmail, lookupReference]);
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <pattern
-            id="application-status-dot-pattern"
-            x="0"
-            y="0"
-            width="24"
-            height="24"
-            patternUnits="userSpaceOnUse"
-          >
-            <circle cx="2" cy="2" r="1.5" fill="currentColor" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#application-status-dot-pattern)" />
-      </svg>
-
-      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Back to website
-          </Link>
-        </Button>
-        <AnimatedThemeToggler variant="header" />
-      </div>
-
-      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-start justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-5xl space-y-6">
+    <AuthPageShell
+      backHref="/"
+      backLabel="Back to website"
+      align="start"
+      maxWidthClassName="max-w-5xl"
+    >
+        <div className="space-y-6">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-            <Building2 className="h-7 w-7 text-primary" />
-          </div>
+          <AuthBrandMark />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Track your application
@@ -262,21 +234,21 @@ export default function ApplicationStatusClientPage() {
                 </Button>
               </div>
             </form>
-            {trackedSummary ? (
+            {visibleTrackedSummary ? (
               <div className="mt-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Tracked application</p>
                   <p className="text-sm text-muted-foreground">
-                    {trackedSummary.name || "University application"} •{" "}
-                    {trackedSummary.reference}
+                    {visibleTrackedSummary.name || "University application"} •{" "}
+                    {visibleTrackedSummary.reference}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setLookupEmail(trackedSummary.email);
-                      setLookupReference(trackedSummary.reference);
+                      setLookupEmail(visibleTrackedSummary.email);
+                      setLookupReference(visibleTrackedSummary.reference);
                       setSubmitted(true);
                     }}
                   >
@@ -499,7 +471,6 @@ export default function ApplicationStatusClientPage() {
           </>
         ) : null}
         </div>
-      </div>
-    </main>
+    </AuthPageShell>
   );
 }

@@ -6,12 +6,10 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Eye,
   EyeOff,
-  GraduationCap,
   KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,38 +18,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
+import { AuthPageShell } from "@/components/Auth/auth-page-shell";
 
 const AUTH_INPUT_CLASS = "text-base md:text-sm";
-
-function DotGrid() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern
-          id="student-reset-dot-pattern"
-          x="0"
-          y="0"
-          width="24"
-          height="24"
-          patternUnits="userSpaceOnUse"
-        >
-          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#student-reset-dot-pattern)" />
-    </svg>
-  );
-}
 
 function StudentResetPasswordPageContent() {
   const router = useRouter();
@@ -118,25 +93,9 @@ function StudentResetPasswordPageContent() {
   const organizationLabel = tenant?.name || organization || "your university";
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <DotGrid />
-
-      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={forgotHref}>
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Back to recovery
-          </Link>
-        </Button>
-        <AnimatedThemeToggler variant="header" />
-      </div>
-
-      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-sm">
+    <AuthPageShell backHref={forgotHref} backLabel="Back to recovery">
           <div className="mb-8 flex flex-col items-center gap-3 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-              <GraduationCap className="h-7 w-7 text-primary" />
-            </div>
+            <AuthBrandMark />
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Create a new password
@@ -151,7 +110,7 @@ function StudentResetPasswordPageContent() {
             {organization ? (
               <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-card">
-                  <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                  <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
@@ -334,9 +293,7 @@ function StudentResetPasswordPageContent() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </AuthPageShell>
   );
 }
 

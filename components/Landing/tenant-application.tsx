@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
+import { LogoIcon } from "@/components/logo";
 import { Textarea } from "@/components/ui/textarea";
 import {
   clearTrackedTenantApplication,
@@ -66,12 +67,12 @@ export function TenantApplicationSection() {
   const [applicationReference, setApplicationReference] = useState<
     string | null
   >(null);
-  const [trackedApplication, setTrackedApplication] = useState<{
-    reference: string;
-    email: string;
-    name?: string | null;
-    status?: string | null;
-  } | null>(null);
+  const [trackedApplication, setTrackedApplication] = useState(() => {
+    const tracked = readTrackedTenantApplication();
+    return tracked && shouldKeepTrackedApplication(tracked.status)
+      ? tracked
+      : null;
+  });
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState<TenantApplicationResponse | null>(
     null,
@@ -86,17 +87,6 @@ export function TenantApplicationSection() {
     undefined,
     step >= 1 && /\S+@\S+\.\S+/.test(lookupEmail),
   );
-
-  useEffect(() => {
-    const tracked = readTrackedTenantApplication();
-    if (!tracked) return;
-    if (!shouldKeepTrackedApplication(tracked.status)) {
-      clearTrackedTenantApplication();
-      return;
-    }
-
-    setTrackedApplication(tracked);
-  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -117,16 +107,26 @@ export function TenantApplicationSection() {
         name: application.name,
         status: application.status,
       };
-      setTrackedApplication(nextTracked);
       writeTrackedTenantApplication(nextTracked);
       return;
     }
 
     clearTrackedTenantApplication();
-    setTrackedApplication(null);
   }, [existingApplicationQuery.data?.application, lookupEmail]);
 
   const isSavingDraft = createMutation.isPending || updateMutation.isPending;
+  const visibleTrackedApplication = useMemo(() => {
+    const application = existingApplicationQuery.data?.application;
+    if (!application) return trackedApplication;
+    if (!shouldKeepTrackedApplication(application.status)) return null;
+
+    return {
+      reference: application.reference || "",
+      email: application.contact_email || lookupEmail,
+      name: application.name,
+      status: application.status,
+    };
+  }, [existingApplicationQuery.data?.application, lookupEmail, trackedApplication]);
   const canAdvanceFromUniversityStep =
     formData.institution_name.trim().length > 0 &&
     formData.slug.trim().length > 0;
@@ -417,6 +417,7 @@ export function TenantApplicationSection() {
     <section className="py-20">
       <div className="mx-auto max-w-5xl px-4 lg:px-0">
         <div className="mx-auto mb-10 max-w-2xl text-center">
+          <LogoIcon className="mx-auto mb-4 h-8 w-8 text-foreground" />
           <Badge
             variant="outline"
             className="rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
@@ -546,21 +547,21 @@ export function TenantApplicationSection() {
               </div>
             ) : (
               <>
-                {trackedApplication ? (
+                {visibleTrackedApplication ? (
                   <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
                         Existing application available
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {trackedApplication.name || "University application"} •{" "}
-                        {trackedApplication.reference}
+                        {visibleTrackedApplication.name || "University application"} •{" "}
+                        {visibleTrackedApplication.reference}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" asChild>
                         <Link
-                          href={`/application-status?reference=${encodeURIComponent(trackedApplication.reference)}&email=${encodeURIComponent(trackedApplication.email)}`}
+                          href={`/application-status?reference=${encodeURIComponent(visibleTrackedApplication.reference)}&email=${encodeURIComponent(visibleTrackedApplication.email)}`}
                         >
                           Check status
                         </Link>

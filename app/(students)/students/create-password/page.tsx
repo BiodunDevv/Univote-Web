@@ -4,13 +4,14 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
 import {
   InputGroup,
   InputGroupAddon,
@@ -98,9 +99,7 @@ export default function StudentCreatePasswordPage() {
       <div className="border-b bg-linear-to-r from-(--student-hero-from) to-(--student-hero-to) px-4 py-5 sm:px-6">
         <div className="mx-auto max-w-md">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border bg-background/80">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-            </div>
+            <AuthBrandMark className="h-7 w-7" />
             <div>
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 First sign-in

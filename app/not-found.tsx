@@ -1,36 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Compass, GraduationCap, LifeBuoy, SearchX } from "lucide-react";
-import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import { Compass, LifeBuoy, SearchX } from "lucide-react";
+import { AuthBrandMark } from "@/components/Auth/auth-brand-mark";
+import { AuthPageShell } from "@/components/Auth/auth-page-shell";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
-
-function DotGrid() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern
-          id="not-found-dot-pattern"
-          x="0"
-          y="0"
-          width="24"
-          height="24"
-          patternUnits="userSpaceOnUse"
-        >
-          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#not-found-dot-pattern)" />
-    </svg>
-  );
-}
 
 function getPrimaryAction(input: {
   adminToken: string | null;
@@ -85,25 +62,10 @@ export default function NotFound() {
   });
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <DotGrid />
-
-      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Back to website
-          </Link>
-        </Button>
-        <AnimatedThemeToggler variant="header" />
-      </div>
-
-      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
-        <section className="w-full max-w-sm">
+    <AuthPageShell backHref="/" backLabel="Back to website">
+        <section>
           <div className="mb-8 flex flex-col items-center gap-3 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-              <GraduationCap className="h-7 w-7 text-primary" />
-            </div>
+            <AuthBrandMark />
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Page not found
@@ -153,7 +115,6 @@ export default function NotFound() {
             </p>
           </div>
         </section>
-      </div>
-    </main>
+    </AuthPageShell>
   );
 }
