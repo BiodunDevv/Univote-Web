@@ -23,6 +23,11 @@ export default function StudentPortalLayout({
       return;
     }
 
+    if (student?.first_login) {
+      router.replace("/students/create-password?ref=/students/home");
+      return;
+    }
+
     if (student) return;
 
     let isMounted = true;
@@ -40,7 +45,7 @@ export default function StudentPortalLayout({
     };
   }, [fetchProfile, hasHydrated, logout, router, student, token]);
 
-  if (!hasHydrated || !token || !student) {
+  if (!hasHydrated || !token || !student || student.first_login) {
     return (
       <ChangingLoadingState
         fullHeight

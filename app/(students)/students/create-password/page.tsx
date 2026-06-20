@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,14 +17,13 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { AuthPageShell } from "@/components/Auth/auth-page-shell";
 
 const AUTH_INPUT_CLASS = "text-base md:text-sm";
 
 export default function StudentCreatePasswordPage() {
   const router = useRouter();
-  const searchParams = new URLSearchParams(
-    typeof window === "undefined" ? "" : window.location.search,
-  );
+  const searchParams = useSearchParams();
   const {
     firstLoginToken,
     token,
@@ -43,6 +42,7 @@ export default function StudentCreatePasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const ref = searchParams.get("ref") || "/students/home";
+  const organization = searchParams.get("organization") || "";
   const labels = getTenantParticipantLabels(tenant);
 
   const strength =
@@ -67,9 +67,18 @@ export default function StudentCreatePasswordPage() {
 
   useEffect(() => {
     if (hasHydrated && !firstLoginToken && !(token && student?.first_login)) {
-      router.replace("/students/login");
+      const query = new URLSearchParams();
+      if (organization) query.set("organization", organization);
+      router.replace(`/students/login${query.toString() ? `?${query}` : ""}`);
     }
-  }, [firstLoginToken, hasHydrated, router, student?.first_login, token]);
+  }, [
+    firstLoginToken,
+    hasHydrated,
+    organization,
+    router,
+    student?.first_login,
+    token,
+  ]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -89,39 +98,42 @@ export default function StudentCreatePasswordPage() {
       return;
     }
 
-    await changePassword(newPassword);
-    router.replace(ref);
+    try {
+      await changePassword(newPassword);
+      router.replace(ref);
+    } catch {
+      return;
+    }
   };
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      {/* Top banner */}
-      <div className="border-b bg-linear-to-r from-(--student-hero-from) to-(--student-hero-to) px-4 py-5 sm:px-6">
-        <div className="mx-auto max-w-md">
-          <div className="flex items-center gap-3">
-            <AuthBrandMark className="h-7 w-7" />
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                First sign-in
-              </p>
-              <h1 className="font-display text-xl font-semibold text-foreground">
-                Create a new password
-              </h1>
-            </div>
-          </div>
+    <AuthPageShell
+      backHref={
+        organization
+          ? `/students/login?organization=${encodeURIComponent(organization)}`
+          : "/students/login"
+      }
+      backLabel="Back to sign in"
+    >
+      <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <AuthBrandMark />
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            Create a new password
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Secure your account before entering the portal.
+          </p>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-md space-y-5">
-          <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-            Secure your {labels.singular.toLowerCase()} account before entering
-            the portal. Use at least 6 characters — this replaces the temporary
-            default password.
-          </div>
+      <div className="space-y-5">
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+          Use at least 6 characters. This replaces the temporary password and
+          unlocks your {labels.singular.toLowerCase()} portal session.
+        </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <Label htmlFor="new-password">New password</Label>
               <InputGroup>
@@ -222,9 +234,8 @@ export default function StudentCreatePasswordPage() {
                 "Create password & enter portal"
               )}
             </Button>
-          </form>
-        </div>
+        </form>
       </div>
-    </div>
+    </AuthPageShell>
   );
 }

@@ -122,7 +122,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
 
           const student = normalizeStudentProfile(response.student);
           set({
-            token: response.token,
+            token: student.first_login ? null : response.token,
             student,
             tenant: response.tenant || null,
             firstLoginToken: student.first_login ? response.token : null,
@@ -141,6 +141,7 @@ export const useStudentAuthStore = create<StudentAuthState>()(
             typeof error.payload?.token === "string"
           ) {
             set({
+              token: null,
               firstLoginToken: error.payload.token,
               isLoading: false,
               error: "Password change required",

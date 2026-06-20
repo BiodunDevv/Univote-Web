@@ -18,7 +18,6 @@ import {
 import { StudentSessionCard } from "@/components/students/portal/session-card";
 import { useStudentDashboardQuery } from "@/lib/queries/student";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   formatParticipantIdentifier,
@@ -156,23 +155,6 @@ export default function StudentHomePage() {
           ))}
         </div>
       </div>
-
-      {/* First-login password banner */}
-      {data.student_info.first_login ? (
-        <Card className="animate-slide-up-1 border-amber-300/60 bg-amber-50/60 shadow-none dark:border-amber-700/40 dark:bg-amber-950/20">
-          <CardContent className="flex items-center justify-between gap-3 p-3.5">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Set a personal password</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                You&apos;re still on your temporary password.
-              </p>
-            </div>
-            <Button asChild size="sm" className="shrink-0 rounded-xl">
-              <Link href="/students/create-password?ref=/students/home">Update</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
 
       {/* Elections — primary content */}
       <section className="animate-slide-up-2 flex flex-col gap-2.5">

@@ -62,13 +62,16 @@ export default function SuperAdminLayout({
   }
 
   return (
-    <div className="min-h-svh bg-background">
-      <SidebarProvider>
-        <SuperAdminSidebar />
-        <SidebarInset>
+    <div className="h-svh overflow-hidden bg-background">
+      <SidebarProvider
+        defaultOpen
+        className="h-svh overflow-hidden [--sidebar-width:16rem]"
+      >
+        <SuperAdminSidebar collapsible="offcanvas" />
+        <SidebarInset className="min-w-0 overflow-hidden">
           <AdminProductTour scope="super-admin" />
           <DashboardShellHeader rootSegment="super-admin" />
-          <div className="flex min-w-0 w-full max-w-full flex-1 flex-col overflow-x-hidden p-2">
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-2">
             {children}
           </div>
         </SidebarInset>

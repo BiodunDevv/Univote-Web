@@ -14,7 +14,6 @@ import {
   KeyRound,
   Lock,
   Search,
-  ShieldCheck,
   UserCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,14 +33,6 @@ import {
 } from "@/lib/tenant-config";
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import type { TenantContext } from "@/types/tenant";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   InputGroup,
   InputGroupAddon,
@@ -79,8 +70,6 @@ function StudentLoginPageContent() {
   const [email, setEmail] = useState(emailParam);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [firstLoginPromptOpen, setFirstLoginPromptOpen] = useState(false);
-  const [postLoginRoute, setPostLoginRoute] = useState(ref);
 
   const organizationsQuery = usePublicOrganizationsQuery(search);
   const selectedOrganizationQuery = usePublicOrganizationQuery(
@@ -135,22 +124,19 @@ function StudentLoginPageContent() {
         : null;
 
   useEffect(() => {
-    if (
-      hasHydrated &&
-      token &&
-      !student?.first_login &&
-      !firstLoginPromptOpen
-    ) {
+    if (hasHydrated && token && !student?.first_login) {
       router.replace(ref);
     }
-  }, [
-    firstLoginPromptOpen,
-    hasHydrated,
-    ref,
-    router,
-    student?.first_login,
-    token,
-  ]);
+  }, [hasHydrated, ref, router, student?.first_login, token]);
+
+  const routeToCreatePassword = (targetTenantSlug?: string | null) => {
+    const query = new URLSearchParams();
+    query.set("ref", ref);
+    if (targetTenantSlug) {
+      query.set("organization", targetTenantSlug);
+    }
+    router.replace(`/students/create-password?${query.toString()}`);
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -165,8 +151,7 @@ function StudentLoginPageContent() {
         });
       }
       if (result.requiresPasswordChange) {
-        setPostLoginRoute(ref);
-        setFirstLoginPromptOpen(true);
+        routeToCreatePassword(targetTenantSlug);
         return;
       }
       router.replace(ref);
@@ -175,10 +160,7 @@ function StudentLoginPageContent() {
         submitError instanceof Error &&
         submitError.message === "FIRST_LOGIN"
       ) {
-        const query = new URLSearchParams();
-        query.set("ref", ref);
-        if (targetTenantSlug) query.set("organization", targetTenantSlug);
-        router.replace(`/students/create-password?${query.toString()}`);
+        routeToCreatePassword(targetTenantSlug);
       }
     }
   };
@@ -188,15 +170,6 @@ function StudentLoginPageContent() {
     setEmail("");
     setPassword("");
     clearError();
-  };
-
-  const routeToCreatePassword = () => {
-    const query = new URLSearchParams();
-    query.set("ref", postLoginRoute);
-    if (hostTenantSlug || selectedOrgSlug) {
-      query.set("organization", hostTenantSlug || selectedOrgSlug);
-    }
-    router.push(`/students/create-password?${query.toString()}`);
   };
 
   const showSignInForm = Boolean(selectedOrganization || hostTenantSlug);
@@ -444,43 +417,6 @@ function StudentLoginPageContent() {
               </div>
             </div>
           )}
-      {/* First-login prompt */}
-      <Dialog
-        open={firstLoginPromptOpen}
-        onOpenChange={setFirstLoginPromptOpen}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Secure your account
-            </DialogTitle>
-            <DialogDescription>
-              You signed in with a default password. Create a personal password
-              now to keep your account secure.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-            Recommended: set your password now before continuing to the portal.
-          </div>
-          <DialogFooter className="gap-2 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setFirstLoginPromptOpen(false);
-                router.replace(postLoginRoute);
-              }}
-            >
-              Skip for now
-            </Button>
-            <Button type="button" onClick={routeToCreatePassword}>
-              Set password
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AuthPageShell>
   );
 }
