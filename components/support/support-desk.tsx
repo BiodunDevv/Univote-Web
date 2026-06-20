@@ -201,8 +201,7 @@ export function SupportDesk({
   const canCreate =
     allowCreate && (overviewQuery.data?.permissions.can_create ?? true);
   const selectedConversation = conversationQuery.data;
-  void compact;
-  void fullScreen;
+  const isCompactFullScreen = compact || fullScreen;
   const isPhotoResetTicket = Boolean(
     selectedConversation &&
       selectedConversation.ticket.requester_type === "student" &&
@@ -550,8 +549,18 @@ export function SupportDesk({
   };
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 flex-col gap-4 pb-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <div
+      className={cn(
+        "flex min-h-0 w-full min-w-0 flex-col",
+        isCompactFullScreen ? "gap-3 pb-0 lg:h-full" : "gap-4 pb-4",
+      )}
+    >
+      <div
+        className={cn(
+          "grid gap-3 sm:grid-cols-2 xl:grid-cols-6",
+          compact && "hidden sm:grid",
+        )}
+      >
         {metrics.map((metric) => (
           <div
             key={metric.label}
@@ -567,8 +576,20 @@ export function SupportDesk({
         ))}
       </div>
 
-      <div className="min-h-[58rem] rounded-2xl border border-border/70">
-        <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
+      <div
+        className={cn(
+          "min-w-0 overflow-hidden rounded-xl border border-border/70",
+          fullScreen
+            ? "flex min-h-[32rem] flex-col lg:min-h-0 lg:flex-1"
+            : "min-h-[58rem]",
+        )}
+      >
+        <div
+          className={cn(
+            "flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:px-5",
+            compact && "px-3 py-3 sm:px-4",
+          )}
+        >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">{title}</p>
@@ -579,7 +600,7 @@ export function SupportDesk({
             {canCreate ? (
               <Button
                 size="sm"
-                className="h-8 shrink-0"
+                className={cn("h-8 shrink-0", compact && "w-full sm:w-auto")}
                 onClick={() => setCreateOpen(true)}
               >
                 <MessageSquarePlus className="mr-1.5 size-3.5" />
@@ -646,7 +667,12 @@ export function SupportDesk({
           ) : null}
         </div>
 
-        <div className="flex min-h-[44rem] min-w-0 flex-col overflow-hidden bg-background sm:rounded-b-2xl">
+        <div
+          className={cn(
+            "flex min-w-0 flex-col overflow-hidden bg-background sm:rounded-b-2xl",
+            fullScreen ? "min-h-[20rem] flex-1 lg:min-h-0" : "min-h-[44rem]",
+          )}
+        >
       {topLevelError ? (
         <div className="shrink-0 border-b bg-destructive/10 px-4 py-2 text-xs text-destructive">
           {topLevelError}
@@ -697,7 +723,7 @@ export function SupportDesk({
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="flex w-screen max-w-none flex-col gap-0 p-0 sm:w-[88vw] sm:max-w-sm"
+                className="flex h-dvh w-[min(100vw,24rem)] max-w-none flex-col gap-0 p-0 sm:w-[88vw] sm:max-w-sm"
               >
                 <SheetTitle className="sr-only">Support tickets</SheetTitle>
                 {/* Sheet header */}
@@ -1079,9 +1105,14 @@ export function SupportDesk({
           ) : null}
 
           {/* Messages area */}
-          <div className="min-h-0 min-w-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-muted/[0.14] px-3 py-3 pb-28 md:bg-transparent md:px-4 md:pb-4">
+          <div
+            className={cn(
+              "min-h-0 min-w-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-muted/[0.14] px-3 py-3 md:bg-transparent md:px-4 md:pb-4",
+              compact ? "pb-24" : "pb-28",
+            )}
+          >
             {!effectiveSelectedTicketId ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <div className="flex min-h-[16rem] flex-col items-center justify-center gap-3 text-center">
                 <LifeBuoy className="size-10 text-muted-foreground/40" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">
@@ -1161,7 +1192,14 @@ export function SupportDesk({
 
           {/* Reply bar */}
           {effectiveSelectedTicketId && !isAuditOnlyView ? (
-            <div className="sticky bottom-0 flex min-w-0 shrink-0 items-end gap-2 border-t bg-background/95 px-3 py-2.5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] backdrop-blur supports-backdrop-filter:bg-background/80">
+            <div
+              className={cn(
+                "sticky bottom-0 flex min-w-0 shrink-0 items-end gap-2 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80",
+                compact
+                  ? "px-2.5 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:px-3"
+                  : "px-3 py-2.5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
+              )}
+            >
               <Textarea
                 value={replyBody}
                 onChange={(event) => setReplyBody(event.target.value)}
@@ -1175,11 +1213,17 @@ export function SupportDesk({
                 }}
                 placeholder="Write a message…"
                 rows={1}
-                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[22px] border bg-background text-sm"
+                className={cn(
+                  "max-h-32 min-w-0 flex-1 resize-none border bg-background text-sm",
+                  compact ? "min-h-10 rounded-xl" : "min-h-11 rounded-[22px]",
+                )}
               />
               <Button
                 size="icon"
-                className="size-11 shrink-0 rounded-[22px]"
+                className={cn(
+                  "shrink-0",
+                  compact ? "size-10 rounded-xl" : "size-11 rounded-[22px]",
+                )}
                 onClick={() => void handleSendMessage()}
                 disabled={createMessage.isPending || !replyBody.trim()}
                 aria-label="Send message"
@@ -1204,7 +1248,7 @@ export function SupportDesk({
 
       {/* Create ticket dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create support ticket</DialogTitle>
             <DialogDescription>
@@ -1289,8 +1333,12 @@ export function SupportDesk({
                 required
               />
             </div>
-            <DialogFooter>
-              <Button type="submit" disabled={createTicket.isPending}>
+            <DialogFooter className="gap-2 sm:justify-end">
+              <Button
+                type="submit"
+                disabled={createTicket.isPending}
+                className="w-full sm:w-auto"
+              >
                 {createTicket.isPending ? (
                   <LoadingButtonContent label="Creating ticket…" />
                 ) : (

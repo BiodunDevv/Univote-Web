@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   XAxis,
 } from "recharts";
 import {
@@ -182,10 +181,10 @@ export default function DashboardWelcomePage() {
       ) : null}
 
       {/* Row 1: Vote trend + activity | Calendar + elections */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <div className="grid gap-4">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.9fr)]">
+        <div className="grid min-w-0 gap-4">
           {/* Vote momentum */}
-          <div className="rounded-xl border">
+          <div className="min-w-0 overflow-hidden rounded-xl border">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -216,41 +215,39 @@ export default function DashboardWelcomePage() {
                   <p className="mt-1 text-xl font-semibold text-foreground">{voteTrendRows.length}</p>
                 </div>
               </div>
-              <ChartContainer config={voteTrendConfig} className="h-[240px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    accessibilityLayer
-                    data={voteTrendRows}
-                    margin={{ left: 4, right: 8, top: 8, bottom: 0 }}
-                  >
-                    <CartesianGrid vertical={false} className="stroke-border/70" />
-                    <XAxis
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value) => formatTrendDate(String(value))}
-                    />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel formatter={(value) => [`${value} votes`, "Votes"]} />}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="votes"
-                      stroke="var(--color-votes)"
-                      strokeWidth={2.25}
-                      dot={{ r: 3, strokeWidth: 2, fill: "hsl(var(--background))" }}
-                      activeDot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <ChartContainer config={voteTrendConfig} className="h-[200px] min-w-0 w-full sm:h-[240px]">
+                <LineChart
+                  accessibilityLayer
+                  data={voteTrendRows}
+                  margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+                >
+                  <CartesianGrid vertical={false} className="stroke-border/70" />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(value) => formatTrendDate(String(value))}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel formatter={(value) => [`${value} votes`, "Votes"]} />}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="votes"
+                    stroke="var(--color-votes)"
+                    strokeWidth={2.25}
+                    dot={{ r: 3, strokeWidth: 2, fill: "hsl(var(--background))" }}
+                    activeDot={{ r: 4 }}
+                  />
+                </LineChart>
               </ChartContainer>
             </div>
           </div>
 
           {/* Recent activity */}
-          <div className="rounded-xl border">
+          <div className="min-w-0 overflow-hidden rounded-xl border">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <p className="text-sm font-semibold text-foreground">Recent activity</p>
               <Activity className="h-4 w-4 text-muted-foreground" />
@@ -293,7 +290,7 @@ export default function DashboardWelcomePage() {
           />
 
           {/* Recent elections */}
-          <div className="rounded-xl border">
+          <div className="min-w-0 overflow-hidden rounded-xl border">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <p className="text-sm font-semibold text-foreground">Recent elections</p>
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -331,8 +328,8 @@ export default function DashboardWelcomePage() {
 
       {/* Row 2: Distribution charts + top voters */}
       {(showLevelStructure || showCollegeStructure) ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-          <div className="grid gap-4">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.9fr)]">
+          <div className="grid min-w-0 gap-4">
             {showLevelStructure ? (
               <StudentsByLevelChart
                 data={studentsByLevelData}

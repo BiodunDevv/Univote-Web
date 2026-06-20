@@ -547,7 +547,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
           {/* Page content */}
           <div className={cn(
             "min-w-0",
-            isSupportRoute && "h-[calc(100svh-13rem)] min-h-0 pb-0 lg:h-[calc(100svh-8rem)]",
+            isSupportRoute &&
+              "pb-6 lg:h-[calc(100svh-8rem)] lg:min-h-0 lg:overflow-hidden lg:pb-0",
           )}>
             {children}
           </div>

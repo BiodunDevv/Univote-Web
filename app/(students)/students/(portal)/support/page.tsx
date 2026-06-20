@@ -10,6 +10,8 @@ export default function StudentSupportPage() {
       description="Open a support ticket, follow replies, and keep your voting issues tracked in one thread."
       allowCreate
       showQueueFilters={false}
+      compact
+      fullScreen
     />
   );
 }

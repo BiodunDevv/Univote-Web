@@ -38,7 +38,7 @@ export function StudentsByLevelChart({
     dimensionLabel && dimensionLabel.trim() ? dimensionLabel : "Level";
 
   return (
-    <Card className="border shadow-none lg:col-span-2">
+    <Card className="min-w-0 overflow-hidden border shadow-none lg:col-span-2">
       <CardHeader>
         <CardTitle className="text-base">
           {participantPluralLabel} by {normalizedDimensionLabel}
@@ -56,11 +56,14 @@ export function StudentsByLevelChart({
             </p>
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-60 w-full sm:h-72">
+          <ChartContainer
+            config={chartConfig}
+            className="h-56 min-w-0 w-full sm:h-72"
+          >
             <AreaChart
               data={data}
               accessibilityLayer
-              margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+              margin={{ left: 0, right: 4, top: 8, bottom: 0 }}
             >
               <CartesianGrid vertical={false} />
               <XAxis

@@ -35,7 +35,7 @@ export function StudentsByCollegeChart({
   );
 
   return (
-    <Card className="border shadow-none">
+    <Card className="min-w-0 overflow-hidden border shadow-none">
       <CardHeader>
         <CardTitle className="text-base">
           {participantPluralLabel} by {dimensionLabel}
@@ -56,7 +56,7 @@ export function StudentsByCollegeChart({
           <>
             <ChartContainer
               config={chartConfig}
-              className="mx-auto h-56 w-full sm:h-60"
+              className="mx-auto h-52 min-w-0 w-full sm:h-60"
             >
               <PieChart accessibilityLayer>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -81,7 +81,7 @@ export function StudentsByCollegeChart({
               </PieChart>
             </ChartContainer>
 
-            <div className="mt-2 grid grid-cols-1 gap-2 text-sm lg:grid-cols-2">
+            <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 text-sm lg:grid-cols-2">
               {data.map((college, index) => (
                 <div
                   key={college.college}

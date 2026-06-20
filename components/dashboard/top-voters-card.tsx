@@ -16,7 +16,7 @@ export function TopVotersCard({
   tenant,
 }: TopVotersCardProps) {
   return (
-    <Card className="border shadow-none">
+    <Card className="min-w-0 overflow-hidden border shadow-none">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base">
           Top {participantPluralLabel}
