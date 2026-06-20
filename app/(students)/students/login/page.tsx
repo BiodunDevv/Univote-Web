@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Building2,
+  CheckCircle2,
   ChevronRight,
   Eye,
   EyeOff,
@@ -52,6 +53,7 @@ function StudentLoginPageContent() {
   const emailParam = searchParams.get("email") || "";
   const ref = searchParams.get("ref") || "/students/home";
   const restrictionReason = searchParams.get("reason");
+  const passwordChanged = searchParams.get("passwordChanged") === "1";
 
   const {
     login,
@@ -284,6 +286,13 @@ function StudentLoginPageContent() {
                       Change
                     </button>
                   ) : null}
+                </div>
+              ) : null}
+
+              {passwordChanged ? (
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-300/60 bg-emerald-50/60 p-4 text-sm font-medium text-emerald-800 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>Password created. Sign in with your new password to continue.</p>
                 </div>
               ) : null}
 

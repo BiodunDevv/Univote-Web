@@ -625,7 +625,7 @@ export function useCreatePlatformTestimonialMutation() {
       author_role: string;
       institution_name: string;
       quote: string;
-      avatar_url?: string;
+      avatar_url?: string | null;
       rating?: number;
       status?: "draft" | "pending_review" | "published" | "rejected";
       highlighted?: boolean;
@@ -662,7 +662,7 @@ export function useUpdatePlatformTestimonialMutation(testimonialId: string) {
       author_role?: string;
       institution_name?: string;
       quote?: string;
-      avatar_url?: string;
+      avatar_url?: string | null;
       rating?: number;
       status?: "draft" | "pending_review" | "published" | "rejected";
       highlighted?: boolean;
@@ -675,6 +675,29 @@ export function useUpdatePlatformTestimonialMutation(testimonialId: string) {
           auth: "admin",
           data: payload,
         },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["platform", "testimonials"],
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.public.landing() }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.public.testimonials(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useDeletePlatformTestimonialMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (testimonialId: string) =>
+      apiRequest<{ message: string }>(
+        `/api/platform/testimonials/${testimonialId}`,
+        { method: "DELETE", auth: "admin" },
       ),
     onSuccess: async () => {
       await Promise.all([

@@ -8,6 +8,7 @@ import {
   FileText,
   Layers3,
   Rocket,
+  Settings,
   ShieldCheck,
 } from "lucide-react";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/lib/queries/platform";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSettingsStore } from "@/lib/store/useSettingsStore";
+import { TenantPageHeader } from "@/components/tenants/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -280,18 +282,21 @@ export default function PlatformSettingsPage() {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none">
-        <div className="space-y-2">
-          <h1 className="text-lg font-semibold sm:text-xl">
-            Platform Settings
-          </h1>
-          <p className="max-w-3xl text-sm text-muted-foreground">
-            Use this workspace as the operating hub for platform-wide controls,
-            tenant lifecycle supervision, and AWS biometric readiness. Univote
-            now runs one managed biometric stack across every university.
-          </p>
-        </div>
-      </section>
+      <TenantPageHeader
+        eyebrow="Platform console"
+        icon={<Settings className="h-4 w-4" />}
+        title="Platform Settings"
+        subtitle="Platform-wide controls, tenant lifecycle supervision, and AWS biometric configuration for all universities."
+        stats={
+          overview
+            ? [
+                { label: "Active tenants", value: overview.active_tenants },
+                { label: "Total tenants", value: overview.total_tenants },
+                { label: "Pending approval", value: onboardingQuery.data?.total ?? "—" },
+              ]
+            : undefined
+        }
+      />
 
       <Tabs
         value={activeTab}

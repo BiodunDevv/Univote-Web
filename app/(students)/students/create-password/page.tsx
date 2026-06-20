@@ -41,7 +41,6 @@ export default function StudentCreatePasswordPage() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const ref = searchParams.get("ref") || "/students/home";
   const organization = searchParams.get("organization") || "";
   const labels = getTenantParticipantLabels(tenant);
 
@@ -100,7 +99,10 @@ export default function StudentCreatePasswordPage() {
 
     try {
       await changePassword(newPassword);
-      router.replace(ref);
+      const loginQuery = new URLSearchParams();
+      loginQuery.set("passwordChanged", "1");
+      if (organization) loginQuery.set("organization", organization);
+      router.replace(`/students/login?${loginQuery.toString()}`);
     } catch {
       return;
     }
@@ -231,7 +233,7 @@ export default function StudentCreatePasswordPage() {
               {isLoading ? (
                 <LoadingButtonContent label="Securing account..." />
               ) : (
-                "Create password & enter portal"
+                "Create password & sign in"
               )}
             </Button>
         </form>

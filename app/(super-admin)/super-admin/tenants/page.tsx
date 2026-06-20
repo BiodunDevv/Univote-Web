@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Building2, Search } from "lucide-react";
 import { usePlatformTenantsQuery } from "@/lib/queries/platform";
+import { TenantPageHeader } from "@/components/tenants/shared/page-header";
 import { CreateTenantDialog } from "@/components/tenants/create-tenant-dialog";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -52,15 +53,21 @@ export default function PlatformTenantsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-6 shadow-none lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Tenants</h1>
-          <p className="text-sm text-muted-foreground">
-            Review institution provisioning, domains, and activation state.
-          </p>
-        </div>
-        <CreateTenantDialog />
-      </section>
+      <TenantPageHeader
+        eyebrow="Platform console"
+        icon={<Building2 className="h-4 w-4" />}
+        title="Tenants"
+        subtitle="Review institution provisioning, domains, and activation state across the platform."
+        actions={<CreateTenantDialog />}
+        stats={
+          data
+            ? [
+                { label: "Total", value: data.total },
+                { label: "Showing", value: tenants.length },
+              ]
+            : undefined
+        }
+      />
 
       {error ? (
         <Card className="border-destructive/40 shadow-none">

@@ -9,6 +9,7 @@ import {
   usePlatformAuditActionsQuery,
   usePlatformAuditLogsQuery,
 } from "@/lib/queries/platform";
+import { TenantPageHeader } from "@/components/tenants/shared/page-header";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,15 +102,17 @@ export default function PlatformAuditLogsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/30 p-4 shadow-none sm:p-6">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Platform Audit Logs
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review cross-tenant administrative activity, platform mutations, and
-          cleanup posture.
-        </p>
-      </section>
+      <TenantPageHeader
+        eyebrow="Platform console"
+        icon={<FileText className="h-4 w-4" />}
+        title="Audit Logs"
+        subtitle="Review cross-tenant administrative activity, platform mutations, and cleanup posture."
+        stats={
+          auditLogsQuery.data
+            ? [{ label: "Entries loaded", value: logs.length }]
+            : undefined
+        }
+      />
 
       {auditLogsQuery.error ? (
         <Card className="border-destructive/40 shadow-none">

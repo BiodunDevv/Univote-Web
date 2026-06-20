@@ -181,11 +181,12 @@ export const useStudentAuthStore = create<StudentAuthState>()(
             redirectOnAuthError: false,
           });
 
+          clearPersistedParticipantAuthState();
           set({
-            token: response.token,
-            student: normalizeStudentProfile(response.student),
-            tenant: response.tenant || null,
+            token: null,
             firstLoginToken: null,
+            student: null,
+            tenant: null,
             isLoading: false,
             error: null,
           });

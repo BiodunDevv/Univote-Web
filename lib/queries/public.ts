@@ -19,7 +19,7 @@ export function usePublicLandingQuery() {
       apiRequest<PublicLandingResponse>("/api/public/landing", {
         signal,
       }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 }
 
@@ -33,7 +33,7 @@ export function usePublicTestimonialsQuery() {
           signal,
         },
       ),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 }
 

@@ -6,10 +6,12 @@ import {
   BadgeCheck,
   FilePenLine,
   FileSearch,
+  GraduationCap,
   Mail,
   PhoneCall,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { TenantPageHeader } from "@/components/tenants/shared/page-header";
 import { toast } from "sonner";
 import {
   usePlatformTenantsQuery,
@@ -85,25 +87,16 @@ export default function PlatformOnboardingPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-4xl border bg-linear-to-br from-card via-card to-muted/40 p-6 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Tenant Onboarding
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Track university applications from submission through platform
-              approval.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm">
-            <Badge variant="secondary">{summary.draft} drafts</Badge>
-            <Badge variant="outline">
-              {summary.pending_approval} pending approval
-            </Badge>
-          </div>
-        </div>
-      </section>
+      <TenantPageHeader
+        eyebrow="Platform console"
+        icon={<GraduationCap className="h-4 w-4" />}
+        title="Tenant Onboarding"
+        subtitle="Track university applications from submission through platform approval."
+        stats={[
+          { label: "Drafts", value: summary.draft },
+          { label: "Pending approval", value: summary.pending_approval },
+        ]}
+      />
 
       <Card className="border-border/70 shadow-none">
         <CardHeader className="gap-4">
