@@ -6,7 +6,7 @@ import { useAdminDirectoryQuery } from "@/lib/queries/admin";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { TenantPageHeader } from "@/components/tenants/shared";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ export default function PermissionsPage() {
   const [search, setSearch] = useState("");
   const adminsQuery = useAdminDirectoryQuery({ page: 1, limit: 100 });
 
-  const admins = adminsQuery.data?.admins || [];
+  const admins = useMemo(() => adminsQuery.data?.admins || [], [adminsQuery.data?.admins]);
   const filteredAdmins = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return admins;
@@ -52,14 +52,18 @@ export default function PermissionsPage() {
       />
 
       {/* Inline search */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <div>
+        <InputGroup>
+          <InputGroupAddon align="inline-start">
+            <Search className="size-3.5" />
+          </InputGroupAddon>
+          <InputGroupInput
           placeholder="Search by name, email, or role…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-9 pl-8 text-sm"
-        />
+          className="text-sm"
+          />
+        </InputGroup>
       </div>
 
       <div className="rounded-lg border overflow-hidden">

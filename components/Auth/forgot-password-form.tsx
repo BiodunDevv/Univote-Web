@@ -6,18 +6,23 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Building2, CheckCircle2, ArrowLeft } from "lucide-react";
+import {
+  AlertCircle,
+  AtSignIcon,
+  Building2,
+  CheckCircle2,
+  GraduationCap,
+  KeyRound,
+} from "lucide-react";
+
+const AUTH_INPUT_CLASS = "text-base md:text-sm";
 
 export function ForgotPasswordForm({
   className,
@@ -50,98 +55,111 @@ export function ForgotPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => router.push("/")}
-        className="w-fit h-9 text-xs"
-      >
-        <ArrowLeft className="mr-2 h-3.5 w-3.5" />
-        Back to Home
-      </Button>
-      <Card>
-        <CardHeader>
-          <CardTitle>Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your email address and we&apos;ll send you a reset code
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              {hostTenantSlug ? (
-                <Alert>
-                  <Building2 className="h-4 w-4" />
-                  <AlertDescription>
-                    Tenant workspace detected:{" "}
-                    <span className="font-medium">{hostTenantSlug}</span>
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <Alert>
-                  <Building2 className="h-4 w-4" />
-                  <AlertDescription>
-                    Root recovery is enabled. Univote will restore access using your
-                    admin account and route you into the correct workspace after sign in.
-                  </AlertDescription>
-                </Alert>
-              )}
+      <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
+          <GraduationCap className="h-7 w-7 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            Reset your password
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Recover admin access to your workspace
+          </p>
+        </div>
+      </div>
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+      <div className="space-y-4">
+        {hostTenantSlug ? (
+          <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-card">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">
+                Tenant workspace detected
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {hostTenantSlug}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <Alert>
+            <Building2 className="h-4 w-4" />
+            <AlertDescription>
+              Root recovery is enabled. Univote will route you back into the
+              correct workspace after recovery.
+            </AlertDescription>
+          </Alert>
+        )}
 
-              {success && (
-                <Alert className="border-green-500 bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-100">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertDescription>
-                    If an account exists with this email, a reset code has been
-                    sent. Redirecting...
-                  </AlertDescription>
-                </Alert>
-              )}
+        {success ? (
+          <Alert className="border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>
+              If your account exists, a reset code has been sent. Redirecting
+              you to the secure reset form.
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading || success}
-                />
-              </Field>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
-              <Field>
-                <Button
-                  type="submit"
-                  disabled={isLoading || success}
-                  className="w-full"
-                >
-                  {isLoading ? "Sending..." : "Send Reset Code"}
-                </Button>
-              </Field>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-sm font-medium">
+              Recovery email address
+            </label>
+            <InputGroup>
+              <InputGroupInput
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="your.email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading || success}
+                className={AUTH_INPUT_CLASS}
+              />
+              <InputGroupAddon align="inline-start">
+                <AtSignIcon className="h-4 w-4" />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
 
-              <Field>
-                <div className="text-center text-sm">
-                  Remember your password?{" "}
-                  <Link
-                    href={backToLoginHref}
-                    className="underline underline-offset-4 hover:text-primary"
-                  >
-                    Back to login
-                  </Link>
-                </div>
-              </Field>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading || success}
+          >
+            {isLoading ? "Sending reset code..." : "Send reset code"}
+          </Button>
+        </form>
+
+        <div className="space-y-2 text-center text-xs text-muted-foreground">
+          <p className="flex items-center justify-center gap-1.5">
+            <KeyRound className="h-3 w-3" />
+            Recovery stays tied to your admin account and workspace access.
+          </p>
+          <p>
+            Remembered your password?{" "}
+            <Link
+              href={backToLoginHref}
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              Go back to sign in
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

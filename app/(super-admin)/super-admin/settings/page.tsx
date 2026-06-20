@@ -28,7 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -390,20 +390,30 @@ export default function PlatformSettingsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="super-admin-name">Full name</Label>
-                    <Input
-                      id="super-admin-name"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Layers3 className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="super-admin-name"
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="super-admin-email">Email</Label>
-                    <Input
-                      id="super-admin-email"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Bell className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="super-admin-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                 </div>
                 <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
@@ -446,33 +456,48 @@ export default function PlatformSettingsPage() {
                   <Label htmlFor="super-admin-current-password">
                     Current password
                   </Label>
-                  <Input
-                    id="super-admin-current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(event) => setCurrentPassword(event.target.value)}
-                  />
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <ShieldCheck className="size-3.5" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="super-admin-current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                    />
+                  </InputGroup>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="super-admin-new-password">New password</Label>
-                    <Input
-                      id="super-admin-new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="super-admin-new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="super-admin-confirm-password">
                       Confirm new password
                     </Label>
-                    <Input
-                      id="super-admin-confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="super-admin-confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                 </div>
                 {securityMessage ? (
@@ -510,69 +535,99 @@ export default function PlatformSettingsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-region">Region</Label>
-                    <Input
-                      id="aws-region"
-                      value={awsRegion}
-                      onChange={(event) => setAwsRegion(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Rocket className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-region"
+                        value={awsRegion}
+                        onChange={(event) => setAwsRegion(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-threshold">Similarity threshold</Label>
-                    <Input
-                      id="aws-threshold"
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={awsThreshold}
-                      onChange={(event) => setAwsThreshold(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-threshold"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={awsThreshold}
+                        onChange={(event) => setAwsThreshold(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-access-key">Access key</Label>
-                    <Input
-                      id="aws-access-key"
-                      value={awsAccessKeyId}
-                      onChange={(event) => setAwsAccessKeyId(event.target.value)}
-                      placeholder={
-                        biometrics?.access_key_id_masked || "Paste AWS access key"
-                      }
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-access-key"
+                        value={awsAccessKeyId}
+                        onChange={(event) => setAwsAccessKeyId(event.target.value)}
+                        placeholder={
+                          biometrics?.access_key_id_masked || "Paste AWS access key"
+                        }
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-secret">Secret key</Label>
-                    <Input
-                      id="aws-secret"
-                      value={awsSecretAccessKey}
-                      onChange={(event) =>
-                        setAwsSecretAccessKey(event.target.value)
-                      }
-                      placeholder={
-                        biometrics?.secret_access_key_masked || "Paste AWS secret key"
-                      }
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-secret"
+                        value={awsSecretAccessKey}
+                        onChange={(event) =>
+                          setAwsSecretAccessKey(event.target.value)
+                        }
+                        placeholder={
+                          biometrics?.secret_access_key_masked || "Paste AWS secret key"
+                        }
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-collection-prefix">Collection prefix</Label>
-                    <Input
-                      id="aws-collection-prefix"
-                      value={collectionPrefix}
-                      onChange={(event) => setCollectionPrefix(event.target.value)}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Layers3 className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-collection-prefix"
+                        value={collectionPrefix}
+                        onChange={(event) => setCollectionPrefix(event.target.value)}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="aws-liveness-threshold">
                       Liveness threshold
                     </Label>
-                    <Input
-                      id="aws-liveness-threshold"
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={livenessThreshold}
-                      onChange={(event) =>
-                        setLivenessThreshold(event.target.value)
-                      }
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <ShieldCheck className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="aws-liveness-threshold"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={livenessThreshold}
+                        onChange={(event) =>
+                          setLivenessThreshold(event.target.value)
+                        }
+                      />
+                    </InputGroup>
                   </div>
                 </div>
 
@@ -629,11 +684,16 @@ export default function PlatformSettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="test-image-url">Test image URL</Label>
-                  <Input
-                    id="test-image-url"
-                    value={testImageUrl}
-                    onChange={(event) => setTestImageUrl(event.target.value)}
-                  />
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <FileText className="size-3.5" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="test-image-url"
+                      value={testImageUrl}
+                      onChange={(event) => setTestImageUrl(event.target.value)}
+                    />
+                  </InputGroup>
                 </div>
                 <Button
                   variant="outline"

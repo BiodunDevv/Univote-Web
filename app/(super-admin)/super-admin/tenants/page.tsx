@@ -9,7 +9,7 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -74,14 +74,17 @@ export default function PlatformTenantsPage() {
         <CardHeader className="gap-4 md:flex-row md:items-center md:justify-between">
           <CardTitle>Tenant Directory</CardTitle>
           <div className="grid w-full gap-3 md:max-w-3xl md:grid-cols-[1fr_180px]">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
+            <div>
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <Search className="size-3.5" />
+                </InputGroupAddon>
+                <InputGroupInput
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search by name, slug, or domain"
-                className="pl-9"
-              />
+                />
+              </InputGroup>
             </div>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>

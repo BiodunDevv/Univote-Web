@@ -4,14 +4,20 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+
+const AUTH_INPUT_CLASS = "text-base md:text-sm";
 
 export default function StudentCreatePasswordPage() {
   const router = useRouter();
@@ -119,25 +125,30 @@ export default function StudentCreatePasswordPage() {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <Label htmlFor="new-password">New password</Label>
-              <div className="relative">
-                <Input
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <LockKeyhole className="h-4 w-4" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="new-password"
                   type={showNew ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   autoComplete="new-password"
-                  className="h-11 rounded-xl pr-11"
+                  className={AUTH_INPUT_CLASS}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowNew((v) => !v)}
-                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
-                  aria-label={showNew ? "Hide password" : "Show password"}
-                >
-                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+                <InputGroupAddon align="inline-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowNew((v) => !v)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label={showNew ? "Hide password" : "Show password"}
+                  >
+                    {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </InputGroupAddon>
+              </InputGroup>
 
               {/* Strength meter */}
               {newPassword.length > 0 ? (
@@ -164,25 +175,30 @@ export default function StudentCreatePasswordPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="confirm-password">Confirm password</Label>
-              <div className="relative">
-                <Input
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <LockKeyhole className="h-4 w-4" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="confirm-password"
                   type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   autoComplete="new-password"
-                  className="h-11 rounded-xl pr-11"
+                  className={AUTH_INPUT_CLASS}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                >
-                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+                <InputGroupAddon align="inline-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                  >
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </InputGroupAddon>
+              </InputGroup>
               {confirmPassword && confirmPassword !== newPassword ? (
                 <p className="text-xs text-destructive">
                   Passwords do not match.

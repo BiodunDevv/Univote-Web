@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Shield, ShieldAlert, Trash2, UserCog, UserPlus } from "lucide-react";
+import { Search, Shield, ShieldAlert, Trash2, UserCog, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
@@ -16,7 +16,7 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import {
   Table,
   TableBody,
@@ -68,7 +68,10 @@ export default function AdminsPage() {
   const deleteGlobalAdmin = useDeleteGlobalAdminMutation();
   const deleteTenantAdmin = useDeleteTenantAdminUserMutation();
 
-  const globalAdmins = globalAdminsQuery.data?.admins || [];
+  const globalAdmins = useMemo(
+    () => globalAdminsQuery.data?.admins || [],
+    [globalAdminsQuery.data?.admins],
+  );
   const tenantAdmins = tenantAdminsQuery.data?.members || [];
 
   const filteredGlobalAdmins = useMemo(() => {
@@ -174,13 +177,18 @@ export default function AdminsPage() {
       ) : null}
 
       {/* Inline search */}
-      <div className="relative">
-        <Input
+      <div>
+        <InputGroup>
+          <InputGroupAddon align="inline-start">
+            <Search className="size-3.5" />
+          </InputGroupAddon>
+          <InputGroupInput
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by name, email, or role…"
-          className="h-9 text-sm"
-        />
+          className="text-sm"
+          />
+        </InputGroup>
       </div>
 
       <div className="rounded-lg border overflow-hidden">

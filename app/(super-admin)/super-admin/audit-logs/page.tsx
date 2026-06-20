@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { FileText } from "lucide-react";
 import {
   useCleanupPlatformAuditLogsMutation,
   usePlatformAuditActionsQuery,
@@ -18,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -142,18 +143,28 @@ export default function PlatformAuditLogsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                type="datetime-local"
-                value={startDate}
-                className="w-full"
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-              <Input
-                type="datetime-local"
-                value={endDate}
-                className="w-full"
-                onChange={(event) => setEndDate(event.target.value)}
-              />
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <FileText className="size-3.5" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  type="datetime-local"
+                  value={startDate}
+                  className="w-full"
+                  onChange={(event) => setStartDate(event.target.value)}
+                />
+              </InputGroup>
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <FileText className="size-3.5" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  type="datetime-local"
+                  value={endDate}
+                  className="w-full"
+                  onChange={(event) => setEndDate(event.target.value)}
+                />
+              </InputGroup>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -208,13 +219,18 @@ export default function PlatformAuditLogsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cleanup-days">Retention window in days</Label>
-              <Input
-                id="cleanup-days"
-                type="number"
-                min={1}
-                value={cleanupDays}
-                onChange={(event) => setCleanupDays(event.target.value)}
-              />
+              <InputGroup>
+                <InputGroupAddon align="inline-start">
+                  <FileText className="size-3.5" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="cleanup-days"
+                  type="number"
+                  min={1}
+                  value={cleanupDays}
+                  onChange={(event) => setCleanupDays(event.target.value)}
+                />
+              </InputGroup>
             </div>
             <div className="grid gap-2">
               <Button

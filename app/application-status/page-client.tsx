@@ -14,9 +14,7 @@ import {
   Receipt,
   RefreshCcw,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
-import { Logo } from "@/components/logo";
 import { useTenantApplicationStatusQuery } from "@/lib/queries/public";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,9 +25,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   clearTrackedTenantApplication,
   readTrackedTenantApplication,
@@ -82,6 +85,7 @@ function getApplicationStatusTone(status?: string) {
 }
 
 export default function ApplicationStatusClientPage() {
+  const compactInputClass = "text-base md:text-sm";
   const searchParams = useSearchParams();
   const [reference, setReference] = useState("");
   const [email, setEmail] = useState("");
@@ -148,24 +152,61 @@ export default function ApplicationStatusClientPage() {
   }, [application, lookupEmail, lookupReference]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background px-4 pb-10 pt-24 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/10 to-transparent" />
+    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern
+            id="application-status-dot-pattern"
+            x="0"
+            y="0"
+            width="24"
+            height="24"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#application-status-dot-pattern)" />
+      </svg>
 
-      <div className="relative mx-auto w-full max-w-5xl space-y-6">
+      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            Back to website
+          </Link>
+        </Button>
+        <AnimatedThemeToggler variant="header" />
+      </div>
+
+      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-start justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-5xl space-y-6">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
+            <Building2 className="h-7 w-7 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              Track your application
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Review onboarding progress and current approval status in one place
+            </p>
+          </div>
+        </div>
+
         <Card className="border-border/70 shadow-none">
           <CardHeader className="space-y-4">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
-              <Sparkles className="size-3.5" />
-              Real-time onboarding verification status
-            </div>
-            <div>
-              <CardTitle className="text-2xl">Track your application</CardTitle>
-              <CardDescription className="mt-2 text-sm">
-                Use the same submitted work email to retrieve your application.
-                Reference is optional but helps if the same email has multiple
-                applications.
-              </CardDescription>
-            </div>
+            <CardTitle className="text-base">Application lookup</CardTitle>
+            <CardDescription className="text-sm">
+              Use the same submitted work email to retrieve your application.
+              Reference is optional but helps if the same email has multiple
+              applications.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -179,9 +220,8 @@ export default function ApplicationStatusClientPage() {
             >
               <div className="space-y-2">
                 <Label htmlFor="email">Submitted work email</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="email"
                     type="email"
                     value={email}
@@ -189,27 +229,32 @@ export default function ApplicationStatusClientPage() {
                       setEmail(event.target.value.toLowerCase())
                     }
                     placeholder="owner@organization.org"
-                    className="pl-9"
+                    className={compactInputClass}
                     required
                   />
-                </div>
+                  <InputGroupAddon align="inline-start">
+                    <Mail className="h-4 w-4" />
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reference">
                   Application reference (optional)
                 </Label>
-                <div className="relative">
-                  <Receipt className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="reference"
                     value={reference}
                     onChange={(event) =>
                       setReference(event.target.value.toUpperCase())
                     }
                     placeholder="APP-20260315-AB12CD"
-                    className="pl-9"
+                    className={compactInputClass}
                   />
-                </div>
+                  <InputGroupAddon align="inline-start">
+                    <Receipt className="h-4 w-4" />
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
               <div className="flex items-end">
                 <Button type="submit" className="w-full lg:w-auto">
@@ -453,6 +498,7 @@ export default function ApplicationStatusClientPage() {
             </div>
           </>
         ) : null}
+        </div>
       </div>
     </main>
   );

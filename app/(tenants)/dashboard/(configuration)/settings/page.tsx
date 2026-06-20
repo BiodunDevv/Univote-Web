@@ -12,6 +12,7 @@ import {
   EyeOff,
   Lock,
   Mail,
+  Phone,
   Server,
   Shield,
   User,
@@ -32,7 +33,12 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -407,40 +413,53 @@ function SettingsContent() {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full name</Label>
-                    <Input
-                      id="fullName"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      className="h-11"
-                      required
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <User className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="fullName"
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                        required
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      className="h-11"
-                      required
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Mail className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        required
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label>Role</Label>
-                    <Input
-                      value={roleLabel}
-                      disabled
-                      className="h-11 bg-muted/40"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Shield className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput value={roleLabel} disabled />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label>Workspace access</Label>
-                    <Input
-                      value={isSuperAdmin ? "Global platform" : "Tenant scoped"}
-                      disabled
-                      className="h-11 bg-muted/40"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Database className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        value={isSuperAdmin ? "Global platform" : "Tenant scoped"}
+                        disabled
+                      />
+                    </InputGroup>
                   </div>
                   {profileMessage ? (
                     <Alert className="lg:col-span-2">
@@ -508,84 +527,112 @@ function SettingsContent() {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="tenant-name">University name</Label>
-                    <Input
-                      id="tenant-name"
-                      value={tenantName}
-                      onChange={(event) => setTenantName(event.target.value)}
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <User className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-name"
+                        value={tenantName}
+                        onChange={(event) => setTenantName(event.target.value)}
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-slug">Slug</Label>
-                    <Input
-                      id="tenant-slug"
-                      value={tenantSlug}
-                      onChange={(event) => setTenantSlug(event.target.value)}
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Database className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-slug"
+                        value={tenantSlug}
+                        onChange={(event) => setTenantSlug(event.target.value)}
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-domain">Primary domain</Label>
-                    <Input
-                      id="tenant-domain"
-                      value={tenantDomain}
-                      onChange={(event) => setTenantDomain(event.target.value)}
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                      placeholder="vote.university.edu"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Server className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-domain"
+                        value={tenantDomain}
+                        onChange={(event) => setTenantDomain(event.target.value)}
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                        placeholder="vote.university.edu"
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-support-email">Support email</Label>
-                    <Input
-                      id="tenant-support-email"
-                      type="email"
-                      value={tenantSupportEmail}
-                      onChange={(event) =>
-                        setTenantSupportEmail(event.target.value)
-                      }
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Mail className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-support-email"
+                        type="email"
+                        value={tenantSupportEmail}
+                        onChange={(event) =>
+                          setTenantSupportEmail(event.target.value)
+                        }
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-contact-name">Contact name</Label>
-                    <Input
-                      id="tenant-contact-name"
-                      value={tenantContactName}
-                      onChange={(event) =>
-                        setTenantContactName(event.target.value)
-                      }
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <User className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-contact-name"
+                        value={tenantContactName}
+                        onChange={(event) =>
+                          setTenantContactName(event.target.value)
+                        }
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-contact-email">Contact email</Label>
-                    <Input
-                      id="tenant-contact-email"
-                      type="email"
-                      value={tenantContactEmail}
-                      onChange={(event) =>
-                        setTenantContactEmail(event.target.value)
-                      }
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Mail className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-contact-email"
+                        type="email"
+                        value={tenantContactEmail}
+                        onChange={(event) =>
+                          setTenantContactEmail(event.target.value)
+                        }
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenant-contact-phone">Contact phone</Label>
-                    <Input
-                      id="tenant-contact-phone"
-                      value={tenantContactPhone}
-                      onChange={(event) =>
-                        setTenantContactPhone(event.target.value)
-                      }
-                      disabled={!canManageTenantSettings || tenantProfileSaving}
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Phone className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="tenant-contact-phone"
+                        value={tenantContactPhone}
+                        onChange={(event) =>
+                          setTenantContactPhone(event.target.value)
+                        }
+                        disabled={!canManageTenantSettings || tenantProfileSaving}
+                      />
+                    </InputGroup>
                   </div>
                   {tenantProfileMessage ? (
                     <Alert className="lg:col-span-2">
@@ -681,87 +728,102 @@ function SettingsContent() {
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current password</Label>
-                  <div className="relative">
-                    <Input
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <Lock className="size-3.5" />
+                    </InputGroupAddon>
+                    <InputGroupInput
                       id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
                       value={currentPassword}
                       onChange={(event) =>
                         setCurrentPassword(event.target.value)
                       }
-                      className="h-11 pr-11"
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowCurrentPassword((current) => !current)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showCurrentPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                        onClick={() =>
+                          setShowCurrentPassword((current) => !current)
+                        }
+                        size="icon-xs"
+                        variant="ghost"
+                      >
+                        {showCurrentPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">New password</Label>
-                    <div className="relative">
-                      <Input
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Lock className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
                         id="newPassword"
                         type={showNewPassword ? "text" : "password"}
                         value={newPassword}
                         onChange={(event) => setNewPassword(event.target.value)}
-                        className="h-11 pr-11"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowNewPassword((current) => !current)
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          aria-label={showNewPassword ? "Hide password" : "Show password"}
+                          onClick={() =>
+                            setShowNewPassword((current) => !current)
+                          }
+                          size="icon-xs"
+                          variant="ghost"
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="size-3.5" />
+                          ) : (
+                            <Eye className="size-3.5" />
+                          )}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirm password</Label>
-                    <div className="relative">
-                      <Input
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Lock className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(event) =>
                           setConfirmPassword(event.target.value)
                         }
-                        className="h-11 pr-11"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword((current) => !current)
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          onClick={() =>
+                            setShowConfirmPassword((current) => !current)
+                          }
+                          size="icon-xs"
+                          variant="ghost"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="size-3.5" />
+                          ) : (
+                            <Eye className="size-3.5" />
+                          )}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
                 </div>
 
@@ -950,16 +1012,20 @@ function SettingsContent() {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="test-email-address">Recipient email</Label>
-                    <Input
-                      id="test-email-address"
-                      type="email"
-                      placeholder="test@example.com"
-                      value={testEmailAddress}
-                      onChange={(event) =>
-                        setTestEmailAddress(event.target.value)
-                      }
-                      className="h-11"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <Mail className="size-3.5" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="test-email-address"
+                        type="email"
+                        placeholder="test@example.com"
+                        value={testEmailAddress}
+                        onChange={(event) =>
+                          setTestEmailAddress(event.target.value)
+                        }
+                      />
+                    </InputGroup>
                   </div>
                   {emailTestMessage ? (
                     <Alert>

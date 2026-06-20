@@ -9,8 +9,12 @@ import { LoadingButtonContent } from "@/components/shared/changing-loading-state
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 function PasswordField({
   id,
@@ -32,24 +36,29 @@ function PasswordField({
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input
+      <InputGroup className="h-11 rounded-xl md:h-10">
+        <InputGroupAddon align="inline-start">
+          <LockKeyhole className="h-4 w-4" />
+        </InputGroupAddon>
+        <InputGroupInput
           id={id}
           type={show ? "text" : "password"}
           value={value}
           autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
-          className="h-11 rounded-xl pr-11"
+          className="text-base md:text-sm"
         />
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={show ? "Hide password" : "Show password"}
-          className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-muted-foreground hover:text-foreground"
-        >
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={show ? "Hide password" : "Show password"}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 }

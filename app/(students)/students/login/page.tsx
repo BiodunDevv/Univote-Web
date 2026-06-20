@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -33,7 +32,6 @@ import {
 } from "@/lib/queries/public";
 import {
   getTenantLoginIdentifier,
-  getTenantParticipantLabels,
   getTenantRecoveryIdentifierLabels,
 } from "@/lib/tenant-config";
 import { deriveTenantSlugFromHostname } from "@/lib/tenant";
@@ -47,6 +45,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+
+const AUTH_INPUT_CLASS = "text-base md:text-sm";
 
 /* ── Subtle dot-grid SVG background ──────────────────────────────────────── */
 function DotGrid() {
@@ -145,7 +150,6 @@ function StudentLoginPageContent() {
       : null);
 
   const loginField = getTenantLoginIdentifier(effectiveTenant);
-  const labels = getTenantParticipantLabels(effectiveTenant);
   const recoveryLabels = getTenantRecoveryIdentifierLabels(effectiveTenant);
 
   const restrictionMessage =
@@ -156,10 +160,22 @@ function StudentLoginPageContent() {
         : null;
 
   useEffect(() => {
-    if (hasHydrated && token && !student?.first_login && !firstLoginPromptOpen) {
+    if (
+      hasHydrated &&
+      token &&
+      !student?.first_login &&
+      !firstLoginPromptOpen
+    ) {
       router.replace(ref);
     }
-  }, [firstLoginPromptOpen, hasHydrated, ref, router, student?.first_login, token]);
+  }, [
+    firstLoginPromptOpen,
+    hasHydrated,
+    ref,
+    router,
+    student?.first_login,
+    token,
+  ]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -169,7 +185,8 @@ function StudentLoginPageContent() {
       const result = await login(email, password, targetTenantSlug);
       if (result.newDevice) {
         toast.info("New device detected", {
-          description: "A security email has been sent to your registered address.",
+          description:
+            "A security email has been sent to your registered address.",
         });
       }
       if (result.requiresPasswordChange) {
@@ -179,7 +196,10 @@ function StudentLoginPageContent() {
       }
       router.replace(ref);
     } catch (submitError) {
-      if (submitError instanceof Error && submitError.message === "FIRST_LOGIN") {
+      if (
+        submitError instanceof Error &&
+        submitError.message === "FIRST_LOGIN"
+      ) {
         const query = new URLSearchParams();
         query.set("ref", ref);
         if (targetTenantSlug) query.set("organization", targetTenantSlug);
@@ -224,7 +244,6 @@ function StudentLoginPageContent() {
       {/* Centered form shell */}
       <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm">
-
           {/* Brand mark */}
           <div className="mb-8 flex flex-col items-center gap-3 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
@@ -248,15 +267,22 @@ function StudentLoginPageContent() {
           {!showSignInForm ? (
             <div className="space-y-3">
               {/* Search */}
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search for your university…"
-                  className="pl-9"
-                  autoFocus
-                />
+              <div className="space-y-2">
+                <p className="text-start text-muted-foreground text-xs">
+                  Search for your university workspace
+                </p>
+                <InputGroup>
+                  <InputGroupInput
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search for your university…"
+                    autoFocus
+                    className={AUTH_INPUT_CLASS}
+                  />
+                  <InputGroupAddon align="inline-start">
+                    <Search className="h-4 w-4" />
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
 
               {/* University list */}
@@ -265,10 +291,13 @@ function StudentLoginPageContent() {
                   <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                     <LoadingButtonContent label="Searching…" />
                   </div>
-                ) : (organizationsQuery.data?.organizations || []).length === 0 ? (
+                ) : (organizationsQuery.data?.organizations || []).length ===
+                  0 ? (
                   <div className="flex flex-col items-center gap-2 py-8 text-center">
                     <Building2 className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">No universities found</p>
+                    <p className="text-sm text-muted-foreground">
+                      No universities found
+                    </p>
                   </div>
                 ) : (
                   (organizationsQuery.data?.organizations || []).map((org) => (
@@ -285,7 +314,9 @@ function StudentLoginPageContent() {
                         <p className="truncate text-sm font-medium text-foreground">
                           {org.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{org.slug}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {org.slug}
+                        </p>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                     </button>
@@ -329,27 +360,41 @@ function StudentLoginPageContent() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Identifier field */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="login-email" className="flex items-center gap-1.5">
+                  <Label
+                    htmlFor="login-email"
+                    className="flex items-center gap-1.5"
+                  >
                     <UserCircle className="h-3.5 w-3.5 text-muted-foreground" />
                     {loginField.label}
                   </Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    placeholder={loginField.placeholder}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
+                  <div className="space-y-2">
+                    <InputGroup>
+                      <InputGroupInput
+                        id="login-email"
+                        type="email"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        placeholder={loginField.placeholder}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoFocus
+                        className={AUTH_INPUT_CLASS}
+                      />
+                      <InputGroupAddon align="inline-start">
+                        <UserCircle className="h-4 w-4" />
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </div>
                 </div>
 
                 {/* Password field */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password" className="flex items-center gap-1.5">
+                    <Label
+                      htmlFor="login-password"
+                      className="flex items-center gap-1.5"
+                    >
                       <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                       Password
                     </Label>
@@ -364,29 +409,34 @@ function StudentLoginPageContent() {
                       Forgot password?
                     </Link>
                   </div>
-                  <div className="relative">
-                    <Input
+                  <InputGroup>
+                    <InputGroupInput
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      className="pr-10"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      autoComplete="current-password"
+                      className={AUTH_INPUT_CLASS}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                    <InputGroupAddon align="inline-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </InputGroupAddon>
+                  </InputGroup>
                 </div>
 
                 {restrictionMessage ? (
@@ -441,7 +491,10 @@ function StudentLoginPageContent() {
       </div>
 
       {/* First-login prompt */}
-      <Dialog open={firstLoginPromptOpen} onOpenChange={setFirstLoginPromptOpen}>
+      <Dialog
+        open={firstLoginPromptOpen}
+        onOpenChange={setFirstLoginPromptOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, FileCheck2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useSubmitTenantApplicationMutation,
@@ -60,6 +60,7 @@ function suggestDomain(slug: string): string {
 }
 
 export function TenantApplicationSection() {
+  const compactInputClass = "h-8 text-base md:h-7 md:text-sm";
   const createMutation = useSubmitTenantApplicationMutation();
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [applicationReference, setApplicationReference] = useState<
@@ -126,6 +127,9 @@ export function TenantApplicationSection() {
   }, [existingApplicationQuery.data?.application, lookupEmail]);
 
   const isSavingDraft = createMutation.isPending || updateMutation.isPending;
+  const canAdvanceFromUniversityStep =
+    formData.institution_name.trim().length > 0 &&
+    formData.slug.trim().length > 0;
 
   async function persistApplication(submit = false) {
     const payload = {
@@ -162,6 +166,10 @@ export function TenantApplicationSection() {
   }
 
   function handleNext() {
+    if (step === 0 && !canAdvanceFromUniversityStep) {
+      toast.error("Complete the university details before continuing.");
+      return;
+    }
     setStep((current) => Math.min(current + 1, STEPS.length - 1));
   }
 
@@ -198,6 +206,7 @@ export function TenantApplicationSection() {
                 }))
               }
               placeholder="Summit Institute"
+              className={compactInputClass}
               required
             />
           </div>
@@ -224,6 +233,7 @@ export function TenantApplicationSection() {
                 });
               }}
               placeholder="summit-demo"
+              className={compactInputClass}
               required
             />
           </div>
@@ -239,11 +249,12 @@ export function TenantApplicationSection() {
                 }))
               }
               placeholder="votes.organization.org"
+              className={compactInputClass}
             />
           </div>
           <div className="space-y-2">
             <Label>Institution type</Label>
-            <Input value="University" disabled />
+            <Input value="University" disabled className={compactInputClass} />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">Application note (optional)</Label>
@@ -257,6 +268,7 @@ export function TenantApplicationSection() {
                 }))
               }
               placeholder="Tell us your rollout period, election timeline, or any special compliance needs."
+              className="text-base md:text-sm"
               rows={4}
             />
           </div>
@@ -278,6 +290,7 @@ export function TenantApplicationSection() {
                   contact_name: event.target.value,
                 }))
               }
+              className={compactInputClass}
               required
             />
           </div>
@@ -293,6 +306,7 @@ export function TenantApplicationSection() {
                   contact_email: event.target.value,
                 }))
               }
+              className={compactInputClass}
               required
             />
           </div>
@@ -307,6 +321,7 @@ export function TenantApplicationSection() {
                   contact_phone: event.target.value,
                 }))
               }
+              className={compactInputClass}
             />
           </div>
           <div className="flex items-center gap-3 rounded-2xl border p-4">
@@ -350,6 +365,7 @@ export function TenantApplicationSection() {
                     student_count_estimate: Number(event.target.value || 0),
                   }))
                 }
+                className={compactInputClass}
               />
             </div>
             <div className="space-y-2">
@@ -365,6 +381,7 @@ export function TenantApplicationSection() {
                     admin_count_estimate: Number(event.target.value || 0),
                   }))
                 }
+                className={compactInputClass}
               />
             </div>
           </div>
@@ -432,25 +449,39 @@ export function TenantApplicationSection() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              {STEPS.map((label, index) => (
-                <button
-                  type="button"
-                  key={label}
-                  className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
-                    index === step
-                      ? "border-primary bg-primary/5"
-                      : index < step
-                        ? "border-emerald-500/30 bg-emerald-500/5"
-                        : "border-border bg-background"
-                  }`}
-                  onClick={() => setStep(index)}
-                >
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
-                  <div className="mt-1 font-medium">{label}</div>
-                </button>
-              ))}
+              {STEPS.map((label, index) => {
+                const canSelectStep =
+                  index <= step || canAdvanceFromUniversityStep;
+
+                return (
+                  <button
+                    type="button"
+                    key={label}
+                    className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
+                      index === step
+                        ? "border-primary bg-primary/5"
+                        : index < step
+                          ? "border-emerald-500/30 bg-emerald-500/5"
+                          : "border-border bg-background"
+                    } ${!canSelectStep ? "cursor-not-allowed opacity-50" : ""}`}
+                    disabled={!canSelectStep}
+                    onClick={() => {
+                      if (!canSelectStep) {
+                        toast.error(
+                          "Complete the university details before opening the next step.",
+                        );
+                        return;
+                      }
+                      setStep(index);
+                    }}
+                  >
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+                    <div className="mt-1 font-medium">{label}</div>
+                  </button>
+                );
+              })}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -627,7 +658,11 @@ export function TenantApplicationSection() {
                       Back
                     </Button>
                     {step < STEPS.length - 1 ? (
-                      <Button type="button" onClick={handleNext}>
+                      <Button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={step === 0 && !canAdvanceFromUniversityStep}
+                      >
                         Next
                         <ArrowRight className="ml-2 size-4" />
                       </Button>

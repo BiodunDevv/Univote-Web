@@ -2,52 +2,69 @@
 
 export const dynamic = "force-dynamic";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  GraduationCap,
   KeyRound,
   Mail,
-  ShieldCheck,
-  Vote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingButtonContent } from "@/components/shared/changing-loading-state";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
 import {
-  getTenantParticipantLabels,
   getTenantRecoveryIdentifierLabels,
 } from "@/lib/tenant-config";
 import { AnimatedThemeToggler } from "@/components/theme-toggler";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+
+const AUTH_INPUT_CLASS = "text-base md:text-sm";
+
+function DotGrid() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern
+          id="student-forgot-dot-pattern"
+          x="0"
+          y="0"
+          width="24"
+          height="24"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#student-forgot-dot-pattern)" />
+    </svg>
+  );
+}
 
 function StudentForgotPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { forgotPassword, isLoading, error, clearError, tenant } =
     useStudentAuthStore();
-  const [email, setEmail] = useState("");
-  const [organization, setOrganization] = useState("");
-  const labels = getTenantParticipantLabels(tenant);
+  const initialEmail = searchParams.get("email") || "";
+  const initialOrganization = searchParams.get("organization") || "";
+  const [email, setEmail] = useState(initialEmail);
+  const [organization] = useState(initialOrganization);
   const recoveryLabels = getTenantRecoveryIdentifierLabels(tenant);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    setEmail(searchParams.get("email") || "");
-    setOrganization(searchParams.get("organization") || "");
-  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -74,93 +91,55 @@ function StudentForgotPasswordPageContent() {
   const backHref = organization
     ? `/students/login?organization=${encodeURIComponent(organization)}`
     : "/students/login";
+  const organizationLabel = tenant?.name || organization || "your university";
 
   return (
-    <div className="min-h-svh overflow-x-hidden bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto mb-4 flex max-w-6xl items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" asChild className="rounded-xl px-3">
+    <div className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <DotGrid />
+
+      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
+        <Button variant="ghost" size="sm" asChild>
           <Link href={backHref}>
             <ArrowLeft className="mr-1.5 h-4 w-4" />
             Back to sign in
           </Link>
         </Button>
-        <AnimatedThemeToggler variant="header" className="h-9" />
+        <AnimatedThemeToggler variant="header" />
       </div>
 
-      <div className="mx-auto grid min-h-[calc(100svh-7rem)] max-w-6xl gap-6 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-        <div className="relative hidden overflow-hidden rounded-2xl border bg-linear-to-br from-(--student-hero-from) via-card to-(--student-hero-to) p-5 shadow-none md:block">
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              <Vote className="h-3.5 w-3.5" />
-              Password recovery
+      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
+              <GraduationCap className="h-7 w-7 text-primary" />
             </div>
-            <h1 className="font-display mt-5 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
-              Recover your {labels.singular.toLowerCase()} voting portal
-              password
-            </h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
-              Enter the recovery email tied to your account. We&apos;ll send a
-              secure reset code so you can set a new password and get back into
-              your sessions quickly.
-            </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Mail className="h-4 w-4 text-primary" />
-                  Fast recovery
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  The reset code goes straight to your recovery channel so you
-                  can move into the next step immediately.
-                </p>
-              </div>
-              <div className="rounded-2xl border bg-background/80 p-4 shadow-none">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  Secure by design
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Recovery is scoped to your organization and keeps student
-                  access protected during every step.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-2xl border bg-background/80 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                Recovery channels
-              </p>
-              <p className="mt-2 text-sm leading-6 text-foreground">
-                {recoveryLabels.length > 0
-                  ? recoveryLabels.join(" or ")
-                  : "Your configured recovery details"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                After the code arrives, continue to the reset page to create a
-                new password for your portal.
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                Reset your password
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Recover access to {organizationLabel}
               </p>
             </div>
           </div>
-        </div>
 
-        <Card className="overflow-hidden rounded-[2rem] border bg-card/95 shadow-none">
-          <CardHeader className="border-b bg-muted/10 pb-5">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border bg-muted p-3">
-                <KeyRound className="h-5 w-5" />
+          <div className="space-y-4">
+            {organization ? (
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-card">
+                  <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    University selected
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {organization}
+                  </p>
+                </div>
               </div>
-              <div>
-                <CardTitle>Reset your portal password</CardTitle>
-                <CardDescription>
-                  Request a six-digit reset code for your{" "}
-                  {labels.singular.toLowerCase()} account.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+            ) : null}
 
-          <CardContent className="space-y-4 p-4 sm:p-5">
             {success ? (
               <Alert className="border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100">
                 <CheckCircle2 className="h-4 w-4" />
@@ -180,21 +159,31 @@ function StudentForgotPasswordPageContent() {
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-1.5">
                 <Label htmlFor="email">Recovery email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@organization.org"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  className="h-11 rounded-2xl"
-                />
+                <div className="space-y-2">
+                  <p className="text-start text-muted-foreground text-xs">
+                    Enter your email address to continue recovery
+                  </p>
+                  <InputGroup>
+                    <InputGroupInput
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                      className={AUTH_INPUT_CLASS}
+                    />
+                    <InputGroupAddon align="inline-start">
+                      <Mail className="h-4 w-4" />
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
               </div>
 
               <Button
                 type="submit"
-                className="h-11 w-full rounded-2xl"
+                className="w-full"
                 disabled={isLoading || success}
               >
                 {isLoading ? (
@@ -208,12 +197,16 @@ function StudentForgotPasswordPageContent() {
               </Button>
             </form>
 
-            <div className="rounded-2xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-              <p>
-                Already have your code? Continue to the password reset form and
-                create a new password securely.
+            <div className="space-y-2 text-center text-xs text-muted-foreground">
+              <p className="flex items-center justify-center gap-1.5">
+                <KeyRound className="h-3 w-3" />
+                Recovery via{" "}
+                {recoveryLabels.length > 0
+                  ? recoveryLabels.join(" or ").toLowerCase()
+                  : "your recovery details"}
+                .
               </p>
-              <p className="mt-2">
+              <p>
                 Remembered your password?{" "}
                 <Link
                   href={backHref}
@@ -224,8 +217,8 @@ function StudentForgotPasswordPageContent() {
                 .
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

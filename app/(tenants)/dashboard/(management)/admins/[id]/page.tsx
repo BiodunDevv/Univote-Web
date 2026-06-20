@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
@@ -16,7 +17,7 @@ import { ChangingLoadingState } from "@/components/shared/changing-loading-state
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -258,16 +259,21 @@ export default function EditAdminPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full name</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(event) =>
-                    setFormData((current) => ({
-                      ...current,
-                      full_name: event.target.value,
-                    }))
-                  }
-                />
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <User className="size-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(event) =>
+                      setFormData((current) => ({
+                        ...current,
+                        full_name: event.target.value,
+                      }))
+                    }
+                  />
+                </InputGroup>
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>

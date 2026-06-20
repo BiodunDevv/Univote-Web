@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
   XAxis,
-  YAxis,
 } from "recharts";
 import {
   Activity,
@@ -52,12 +52,36 @@ function formatSessionDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
+function formatTrendDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(value));
+}
+
 export default function DashboardWelcomePage() {
   const router = useRouter();
   const { admin, token, hasHydrated, tenant: activeTenant } = useAuthStore();
   const isAuthorized = hasHydrated && Boolean(token);
   const dashboardQuery = useAdminDashboardQuery({ enabled: isAuthorized });
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const dashboardData = dashboardQuery.data;
+  const voteTrendRows = useMemo(
+    () => (dashboardData?.vote_trend || []).slice(-7),
+    [dashboardData?.vote_trend],
+  );
+  const voteTrendDelta = useMemo(() => {
+    if (voteTrendRows.length < 2) return 0;
+    const first = voteTrendRows[0]?.votes || 0;
+    const last = voteTrendRows.at(-1)?.votes || 0;
+    if (!first) return last > 0 ? 100 : 0;
+    return Math.round(((last - first) / first) * 100);
+  }, [voteTrendRows]);
+  const voteTrendPeak = useMemo(
+    () => voteTrendRows.reduce((max, item) => Math.max(max, item.votes || 0), 0),
+    [voteTrendRows],
+  );
+  const voteTrendTotal = useMemo(
+    () => voteTrendRows.reduce((sum, item) => sum + (item.votes || 0), 0),
+    [voteTrendRows],
+  );
 
   if (!hasHydrated || !token || !admin) {
     return (
@@ -93,7 +117,6 @@ export default function DashboardWelcomePage() {
     );
   }
 
-  const dashboardData = dashboardQuery.data;
   const tenantContext = activeTenant || dashboardData?.tenant || null;
   const participantLabels = getTenantParticipantLabels(tenantContext);
   const overview = dashboardData?.overview as DashboardOverview | undefined;
@@ -112,7 +135,6 @@ export default function DashboardWelcomePage() {
       students: item.count,
       fill: `var(--color-college${index + 1})`,
     })) || [];
-
   const voteTrendConfig = {
     votes: { label: "Votes", color: "var(--chart-1)" },
   } satisfies ChartConfig;
@@ -160,36 +182,69 @@ export default function DashboardWelcomePage() {
       ) : null}
 
       {/* Row 1: Vote trend + activity | Calendar + elections */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_272px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <div className="grid gap-4">
           {/* Vote momentum */}
           <div className="rounded-xl border">
-            <div className="flex items-start justify-between border-b px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Voting momentum</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Daily vote volume over the active schedule.</p>
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-foreground">Voting momentum</p>
+                  <div className="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {voteTrendDelta >= 0 ? "+" : ""}{voteTrendDelta}% trend
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">Daily vote volume over the active schedule.</p>
               </div>
               <div className="flex items-center gap-1.5 rounded-md border bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
                 <BarChart3 className="h-3 w-3" />
                 Live
               </div>
             </div>
-            <div className="p-4">
-              <ChartContainer config={voteTrendConfig} className="h-[190px] w-full">
-                <AreaChart accessibilityLayer data={dashboardData?.vote_trend || []}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <YAxis tickLine={false} axisLine={false} width={36} tick={{ fontSize: 11 }} />
-                  <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-                  <Area
-                    type="monotone"
-                    dataKey="votes"
-                    stroke="var(--color-votes)"
-                    fill="var(--color-votes)"
-                    fillOpacity={0.15}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
+            <div className="space-y-4 p-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">7-day volume</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{voteTrendTotal.toLocaleString()}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Peak day</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{voteTrendPeak.toLocaleString()}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Active rows</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{voteTrendRows.length}</p>
+                </div>
+              </div>
+              <ChartContainer config={voteTrendConfig} className="h-[240px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    accessibilityLayer
+                    data={voteTrendRows}
+                    margin={{ left: 4, right: 8, top: 8, bottom: 0 }}
+                  >
+                    <CartesianGrid vertical={false} className="stroke-border/70" />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => formatTrendDate(String(value))}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel formatter={(value) => [`${value} votes`, "Votes"]} />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="votes"
+                      stroke="var(--color-votes)"
+                      strokeWidth={2.25}
+                      dot={{ r: 3, strokeWidth: 2, fill: "hsl(var(--background))" }}
+                      activeDot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </ChartContainer>
             </div>
           </div>
@@ -228,7 +283,7 @@ export default function DashboardWelcomePage() {
         </div>
 
         {/* Right sidebar */}
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <CalendarWidget
             currentMonth={currentMonth}
             onPreviousMonth={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
@@ -276,7 +331,7 @@ export default function DashboardWelcomePage() {
 
       {/* Row 2: Distribution charts + top voters */}
       {(showLevelStructure || showCollegeStructure) ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_272px]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="grid gap-4">
             {showLevelStructure ? (
               <StudentsByLevelChart

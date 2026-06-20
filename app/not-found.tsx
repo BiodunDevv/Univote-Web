@@ -1,12 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Compass, LifeBuoy, SearchX } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { ArrowLeft, Compass, GraduationCap, LifeBuoy, SearchX } from "lucide-react";
+import { AnimatedThemeToggler } from "@/components/theme-toggler";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useStudentAuthStore } from "@/lib/store/useStudentAuthStore";
+
+function DotGrid() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.055]"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern
+          id="not-found-dot-pattern"
+          x="0"
+          y="0"
+          width="24"
+          height="24"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#not-found-dot-pattern)" />
+    </svg>
+  );
+}
 
 function getPrimaryAction(input: {
   adminToken: string | null;
@@ -15,27 +39,15 @@ function getPrimaryAction(input: {
 }) {
   if (input.adminToken) {
     return input.adminRole === "super_admin"
-      ? {
-          href: "/super-admin",
-          label: "Return to platform console",
-        }
-      : {
-          href: "/dashboard",
-          label: "Return to admin dashboard",
-        };
+      ? { href: "/super-admin", label: "Return to platform console" }
+      : { href: "/dashboard", label: "Return to admin dashboard" };
   }
 
   if (input.studentToken) {
-    return {
-      href: "/students/home",
-      label: "Return to student dashboard",
-    };
+    return { href: "/students/home", label: "Return to student dashboard" };
   }
 
-  return {
-    href: "/",
-    label: "Return to Univote home",
-  };
+  return { href: "/", label: "Return to Univote home" };
 }
 
 function getSecondaryAction(input: {
@@ -44,29 +56,22 @@ function getSecondaryAction(input: {
   studentToken: string | null;
 }) {
   if (input.adminToken) {
-    return {
-      href: "/auth/signin",
-      label: "Open admin sign in",
-    };
+    return input.adminRole === "super_admin"
+      ? { href: "/super-admin/support", label: "Open support" }
+      : { href: "/dashboard/support", label: "Open support" };
   }
 
   if (input.studentToken) {
-    return {
-      href: "/students/profile",
-      label: "Open student profile",
-    };
+    return { href: "/students/elections", label: "View elections" };
   }
 
-  return {
-    href: "/students/login",
-    label: "Open student login",
-  };
+  return { href: "/students/login", label: "Open student login" };
 }
 
 export default function NotFound() {
   const { token: adminToken, admin, hasHydrated: adminHydrated } = useAuthStore();
-  const { token: studentToken, hasHydrated: studentHydrated } =
-    useStudentAuthStore();
+  const { token: studentToken, hasHydrated: studentHydrated } = useStudentAuthStore();
+  const authReady = adminHydrated && studentHydrated;
 
   const primaryAction = getPrimaryAction({
     adminToken,
@@ -78,118 +83,77 @@ export default function NotFound() {
     adminRole: admin?.role,
     studentToken,
   });
-  const authReady = adminHydrated && studentHydrated;
 
   return (
-    <main className="relative flex h-screen min-h-screen w-full items-center justify-center overflow-hidden bg-background">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.08),transparent_28%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-primary/5 to-transparent" />
+    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <DotGrid />
 
-      <Card className="relative h-full w-full overflow-hidden rounded-none border-0 bg-card/95 shadow-none backdrop-blur md:h-[100svh] md:border-border/70 md:shadow-2xl">
-        <CardContent className="grid h-full gap-0 p-0 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="flex flex-col justify-between gap-8">
-            <div className="space-y-5 px-5 pb-8 pt-8 sm:px-8 lg:px-12 lg:pt-12">
-              <Logo className="w-fit" />
+      <div className="relative z-10 flex items-center justify-between px-4 pb-2 pt-4 sm:px-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            Back to website
+          </Link>
+        </Button>
+        <AnimatedThemeToggler variant="header" />
+      </div>
 
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                <SearchX className="h-3.5 w-3.5" />
+      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-8">
+        <section className="w-full max-w-sm">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
+              <GraduationCap className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Page not found
-              </div>
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                This Univote route is unavailable or has moved.
+              </p>
+            </div>
+          </div>
 
-              <div className="space-y-3">
-                <h1 className="max-w-xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  This Univote page is unavailable or no longer exists.
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                  The link may be outdated, the route may have changed, or this
-                  page may only be available inside a specific university
-                  workspace.
+          <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40 text-muted-foreground">
+                <SearchX className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  We could not find that page.
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  The link may be outdated, scoped to another university
+                  workspace, or no longer available.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 px-5 pb-8 sm:flex-row sm:px-8 lg:px-12 lg:pb-12">
-              <Button
-                asChild
-                size="lg"
-                className="rounded-2xl"
-                disabled={!authReady}
-              >
+            <div className="mt-5 grid gap-2">
+              <Button asChild disabled={!authReady}>
                 <Link href={primaryAction.href}>
                   <Compass className="mr-2 h-4 w-4" />
                   {authReady ? primaryAction.label : "Checking your workspace..."}
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-2xl"
-                disabled={!authReady}
-              >
+              <Button asChild variant="outline" disabled={!authReady}>
                 <Link href={secondaryAction.href}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <LifeBuoy className="mr-2 h-4 w-4" />
                   {authReady ? secondaryAction.label : "Preparing recovery path..."}
                 </Link>
               </Button>
             </div>
-          </section>
 
-          <aside className="flex h-full items-center border-t border-border/70 bg-muted/25 p-5 sm:p-6 lg:border-l lg:border-t-0 lg:p-10">
-            <div className="mx-auto w-full max-w-xl space-y-5">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  Next steps
-                </p>
-                <p className="mt-2 text-sm text-foreground">
-                  Try one of the most common recovery paths below.
-                </p>
-              </div>
+            <Separator className="my-5" />
 
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-sm font-semibold text-foreground">
-                    University workspace route
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    If you were trying to access a tenant admin page, return to
-                    the correct university subdomain and sign in again.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-sm font-semibold text-foreground">
-                    Student portal access
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Student routes are available from the dedicated student
-                    login flow and will redirect into the right dashboard if
-                    you are already signed in.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl border border-border/70 bg-muted/40 p-2 text-muted-foreground">
-                    <LifeBuoy className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">
-                      Need help?
-                    </p>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      If this page should exist, go back to your last working
-                      screen and continue from there, or contact your
-                      university’s Univote administrator.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </CardContent>
-      </Card>
+            <p className="text-center text-xs leading-5 text-muted-foreground">
+              If this page should exist, return to your last working screen or
+              contact your university Univote administrator.
+            </p>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

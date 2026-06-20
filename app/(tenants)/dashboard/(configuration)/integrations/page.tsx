@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { getTenantParticipantLabels } from "@/lib/tenant-config";
@@ -126,14 +126,18 @@ export default function IntegrationsPage() {
         >
           <div className="space-y-2">
             <Label htmlFor="integration-email">Recipient email</Label>
-            <Input
-              id="integration-email"
-              type="email"
-              placeholder="admin@example.edu"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="h-11"
-            />
+            <InputGroup>
+              <InputGroupAddon align="inline-start">
+                <Mail className="size-3.5" />
+              </InputGroupAddon>
+              <InputGroupInput
+                id="integration-email"
+                type="email"
+                placeholder="admin@example.edu"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </InputGroup>
           </div>
           <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
             <span>SMTP provider</span>
@@ -160,13 +164,17 @@ export default function IntegrationsPage() {
         >
           <div className="space-y-2">
             <Label htmlFor="integration-biometric">Image URL</Label>
-            <Input
-              id="integration-biometric"
-              placeholder="https://example.com/photo.jpg"
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
-              className="h-11"
-            />
+            <InputGroup>
+              <InputGroupAddon align="inline-start">
+                <ScanFace className="size-3.5" />
+              </InputGroupAddon>
+              <InputGroupInput
+                id="integration-biometric"
+                placeholder="https://example.com/photo.jpg"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+              />
+            </InputGroup>
           </div>
           <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
             <span>AWS region</span>

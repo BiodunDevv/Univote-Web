@@ -21,7 +21,6 @@ import { useCreateSupportTicketMutation } from "@/lib/queries/support";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,6 +32,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 export default function StudentProfileEditPage() {
   const router = useRouter();
@@ -269,47 +273,53 @@ export default function StudentProfileEditPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="full-name">Full name</Label>
-                <Input
-                  id="full-name"
-                  className="h-11 rounded-xl"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                />
+                <InputGroup className="h-11 rounded-xl md:h-10">
+                  <InputGroupInput
+                    id="full-name"
+                    className="text-base md:text-sm"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                  />
+                </InputGroup>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  className="h-11 rounded-xl"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
+                <InputGroup className="h-11 rounded-xl md:h-10">
+                  <InputGroupInput
+                    id="email"
+                    type="email"
+                    className="text-base md:text-sm"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                </InputGroup>
               </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="photo-url">Photo URL</Label>
-              <div className="relative">
-                <Input
+              <InputGroup className="h-11 rounded-xl md:h-10">
+                <InputGroupInput
                   id="photo-url"
                   value={photoUrl}
-                  className="h-11 rounded-xl pr-9"
+                  className="text-base md:text-sm"
                   onChange={(event) => setPhotoUrl(event.target.value)}
                   placeholder="https://example.com/photo.jpg"
                   disabled={cooldownBlocked}
                 />
                 {photoUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => setPhotoUrl("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label="Clear photo URL"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <InputGroupAddon align="inline-end">
+                    <button
+                      type="button"
+                      onClick={() => setPhotoUrl("")}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label="Clear photo URL"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </InputGroupAddon>
                 ) : null}
-              </div>
+              </InputGroup>
               <p className="text-xs text-muted-foreground">
                 Paste an image URL or upload directly from your device above.
               </p>

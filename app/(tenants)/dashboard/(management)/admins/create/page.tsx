@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { KeyRound, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
@@ -21,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -265,7 +266,7 @@ export default function CreateAdminPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-x-hidden">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 overflow-x-hidden">
       <section className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">
           {isSuperAdmin ? "Create Platform Admin" : "Invite Tenant Admin"}
@@ -314,45 +315,60 @@ export default function CreateAdminPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full name</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(event) =>
-                    setFormData((current) => ({
-                      ...current,
-                      full_name: event.target.value,
-                    }))
-                  }
-                  required
-                />
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <User className="size-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(event) =>
+                      setFormData((current) => ({
+                        ...current,
+                        full_name: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </InputGroup>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(event) =>
-                    setFormData((current) => ({
-                      ...current,
-                      email: event.target.value,
-                    }))
-                  }
-                  required
-                />
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <Mail className="size-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) =>
+                      setFormData((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </InputGroup>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="password">Temporary password</Label>
-                <Input
-                  id="password"
-                  type="text"
-                  value={formData.password}
-                  disabled
-                  readOnly
-                />
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <KeyRound className="size-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="password"
+                    type="text"
+                    value={formData.password}
+                    disabled
+                    readOnly
+                  />
+                </InputGroup>
                 <p className="text-xs text-muted-foreground">
                   This account will sign in with 123456789 and should change it
                   after first login.

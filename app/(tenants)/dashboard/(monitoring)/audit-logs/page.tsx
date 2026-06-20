@@ -18,7 +18,7 @@ import {
 } from "@/components/tenants/shared";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -145,18 +145,28 @@ export default function AuditLogsPage() {
             {actions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input
-          type="datetime-local"
-          value={startDate}
-          onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-          className="h-9 w-full text-sm sm:w-52"
-        />
-        <Input
-          type="datetime-local"
-          value={endDate}
-          onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-          className="h-9 w-full text-sm sm:w-52"
-        />
+        <InputGroup className="w-full sm:w-52">
+          <InputGroupAddon align="inline-start">
+            <FileText className="size-3.5" />
+          </InputGroupAddon>
+          <InputGroupInput
+            type="datetime-local"
+            value={startDate}
+            onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+            className="text-sm"
+          />
+        </InputGroup>
+        <InputGroup className="w-full sm:w-52">
+          <InputGroupAddon align="inline-start">
+            <FileText className="size-3.5" />
+          </InputGroupAddon>
+          <InputGroupInput
+            type="datetime-local"
+            value={endDate}
+            onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+            className="text-sm"
+          />
+        </InputGroup>
         <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as "json" | "csv")}>
           <SelectTrigger className="h-9 w-full text-sm sm:w-28">
             <SelectValue />
