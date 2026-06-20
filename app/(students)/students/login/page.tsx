@@ -58,6 +58,7 @@ function StudentLoginPageContent() {
   const hostTenantSlug = deriveTenantSlugFromHostname();
   const orgParam =
     searchParams.get("organization") || searchParams.get("org") || "";
+  const emailParam = searchParams.get("email") || "";
   const ref = searchParams.get("ref") || "/students/home";
   const restrictionReason = searchParams.get("reason");
 
@@ -75,7 +76,7 @@ function StudentLoginPageContent() {
   const [selectedOrgSlug, setSelectedOrgSlug] = useState(
     hostTenantSlug || orgParam,
   );
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(emailParam);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [firstLoginPromptOpen, setFirstLoginPromptOpen] = useState(false);

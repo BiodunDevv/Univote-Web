@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Users } from "lucide-react";
+import { Eye, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +26,16 @@ type DepartmentTableProps = {
   departments: DepartmentRow[];
   participantPluralLabel?: string;
   onViewStudents: (department: DepartmentRow) => void;
+  onDelete?: (department: DepartmentRow) => void;
+  canDelete?: boolean;
 };
 
 export function DepartmentTable({
   departments,
   participantPluralLabel = "Students",
   onViewStudents,
+  onDelete,
+  canDelete = false,
 }: DepartmentTableProps) {
   return (
     <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
@@ -75,8 +79,11 @@ export function DepartmentTable({
                 </div>
 
                 <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <p className="line-clamp-2 wrap-break-word">
-                    College: {department.college?.name || "Not assigned"}
+                  <p
+                    className="line-clamp-1 wrap-break-word"
+                    title={department.college?.name || undefined}
+                  >
+                    College: {department.college?.code || "Not assigned"}
                   </p>
                   <p className="line-clamp-2 wrap-break-word">
                     HOD: {department.hod_name || "Not assigned"}
@@ -114,6 +121,17 @@ export function DepartmentTable({
                     <Users className="mr-2 h-4 w-4" />
                     {participantPluralLabel}
                   </Button>
+                  {canDelete && onDelete ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:col-span-2"
+                      onClick={() => onDelete(department)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

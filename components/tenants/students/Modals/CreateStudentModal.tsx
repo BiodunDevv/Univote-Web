@@ -3,12 +3,15 @@
 import { useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  AtSign,
   Download,
   FileImage,
   FileText,
+  Hash,
   Loader2,
   Trash2,
   Upload,
+  UserRound,
 } from "lucide-react";
 import type { StudentCSVData } from "@/types/student";
 import { Button } from "@/components/ui/button";
@@ -21,6 +24,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
@@ -62,6 +70,7 @@ type CreateStudentModalProps = {
   onOpenChange: (open: boolean) => void;
   overview: StudentsOverviewLite | null;
   initialMode?: Mode;
+  inline?: boolean;
   isSubmitting?: boolean;
   submitError?: string | null;
   onCreateManual: (payload: StudentCSVData) => Promise<void>;
@@ -93,6 +102,7 @@ export function CreateStudentModal({
   onOpenChange,
   overview,
   initialMode = "manual",
+  inline = false,
   isSubmitting,
   submitError,
   onCreateManual,
@@ -658,17 +668,26 @@ export function CreateStudentModal({
     });
   };
 
-  return (
-    <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent
-        side="right"
-        className="h-full w-full max-w-full overflow-y-auto border-l sm:max-w-5xl"
-      >
+  const content = (
+    <>
         <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle>Create {participantLabels.plural}</SheetTitle>
-          <SheetDescription>
-            Add one record manually or upload many at once with CSV.
-          </SheetDescription>
+          {inline ? (
+            <>
+              <h2 className="font-heading text-sm font-medium text-foreground">
+                Create {participantLabels.plural}
+              </h2>
+              <p className="text-xs/relaxed text-muted-foreground">
+                Add one record manually or upload many at once with CSV.
+              </p>
+            </>
+          ) : (
+            <>
+              <SheetTitle>Create {participantLabels.plural}</SheetTitle>
+              <SheetDescription>
+                Add one record manually or upload many at once with CSV.
+              </SheetDescription>
+            </>
+          )}
         </SheetHeader>
 
         <div className="space-y-4 px-5 py-4">
@@ -699,46 +718,61 @@ export function CreateStudentModal({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Matric Number</Label>
-                  <Input
-                    value={manualForm.matric_no}
-                    onChange={(event) =>
-                      setManualForm((prev) => ({
-                        ...prev,
-                        matric_no: event.target.value.toUpperCase(),
-                      }))
-                    }
-                    placeholder="BU22CSC1001"
-                    required
-                  />
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <Hash />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      value={manualForm.matric_no}
+                      onChange={(event) =>
+                        setManualForm((prev) => ({
+                          ...prev,
+                          matric_no: event.target.value.toUpperCase(),
+                        }))
+                      }
+                      placeholder="BU22CSC1001"
+                      required
+                    />
+                  </InputGroup>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="text-xs">Full Name</Label>
-                  <Input
-                    value={manualForm.full_name}
-                    onChange={(event) =>
-                      setManualForm((prev) => ({
-                        ...prev,
-                        full_name: event.target.value,
-                      }))
-                    }
-                    required
-                  />
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <UserRound />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      value={manualForm.full_name}
+                      onChange={(event) =>
+                        setManualForm((prev) => ({
+                          ...prev,
+                          full_name: event.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </InputGroup>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="text-xs">Email</Label>
-                  <Input
-                    type="email"
-                    value={manualForm.email}
-                    onChange={(event) =>
-                      setManualForm((prev) => ({
-                        ...prev,
-                        email: event.target.value,
-                      }))
-                    }
-                    required
-                  />
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <AtSign />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      type="email"
+                      value={manualForm.email}
+                      onChange={(event) =>
+                        setManualForm((prev) => ({
+                          ...prev,
+                          email: event.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </InputGroup>
                 </div>
 
                 {collegeEnabled ? (
@@ -828,10 +862,10 @@ export function CreateStudentModal({
                   <div className="space-y-1.5 md:col-span-2">
                     <Label className="text-xs">Photo</Label>
                     <div
-                      className={`rounded-xl border-2 border-dashed p-5 transition-colors ${
+                      className={`grid gap-3 rounded-md border p-3 transition-colors sm:grid-cols-[160px_minmax(0,1fr)] ${
                         isDraggingManualImage
                           ? "border-primary bg-primary/5"
-                          : "border-border"
+                          : "border-border bg-muted/10"
                       }`}
                       onDragOver={(event) => {
                         event.preventDefault();
@@ -846,29 +880,65 @@ export function CreateStudentModal({
                         void handleManualImageFile(file);
                       }}
                     >
-                      <div className="flex min-h-28 flex-col items-center justify-center gap-2 text-center">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => manualImageInputRef.current?.click()}
-                          disabled={isManualImageUploading}
-                        >
-                          {isManualImageUploading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Uploading...
-                            </>
-                          ) : (
-                            <>
-                              <FileImage className="mr-2 h-4 w-4" />
-                              Upload image
-                            </>
-                          )}
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          Drag and drop an image here, or click to select.
-                        </p>
+                      <div className="overflow-hidden rounded-md border bg-background">
+                        {manualForm.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={manualForm.photo_url}
+                            alt="Student upload preview"
+                            className="aspect-square h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex aspect-square items-center justify-center text-xs text-muted-foreground">
+                            No photo
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 space-y-3">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {manualForm.photo_url ? "Photo ready" : "Add a profile photo"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Drag an image here, upload from your device, or paste a direct image URL below.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => manualImageInputRef.current?.click()}
+                            disabled={isManualImageUploading}
+                          >
+                            {isManualImageUploading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <FileImage className="mr-2 h-4 w-4" />
+                                Upload image
+                              </>
+                            )}
+                          </Button>
+                          {manualForm.photo_url ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setManualForm((prev) => ({
+                                  ...prev,
+                                  photo_url: "",
+                                }))
+                              }
+                            >
+                              Remove photo
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                       <input
                         ref={manualImageInputRef}
@@ -882,25 +952,21 @@ export function CreateStudentModal({
                         }}
                       />
                     </div>
-                    {manualForm.photo_url ? (
-                      <div className="overflow-hidden rounded-xl border bg-muted/20">
-                        <img
-                          src={manualForm.photo_url}
-                          alt="Student upload preview"
-                          className="h-56 w-full object-cover"
-                        />
-                      </div>
-                    ) : null}
-                    <Input
-                      value={manualForm.photo_url}
-                      onChange={(event) =>
-                        setManualForm((prev) => ({
-                          ...prev,
-                          photo_url: event.target.value,
-                        }))
-                      }
-                      placeholder="https://"
-                    />
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <FileImage />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        value={manualForm.photo_url}
+                        onChange={(event) =>
+                          setManualForm((prev) => ({
+                            ...prev,
+                            photo_url: event.target.value,
+                          }))
+                        }
+                        placeholder="https://"
+                      />
+                    </InputGroup>
                   </div>
                 ) : null}
               </div>
@@ -1236,6 +1302,24 @@ export function CreateStudentModal({
             </div>
           )}
         </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-border/70">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent
+        side="right"
+        className="h-full w-full max-w-full overflow-y-auto border-l sm:max-w-5xl"
+      >
+        {content}
       </SheetContent>
     </Sheet>
   );

@@ -87,7 +87,7 @@ export function CollegeDirectoryTable({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:col-span-2"
                         onClick={() => onDelete(college)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />

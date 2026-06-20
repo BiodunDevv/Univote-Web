@@ -1,15 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Building2, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { DepartmentFilters } from "@/components/tenants/departments";
+import {
+  DeleteDepartmentDialog,
+  DepartmentFilters,
+} from "@/components/tenants/departments";
 import { DepartmentTable } from "@/components/tenants/departments/department-table";
 import { TablePaginationControls } from "@/components/shared/table-pagination-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useCollegeStore } from "@/lib/store/useCollegeStore";
 import { useDepartmentStore } from "@/lib/store/useDepartmentStore";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
@@ -21,6 +26,7 @@ import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 
 function DepartmentsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { token, hasHydrated, admin, membership, tenant } = useAuthStore();
   const participantLabels = { singular: "Student", plural: "Students" };
   const departmentEnabled = isTenantParticipantFieldEnabled(
@@ -36,12 +42,23 @@ function DepartmentsPageContent() {
     fetchDepartments,
     fetchOverview,
   } = useDepartmentStore();
+  const { deleteDepartment } = useCollegeStore();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [collegeId, setCollegeId] = useState("all");
+  const [collegeId, setCollegeId] = useState(
+    searchParams.get("college_id") || "all",
+  );
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [departmentToDelete, setDepartmentToDelete] = useState<{
+    id: string;
+    collegeId: string;
+    name: string;
+    code: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const canManageDepartments =
     admin?.role === "super_admin" ||
@@ -66,10 +83,27 @@ function DepartmentsPageContent() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  useEffect(() => {
+    const nextCollegeId = searchParams.get("college_id") || "all";
+    setCollegeId(nextCollegeId);
+    setPage(1);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (collegeId === "all" || !overview?.colleges?.length) return;
+    const collegeExists = overview.colleges.some(
+      (college) => college.id === collegeId,
+    );
+    if (!collegeExists) {
+      setCollegeId("all");
+      setPage(1);
+    }
+  }, [collegeId, overview?.colleges]);
+
   const filteredDepartments = useMemo(() => {
     const term = debouncedSearch.toLowerCase();
     return departments.filter((department) => {
-      if (collegeId !== "all" && department.college.id !== collegeId) {
+      if (collegeId !== "all" && department.college?.id !== collegeId) {
         return false;
       }
       if (status !== "all") {
@@ -83,7 +117,7 @@ function DepartmentsPageContent() {
       return [
         department.name,
         department.code,
-        department.college.name,
+        department.college?.name,
         department.hod_name,
       ]
         .filter(Boolean)
@@ -115,6 +149,36 @@ function DepartmentsPageContent() {
       setPage(pagination.pages);
     }
   }, [page, pagination.pages]);
+
+  const handleDeleteDepartment = async () => {
+    if (!token || !departmentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteDepartment(
+        token,
+        departmentToDelete.collegeId,
+        departmentToDelete.id,
+        true,
+      );
+      setDeleteDialogOpen(false);
+      setDepartmentToDelete(null);
+      await Promise.all([
+        fetchOverview(token),
+        fetchDepartments(token, { page: 1, limit: 1000 }),
+      ]);
+      toast.success("Department deleted");
+    } catch (deleteError) {
+      toast.error("Delete failed", {
+        description:
+          deleteError instanceof Error
+            ? deleteError.message
+            : "Failed to delete department",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!hasHydrated || !token) {
     return (
@@ -234,6 +298,7 @@ function DepartmentsPageContent() {
             colleges={(overview?.colleges || []).map((college) => ({
               id: college.id,
               name: college.name,
+              code: college.code,
             }))}
           />
         </TenantSectionCard>
@@ -276,15 +341,29 @@ function DepartmentsPageContent() {
                 <DepartmentTable
                   departments={visibleDepartments}
                   participantPluralLabel={participantLabels.plural}
-                  onViewStudents={(department) =>
+                  canDelete={canManageDepartments}
+                  onDelete={(department) => {
+                    if (!department.college?.id) return;
+                    setDepartmentToDelete({
+                      id: department._id,
+                      collegeId: department.college.id,
+                      name: department.name,
+                      code: department.code,
+                    });
+                    setDeleteDialogOpen(true);
+                  }}
+                  onViewStudents={(department) => {
+                    if (!department.college?.id || !department._id) return;
                     router.push(
                       `/dashboard/students?college_id=${encodeURIComponent(
                         department.college.id,
-                      )}&search=${encodeURIComponent(
-                        department.name,
-                      )}&ref=${encodeURIComponent("/dashboard/structure/departments")}`,
-                    )
-                  }
+                      )}&department_id=${encodeURIComponent(
+                        department._id,
+                      )}&ref=${encodeURIComponent(
+                        "/dashboard/structure/departments",
+                      )}`,
+                    );
+                  }}
                 />
               </div>
             </TenantSectionCard>
@@ -307,6 +386,15 @@ function DepartmentsPageContent() {
           </>
         )}
       </div>
+
+      <DeleteDepartmentDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => void handleDeleteDepartment()}
+        departmentName={departmentToDelete?.name}
+        departmentCode={departmentToDelete?.code}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

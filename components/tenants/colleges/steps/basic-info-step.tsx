@@ -43,7 +43,7 @@ export function BasicInfoStep({ formData, onChange }: BasicInfoStepProps) {
                 onChange={(event) =>
                   onChange("code", event.target.value.toUpperCase())
                 }
-                placeholder="COE"
+                placeholder="COCCS"
                 className="h-9 font-mono text-sm uppercase"
                 maxLength={10}
                 required

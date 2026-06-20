@@ -69,6 +69,10 @@ const adminNavMain: NavItem[] = [
     title: "Students",
     url: "/dashboard/students",
     icon: GraduationCap,
+    items: [
+      { title: "All Students", url: "/dashboard/students" },
+      { title: "Add Student", url: "/dashboard/students/create" },
+    ],
   },
   {
     title: "Elections",
@@ -84,11 +88,19 @@ const adminNavMain: NavItem[] = [
     title: "Colleges",
     url: "/dashboard/structure/colleges",
     icon: Building2,
+    items: [
+      { title: "All Colleges", url: "/dashboard/structure/colleges" },
+      { title: "Create College", url: "/dashboard/structure/colleges/create" },
+    ],
   },
   {
     title: "Departments",
     url: "/dashboard/structure/departments",
     icon: Building2,
+    items: [
+      { title: "All Departments", url: "/dashboard/structure/departments" },
+      { title: "Create Department", url: "/dashboard/structure/departments/create" },
+    ],
   },
   {
     title: "Admin Users",
@@ -226,7 +238,22 @@ export function AdminSidebar({
                   (subItem) => subItem.url !== "/dashboard/election-analytics",
                 ),
               }
-            : item,
+            : item.title === "Students" && !canManageStudents
+              ? {
+                  ...item,
+                  items: item.items?.filter(
+                    (subItem) => subItem.url !== "/dashboard/students/create",
+                  ),
+                }
+              : (item.title === "Colleges" || item.title === "Departments") &&
+                  !canManageStudents
+                ? {
+                    ...item,
+                    items: item.items?.filter(
+                      (subItem) => !subItem.url.endsWith("/create"),
+                    ),
+                  }
+                : item,
         )
         .filter((item) => {
           switch (item.title) {
@@ -254,6 +281,7 @@ export function AdminSidebar({
       advancedReportsEnabled,
       collegeEnabled,
       canManageAdmins,
+      canManageStudents,
       canManageSessions,
       canViewParticipants,
       canViewAnalytics,

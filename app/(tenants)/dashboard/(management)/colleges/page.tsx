@@ -21,7 +21,6 @@ import { CollegeDirectoryTable } from "@/components/tenants/colleges/college-dir
 import { CollegeOverviewChart } from "@/components/tenants/colleges/college-overview-chart";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
 import { TablePaginationControls } from "@/components/shared/table-pagination-controls";
-import { getTenantParticipantLabels } from "@/lib/tenant-config";
 import { isTenantParticipantFieldEnabled } from "@/lib/tenant-config";
 import {
   TenantAccessRestricted,
@@ -33,7 +32,6 @@ import { hasAnyTenantPermission } from "@/lib/tenant-permissions";
 export default function CollegesPage() {
   const router = useRouter();
   const { token, admin, membership, tenant } = useAuthStore();
-  const participantLabels = getTenantParticipantLabels(tenant);
   const collegeEnabled = isTenantParticipantFieldEnabled(tenant, "college");
   const departmentEnabled = isTenantParticipantFieldEnabled(
     tenant,
@@ -421,7 +419,11 @@ export default function CollegesPage() {
                 canManageColleges={canManageColleges}
                 participantPluralLabel="Students"
                 onView={(collegeId) =>
-                  router.push(`/dashboard/structure/colleges/${collegeId}`)
+                  router.push(
+                    `/dashboard/structure/departments?college_id=${encodeURIComponent(
+                      collegeId,
+                    )}`,
+                  )
                 }
                 onEdit={handleEditClick}
                 onDelete={(college) =>

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ChangingLoadingState } from "@/components/shared/changing-loading-state";
-import { CreateStudentModal } from "@/components/tenants/students/Modals";
 import { ParticipantEditDialog } from "@/components/tenants/students/participant-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +47,7 @@ import {
   useBulkUpdateStudentsMutation,
   useDeactivateStudentMutation,
   useDeleteStudentMutation,
-  useUploadStudentsMutation,
 } from "@/lib/queries/admin";
-import type { StudentCSVData, UploadStudentsResponse } from "@/types/student";
 export function StudentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,21 +92,14 @@ export function StudentsPage() {
       "students.manage",
       "tenant.manage",
     ]);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [dismissCreateParam, setDismissCreateParam] = useState(false);
-  const [createStudentError, setCreateStudentError] = useState<string | null>(null);
-  const [uploadSummary, setUploadSummary] = useState<UploadStudentsResponse["results"] | null>(null);
-  const createMode = searchParams.get("mode") === "bulk" ? "bulk" : "manual";
 
   const studentsQuery = useAdminStudentsQuery({ page: 1, limit: 1000 }, { enabled: isAuthorized });
   const overviewQuery = useAdminStudentsOverviewQuery({ enabled: isAuthorized });
-  const uploadStudents = useUploadStudentsMutation();
   const activateStudent = useActivateStudentMutation();
   const deactivateStudent = useDeactivateStudentMutation();
   const deleteStudent = useDeleteStudentMutation();
   const bulkUpdateStudents = useBulkUpdateStudentsMutation();
   const isBulkUpdating = bulkUpdateStudents.isPending;
-  const isCreatingStudent = uploadStudents.isPending;
   const allStudents = useMemo(
     () => studentsQuery.data?.students ?? [],
     [studentsQuery.data?.students],
@@ -172,8 +162,6 @@ export function StudentsPage() {
     (overviewQuery.error instanceof Error ? overviewQuery.error.message : undefined) ||
     null;
   const loading = studentsQuery.isLoading || overviewQuery.isLoading;
-  const shouldOpenCreateFromQuery =
-    !dismissCreateParam && hasHydrated && canManageStudents && searchParams.get("open") === "create";
   const collegeCodeMap = useMemo(
     () => Object.fromEntries((overview?.colleges || []).map((c) => [c.name, c.code])),
     [overview?.colleges],
@@ -214,6 +202,52 @@ export function StudentsPage() {
   }, [search]);
 
   useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setDebouncedSearch(searchParams.get("search") || "");
+    setSelectedCollegeId(searchParams.get("college_id") || "all");
+    setSelectedDepartmentId(searchParams.get("department_id") || "all");
+    setStatus(searchParams.get("status") || "all");
+    setFacial(searchParams.get("facial") || "all");
+    setPage(1);
+    setSelectedIds([]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!overview?.colleges?.length) return;
+
+    if (
+      selectedCollegeId !== "all" &&
+      !overview.colleges.some((college) => college.id === selectedCollegeId)
+    ) {
+      setSelectedCollegeId("all");
+      setSelectedDepartmentId("all");
+      setPage(1);
+      return;
+    }
+
+    if (selectedDepartmentId === "all") return;
+
+    const departmentBelongsToSelection =
+      selectedCollegeId !== "all"
+        ? departmentOptions.some(
+            (department) => department.id === selectedDepartmentId,
+          )
+        : overview.colleges
+            .flatMap((college) => college.departments)
+            .some((department) => department.id === selectedDepartmentId);
+
+    if (!departmentBelongsToSelection) {
+      setSelectedDepartmentId("all");
+      setPage(1);
+    }
+  }, [
+    departmentOptions,
+    overview?.colleges,
+    selectedCollegeId,
+    selectedDepartmentId,
+  ]);
+
+  useEffect(() => {
     if (page > pagination.pages) setPage(pagination.pages);
   }, [page, pagination.pages]);
 
@@ -252,46 +286,6 @@ export function StudentsPage() {
 
   const refreshCurrentView = async () => {
     await Promise.all([studentsQuery.refetch(), overviewQuery.refetch()]);
-  };
-
-  const handleCreateManual = async (payload: StudentCSVData) => {
-    setCreateStudentError(null);
-    try {
-      const response = await uploadStudents.mutateAsync({
-        csvData: [payload],
-        target: { college: payload.college, department: payload.department, level: payload.level },
-      });
-      setCreateModalOpen(false);
-      await refreshCurrentView();
-      toast.success("Student created", {
-        description: `${response.results.created} created, ${response.results.failed} failed`,
-      });
-      setUploadSummary(response.results);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create student";
-      setCreateStudentError(message);
-      toast.error("Create failed", { description: message });
-    }
-  };
-
-  const handleCreateBulk = async (
-    csvData: StudentCSVData[],
-    target?: { college?: string; department?: string; level?: string },
-  ) => {
-    setCreateStudentError(null);
-    try {
-      const response = await uploadStudents.mutateAsync({ csvData, target });
-      setCreateModalOpen(false);
-      await refreshCurrentView();
-      setUploadSummary(response.results);
-      toast.success("Upload completed", {
-        description: `${response.results.created} created, ${response.results.failed} failed out of ${response.results.total}`,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to upload students";
-      setCreateStudentError(message);
-      toast.error("Upload failed", { description: message });
-    }
   };
 
   const handleMarkActive = async (studentId: string) => {
@@ -387,11 +381,7 @@ export function StudentsPage() {
           canManageStudents ? (
             <Button
               size="sm"
-              onClick={() => {
-                setCreateStudentError(null);
-                setCreateModalOpen(true);
-                setDismissCreateParam(true);
-              }}
+              onClick={() => router.push("/dashboard/students/create")}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add student
@@ -405,39 +395,6 @@ export function StudentsPage() {
           <CardContent className="flex items-start gap-2 p-3">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-xs text-destructive">{error}</p>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {uploadSummary ? (
-        <Card className="border shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Upload summary</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {uploadSummary.created} created · {uploadSummary.failed} failed · {uploadSummary.total} submitted
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setUploadSummary(null)}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            {uploadSummary.errors.length > 0 ? (
-              <div className="mt-3 space-y-1.5">
-                {uploadSummary.errors.slice(0, 5).map((item, index) => (
-                  <div key={`${item.matric_no}-${index}`} className="rounded-md border bg-muted/20 px-3 py-2">
-                    <p className="text-xs font-medium text-foreground">
-                      {item.full_name} ({item.matric_no})
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{item.error || item.warning}</p>
-                  </div>
-                ))}
-                {uploadSummary.errors.length > 5 ? (
-                  <p className="text-xs text-muted-foreground">…and {uploadSummary.errors.length - 5} more</p>
-                ) : null}
-              </div>
-            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -596,7 +553,7 @@ export function StudentsPage() {
                   });
                 }}
                 onView={(studentId) => { setEditingStudentId(studentId); setEditingStudentMode("view"); }}
-                onEdit={(studentId) => { setEditingStudentId(studentId); setEditingStudentMode("edit"); }}
+                onEdit={(studentId) => router.push(`/dashboard/students/${studentId}/edit`)}
                 onMarkActive={(studentId) => void handleMarkActive(studentId)}
                 onMarkInactive={(studentId) => void handleMarkInactive(studentId)}
                 onDelete={(studentId) => void handleDeleteStudent(studentId)}
@@ -638,21 +595,6 @@ export function StudentsPage() {
             overview={overview}
             onUpdated={refreshCurrentView}
             initialMode={editingStudentMode}
-          />
-
-          <CreateStudentModal
-            key={createMode}
-            open={createModalOpen || shouldOpenCreateFromQuery}
-            onOpenChange={(open) => {
-              if (!open) setDismissCreateParam(true);
-              setCreateModalOpen(open);
-            }}
-            overview={overview}
-            initialMode={createMode}
-            isSubmitting={isCreatingStudent}
-            submitError={createStudentError}
-            onCreateManual={handleCreateManual}
-            onCreateBulk={handleCreateBulk}
           />
         </>
       )}

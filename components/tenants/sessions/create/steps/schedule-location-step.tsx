@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -94,9 +100,11 @@ function DateTimeField({
           </PopoverContent>
         </Popover>
 
-        <div className="relative">
-          <Clock3 className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="h-9">
+          <InputGroupAddon align="inline-start">
+            <Clock3 className="h-3.5 w-3.5" />
+          </InputGroupAddon>
+          <InputGroupInput
             id={`${id}-time`}
             type="time"
             value={formatTimeValue(value)}
@@ -109,9 +117,9 @@ function DateTimeField({
                 ),
               )
             }
-            className="pl-9"
+            className="text-sm"
           />
-        </div>
+        </InputGroup>
       </div>
     </div>
   );
@@ -199,27 +207,39 @@ export function ScheduleLocationStep({
                 <Label className="text-xs font-medium text-muted-foreground">
                   Latitude
                 </Label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={formData.location.lat}
-                  onChange={(event) =>
-                    onLocationChange("lat", Number(event.target.value) || 0)
-                  }
-                />
+                <InputGroup className="h-9">
+                  <InputGroupAddon align="inline-start">
+                    <MapPin className="h-3.5 w-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    type="number"
+                    step="any"
+                    value={formData.location.lat}
+                    onChange={(event) =>
+                      onLocationChange("lat", Number(event.target.value) || 0)
+                    }
+                    className="text-sm"
+                  />
+                </InputGroup>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground">
                   Longitude
                 </Label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={formData.location.lng}
-                  onChange={(event) =>
-                    onLocationChange("lng", Number(event.target.value) || 0)
-                  }
-                />
+                <InputGroup className="h-9">
+                  <InputGroupAddon align="inline-start">
+                    <MapPin className="h-3.5 w-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    type="number"
+                    step="any"
+                    value={formData.location.lng}
+                    onChange={(event) =>
+                      onLocationChange("lng", Number(event.target.value) || 0)
+                    }
+                    className="text-sm"
+                  />
+                </InputGroup>
               </div>
             </div>
 
@@ -241,17 +261,22 @@ export function ScheduleLocationStep({
                 >
                   -
                 </Button>
-                <Input
-                  type="number"
-                  value={formData.location.radius_meters}
-                  onChange={(event) =>
-                    onLocationChange(
-                      "radius_meters",
-                      Math.max(100, Number(event.target.value) || 500),
-                    )
-                  }
-                  className="text-center"
-                />
+                <InputGroup className="h-9">
+                  <InputGroupInput
+                    type="number"
+                    value={formData.location.radius_meters}
+                    onChange={(event) =>
+                      onLocationChange(
+                        "radius_meters",
+                        Math.max(100, Number(event.target.value) || 500),
+                      )
+                    }
+                    className="text-center text-sm"
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupText>m</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
                 <Button
                   type="button"
                   size="icon"
@@ -298,13 +323,15 @@ export function ScheduleLocationStep({
             </div>
             <div className="relative w-full sm:max-w-sm">
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
+                <InputGroup className="h-9 flex-1">
+                  <InputGroupAddon align="inline-start">
+                    <Search className="h-3.5 w-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search and pick a location"
-                    className="pl-9"
+                    className="text-sm"
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
@@ -312,7 +339,7 @@ export function ScheduleLocationStep({
                       }
                     }}
                   />
-                </div>
+                </InputGroup>
                 <Button
                   type="button"
                   size="sm"

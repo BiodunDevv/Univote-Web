@@ -2,7 +2,11 @@ import { FileText, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SessionCreationFormData } from "@/components/tenants/sessions/create/types";
@@ -38,14 +42,19 @@ export function BasicInfoStep({
           >
             Election Title
           </Label>
-          <Input
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={onInputChange}
-            placeholder="e.g., Leadership Election 2026"
-            className="h-9 text-sm"
-          />
+          <InputGroup className="h-9">
+            <InputGroupAddon align="inline-start">
+              <FileText className="h-3.5 w-3.5" />
+            </InputGroupAddon>
+            <InputGroupInput
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={onInputChange}
+              placeholder="e.g., Leadership Election 2026"
+              className="text-sm"
+            />
+          </InputGroup>
         </div>
 
         <div className="space-y-1.5">
@@ -96,18 +105,23 @@ export function BasicInfoStep({
           </div>
 
           <div className="flex gap-2">
-            <Input
-              id="new-category"
-              placeholder="e.g., President"
-              className="h-9 flex-1 text-sm"
-              onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                const value = event.currentTarget.value.trim();
-                onAddCategory(value);
-                event.currentTarget.value = "";
-              }}
-            />
+            <InputGroup className="h-9 flex-1">
+              <InputGroupAddon align="inline-start">
+                <Plus className="h-3.5 w-3.5" />
+              </InputGroupAddon>
+              <InputGroupInput
+                id="new-category"
+                placeholder="e.g., President"
+                className="text-sm"
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  const value = event.currentTarget.value.trim();
+                  onAddCategory(value);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </InputGroup>
             <Button
               type="button"
               size="sm"
