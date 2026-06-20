@@ -1854,6 +1854,37 @@ export function useDeactivateStudentMutation() {
   });
 }
 
+export function useReinviteStudentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (studentId: string) =>
+      apiRequest<{
+        message: string;
+        student: {
+          id: string;
+          matric_no?: string | null;
+          email?: string | null;
+          first_login: boolean;
+        };
+      }>(`/api/admin/participants/${studentId}/reinvite`, {
+        method: "POST",
+        auth: "admin",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["students"] }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.students.overview(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.admin(),
+        }),
+      ]);
+    },
+  });
+}
+
 export function useDeleteStudentMutation() {
   const queryClient = useQueryClient();
 

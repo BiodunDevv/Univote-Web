@@ -54,10 +54,11 @@ export type StudentsRegistryTableProps = {
   onToggleOne: (studentId: string, checked: boolean) => void;
   onView: (studentId: string) => void;
   onEdit: (studentId: string) => void;
+  onReinvite: (studentId: string) => void;
   onMarkActive: (studentId: string) => void;
   onMarkInactive: (studentId: string) => void;
   onDelete: (studentId: string) => void;
   onPreviewImage: (preview: StudentImagePreview) => void;
   statusActionStudentId?: string | null;
-  statusActionType?: "activate" | "deactivate" | null;
+  statusActionType?: "activate" | "deactivate" | "reinvite" | null;
 };

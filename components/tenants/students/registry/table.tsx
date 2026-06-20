@@ -3,6 +3,7 @@
 import {
   IconEdit,
   IconEye,
+  IconMailForward,
   IconTrash,
   IconUserCheck,
   IconUserX,
@@ -100,6 +101,7 @@ export function StudentsRegistryTable({
   onToggleOne,
   onView,
   onEdit,
+  onReinvite,
   onMarkActive,
   onMarkInactive,
   onDelete,
@@ -167,6 +169,9 @@ export function StudentsRegistryTable({
               const isDeactivating =
                 statusActionStudentId === student._id &&
                 statusActionType === "deactivate";
+              const isReinviting =
+                statusActionStudentId === student._id &&
+                statusActionType === "reinvite";
               const enrolled = isFaceEnrolled(student);
               const initials = student.full_name
                 .split(" ")
@@ -300,9 +305,13 @@ export function StudentsRegistryTable({
                   </TableCell>
 
                   <TableCell className="text-right">
-                    {isActivating || isDeactivating ? (
+                    {isActivating || isDeactivating || isReinviting ? (
                       <span className="text-xs text-muted-foreground">
-                        {isActivating ? "Activating…" : "Deactivating…"}
+                        {isReinviting
+                          ? "Sending…"
+                          : isActivating
+                            ? "Activating…"
+                            : "Deactivating…"}
                       </span>
                     ) : (
                       <DropdownMenu>
@@ -328,6 +337,13 @@ export function StudentsRegistryTable({
                               >
                                 <IconEdit className="mr-2 h-4 w-4" />
                                 Edit record
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={!student.email}
+                                onClick={() => onReinvite(student._id)}
+                              >
+                                <IconMailForward className="mr-2 h-4 w-4" />
+                                Reinvite
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {student.is_active ? (

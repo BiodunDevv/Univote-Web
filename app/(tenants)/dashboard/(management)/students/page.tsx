@@ -47,6 +47,7 @@ import {
   useBulkUpdateStudentsMutation,
   useDeactivateStudentMutation,
   useDeleteStudentMutation,
+  useReinviteStudentMutation,
 } from "@/lib/queries/admin";
 export function StudentsPage() {
   const router = useRouter();
@@ -79,7 +80,7 @@ export function StudentsPage() {
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingStudentMode, setEditingStudentMode] = useState<"view" | "edit">("view");
   const [statusActionStudentId, setStatusActionStudentId] = useState<string | null>(null);
-  const [statusActionType, setStatusActionType] = useState<"activate" | "deactivate" | null>(null);
+  const [statusActionType, setStatusActionType] = useState<"activate" | "deactivate" | "reinvite" | null>(null);
 
   const canManageStudents =
     admin?.role === "super_admin" ||
@@ -97,6 +98,7 @@ export function StudentsPage() {
   const overviewQuery = useAdminStudentsOverviewQuery({ enabled: isAuthorized });
   const activateStudent = useActivateStudentMutation();
   const deactivateStudent = useDeactivateStudentMutation();
+  const reinviteStudent = useReinviteStudentMutation();
   const deleteStudent = useDeleteStudentMutation();
   const bulkUpdateStudents = useBulkUpdateStudentsMutation();
   const isBulkUpdating = bulkUpdateStudents.isPending;
@@ -315,6 +317,29 @@ export function StudentsPage() {
     } catch (error) {
       toast.error("Update failed", {
         description: error instanceof Error ? error.message : "Failed to deactivate student",
+      });
+    } finally {
+      setStatusActionStudentId(null);
+      setStatusActionType(null);
+    }
+  };
+
+  const handleReinviteStudent = async (studentId: string) => {
+    try {
+      setStatusActionStudentId(studentId);
+      setStatusActionType("reinvite");
+      await reinviteStudent.mutateAsync(studentId);
+      await refreshCurrentView();
+      toast.success("Invitation resent", {
+        description:
+          "A fresh temporary password was emailed to the student.",
+      });
+    } catch (error) {
+      toast.error("Reinvite failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to resend the student invitation",
       });
     } finally {
       setStatusActionStudentId(null);
@@ -554,6 +579,7 @@ export function StudentsPage() {
                 }}
                 onView={(studentId) => { setEditingStudentId(studentId); setEditingStudentMode("view"); }}
                 onEdit={(studentId) => router.push(`/dashboard/students/${studentId}/edit`)}
+                onReinvite={(studentId) => void handleReinviteStudent(studentId)}
                 onMarkActive={(studentId) => void handleMarkActive(studentId)}
                 onMarkInactive={(studentId) => void handleMarkInactive(studentId)}
                 onDelete={(studentId) => void handleDeleteStudent(studentId)}
