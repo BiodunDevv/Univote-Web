@@ -57,7 +57,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
       icon: Building2,
     },
     {
-      label: "Participant records",
+      label: "Students enrolled",
       value: stats?.active_students ?? 0,
       icon: Users,
     },

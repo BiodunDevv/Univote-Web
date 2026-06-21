@@ -1,3 +1,5 @@
+"use client";
+
 import type { LandingTestimonial } from "@/types/landing";
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/magicui/marquee";
@@ -6,8 +8,6 @@ import { toast } from "sonner";
 import { usePublicOrganizationsQuery, useSubmitTestimonialMutation } from "@/lib/queries/public";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import { Briefcase, Building2, MessageSquare, User } from "lucide-react";
 
 function toUsername(name: string) {
   return `@${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
@@ -200,12 +207,11 @@ function SubmitDialog() {
           Submit a testimonial
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Submit a testimonial</DialogTitle>
         </DialogHeader>
         <form
-          className="space-y-4"
           onSubmit={async (event) => {
             event.preventDefault();
             try {
@@ -218,83 +224,109 @@ function SubmitDialog() {
             }
           }}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="submit-name">Name</Label>
-              <Input
-                id="submit-name"
-                value={form.author_name}
-                onChange={(e) => setForm((f) => ({ ...f, author_name: e.target.value }))}
-                placeholder="Your full name"
-                autoComplete="name"
-                required
-              />
+          <FieldGroup className="gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="submit-name" className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  Full name
+                </FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="submit-name"
+                    value={form.author_name}
+                    onChange={(e) => setForm((f) => ({ ...f, author_name: e.target.value }))}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                    required
+                  />
+                </InputGroup>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="submit-role" className="flex items-center gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                  Role
+                </FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="submit-role"
+                    value={form.author_role}
+                    onChange={(e) => setForm((f) => ({ ...f, author_role: e.target.value }))}
+                    placeholder="e.g. 300L Student, Senior Lecturer"
+                    autoComplete="organization-title"
+                    required
+                  />
+                </InputGroup>
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="submit-role">Role</Label>
-              <Input
-                id="submit-role"
-                value={form.author_role}
-                onChange={(e) => setForm((f) => ({ ...f, author_role: e.target.value }))}
-                placeholder="e.g. 300L Student / Senior Lecturer"
-                autoComplete="organization-title"
-                required
-              />
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="submit-org">Organization</Label>
-            {organizations.length > 0 ? (
-              <Select
-                value={form.institution_name}
-                onValueChange={(v) => setForm((f) => ({ ...f, institution_name: v }))}
-                required
-              >
-                <SelectTrigger id="submit-org">
-                  <SelectValue placeholder="Select your university…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.name}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id="submit-org"
-                value={form.institution_name}
-                onChange={(e) => setForm((f) => ({ ...f, institution_name: e.target.value }))}
-                placeholder="University or institution name"
-                autoComplete="organization"
-                required
-              />
-            )}
-          </div>
+            <Field>
+              <FieldLabel htmlFor="submit-org" className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                Institution
+              </FieldLabel>
+              {organizations.length > 0 ? (
+                <Select
+                  value={form.institution_name}
+                  onValueChange={(v) => setForm((f) => ({ ...f, institution_name: v }))}
+                  required
+                >
+                  <SelectTrigger id="submit-org">
+                    <SelectValue placeholder="Select your university…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.name}>
+                        {org.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <Building2 className="h-3.5 w-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="submit-org"
+                    value={form.institution_name}
+                    onChange={(e) => setForm((f) => ({ ...f, institution_name: e.target.value }))}
+                    placeholder="University or institution name"
+                    autoComplete="organization"
+                    required
+                  />
+                </InputGroup>
+              )}
+            </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="submit-review">Review</Label>
-            <Textarea
-              id="submit-review"
-              rows={5}
-              value={form.quote}
-              onChange={(e) => setForm((f) => ({ ...f, quote: e.target.value }))}
-              placeholder="Tell us about your experience with Univote…"
-              minLength={20}
-              required
-            />
-            <p className="text-xs text-muted-foreground">Min. 20 characters.</p>
-          </div>
+            <Field>
+              <FieldLabel htmlFor="submit-review" className="flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                Your review
+              </FieldLabel>
+              <InputGroup>
+                <InputGroupTextarea
+                  id="submit-review"
+                  rows={4}
+                  value={form.quote}
+                  onChange={(e) => setForm((f) => ({ ...f, quote: e.target.value }))}
+                  placeholder="Tell us about your experience with Univote…"
+                  minLength={20}
+                  required
+                />
+              </InputGroup>
+              <FieldDescription>Minimum 20 characters. All testimonials are reviewed before publication.</FieldDescription>
+            </Field>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={submitMutation.isPending || !form.institution_name}
-          >
-            {submitMutation.isPending ? "Submitting…" : "Submit for review"}
-          </Button>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={submitMutation.isPending || !form.institution_name}
+            >
+              {submitMutation.isPending ? "Submitting…" : "Submit for review"}
+            </Button>
+          </FieldGroup>
         </form>
       </DialogContent>
     </Dialog>
